@@ -27,6 +27,7 @@
   </div>
 </div>
 <script src="assets/swordman.meta.js"></script>
+<script src="assets/monsters.meta.js"></script>
 <script>
 "use strict";
 const canvas = document.getElementById('game');
@@ -234,6 +235,7 @@ const CONSUMABLE_DB = {
 const INV_COLS=6;
 const CONSUMABLE_PRICES={hp_s:30, hp_m:75, mp_s:25, mp_m:62, atk_p:120};
 let shopItems=[], shopTab=0, shopCursor=0, shopSellMode=false, shopPending=false;
+let clearPending=false, clearInfo=null, dunStats={t:0,kills:0,gold0:0};
 
 function sellPrice(item){
   const base={white:44,blue:115,purple:290,orange:820};
@@ -515,7 +517,7 @@ class Player extends Fighter {
       if(down('arrowup'))mvy=-1;
       if(down('arrowdown'))mvy=1;
       const runOn = this.running && ((this.running<0&&mvx<0)||(this.running>0&&mvx>0));
-      const sp = runOn ? this.speed*1.8 : this.speed;
+      const sp = runOn ? this.speed*1.5 : this.speed*0.55; // 慢走更慢 vs 奔跑
       this.x+=mvx*sp;
       if(this.onGround)this.y+=mvy*sp*0.7;
       if(mvx||mvy)this.walkPhase+=runOn?0.45:0.25; else this.walkPhase=0;
@@ -710,12 +712,14 @@ class Enemy extends Fighter {
     drawShadow(this.x,this.y,this.w);
     const flashing=this.flash>0&&this.flash%2===0;
     const big=this.kind==='boss';
+    if(!(MON_SPR[this.kind]&&MON_SPR[this.kind].ready&&drawMonsterSprite(this))){
     if(this.knockdown>0){ // 倒地
       ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(this.dir*1.3); ctx.scale(this.dir,1);
       const f={walkPhase:0,state:'idle',onGround:true,attackTimer:0,kind:this.kind};
       drawHumanoid(0,0,1,this.color,this.dark,f,flashing,false,big); ctx.restore();
     } else {
       drawHumanoid(this.x,this.screenY(),this.dir,this.color,this.dark,this,flashing,false,big);
+    }
     }
     if(this.slow>0){ ctx.save(); ctx.globalAlpha=0.4; ctx.fillStyle='#7fdfff';
       ctx.beginPath(); ctx.ellipse(this.x,this.y,this.w*0.6,12,0,0,7); ctx.fill(); ctx.restore(); }
@@ -756,18 +760,29 @@ else fetch('assets/swordman.json').then(r=>r.json()).then(m=>{SPR.meta=m; if(SPR
 let SPR_SCALE=0.62; // Q版缩小比例(可调)
 // 动画区间(帧索引), 凭客户端帧序划分, 可微调
 const SWORD_ANIM={
-  idle:  {f:[0,1,2],                      fps:6},
-  walk:  {f:[5,6,7,8,9,10,11,12],         fps:11},
-  run:   {f:[5,6,7,8,9,10,11,12],         fps:18},
-  attack:{f:[60,61,62,63,64,65],          fps:18},
-  hurt:  {f:[98,99],                      fps:10},
-  fall:  {f:[100,101,102],                fps:9},
+  idle:  {f:[90,91,92,93,94],                   fps:5},   // 持剑站立(剑握在手垂于身侧)
+  walk:  {f:[14,15,16,17,18,19,20,21],          fps:8},   // 慢走(持剑防守步, 直立不像跑)
+  run:   {f:[104,105,106,107,108,109,110,111,112,113,114], fps:14}, // 奔跑(剑后摆冲刺)
+  // 普攻三段(DNF 经典连斩): 横斩→过顶劈→大横扫
+  attack1:{f:[60,61,62,63,64]},
+  attack2:{f:[80,81,82,83,84,85]},
+  attack3:{f:[196,197,198,199,200]},
+  // 技能挥砍(参考原游戏大招动作): 横扫 / 过顶巨劈
+  skillThrust:{f:[196,197,198,199,200]}, // proj/dash 类
+  skillCast:  {f:[201,202,203,204,205]}, // 其余技能
+  hurt:  {f:[98,99],                            fps:10},
+  fall:  {f:[100,101,102],                      fps:9},
 };
 function pickSwordFrame(p){
   let a,idx;
   if(p.dead){ a=SWORD_ANIM.fall; idx=a.f.length-1; }
-  else if(p.attackTimer>0&&p.attackType){ a=SWORD_ANIM.attack; const dur=(p.attackType.dur||16);
-    const prog=clamp(1-p.attackTimer/dur,0,1); idx=Math.min(a.f.length-1,Math.floor(prog*a.f.length)); }
+  else if(p.attackTimer>0&&p.attackType){
+    const at=p.attackType;
+    if(at.basic) a=SWORD_ANIM['attack'+(at.combo||1)]||SWORD_ANIM.attack1;
+    else a=(at.type==='proj'||at.type==='dash')?SWORD_ANIM.skillThrust:SWORD_ANIM.skillCast;
+    const dur=at.dur||16, prog=clamp(1-p.attackTimer/dur,0,1);
+    idx=Math.min(a.f.length-1,Math.floor(prog*a.f.length));
+  }
   else if(p.hurt>0){ a=SWORD_ANIM.hurt; idx=Math.floor(performance.now()/(1000/a.fps))%a.f.length; }
   else if(p.state==='run'){ a=SWORD_ANIM.run; idx=Math.floor(performance.now()/(1000/a.fps))%a.f.length; }
   else if(p.state==='walk'){ a=SWORD_ANIM.walk; idx=Math.floor(performance.now()/(1000/a.fps))%a.f.length; }
@@ -784,6 +799,53 @@ function drawSwordmanSprite(p){
   if(p.flash>0&&p.flash%2===0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.5;
     ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s); }
   ctx.restore();
+  return true;
+}
+
+/* ===================== 怪物精灵图集(客户端真实素材) ===================== */
+const MON_DEF={
+  gob:    {file:'mon_gob',    scale:0.78, face:-1, idle:[0,1,2],         walk:[10,11,12,13],            attack:[6,7],            die:[8,9]},
+  orc:    {file:'mon_orc',    scale:0.82, face:-1, idle:[0,1,2,3,4],     walk:[28,29,30,31,32],         attack:[5,6,4],          die:[22,23,24,25,26,27]},
+  archer: {file:'mon_archer', scale:0.78, face:-1, idle:[0,1,2,3,4],     walk:[0,1,2,3,4],              attack:[7,8,9,10,11,12], die:[20,21,22,23]},
+  charger:{file:'mon_charger',scale:0.88, face:-1, idle:[0,1,2,3,4,5],   walk:[25,26,27,28,29,30,31],   attack:[8,9,10,11,12,13],die:[23,24]},
+  bomber: {file:'mon_bomber', scale:0.78, face:-1, idle:[0,1,2,3,4,5,6,7],walk:[0,1,2,3,4,5,6,7],        attack:[8,9,10,11,12],   die:[18,19,20,21,22]},
+  boss:   {file:'mon_boss',   scale:1.05, face:-1, idle:[0,1,2,3,4],     walk:[5,6,7,8],                attack:[14,15,16,17,18], die:[20,21,22,23]},
+};
+const MON_SPR={};
+for(const k in MON_DEF){ const d=MON_DEF[k], o={img:new Image(),meta:null,ready:false,def:d};
+  o.img.onload=()=>{ if(o.meta)o.ready=true; };
+  o.img.src='assets/'+d.file+'.png';
+  if(window['MON_META_'+k]){ o.meta=window['MON_META_'+k]; if(o.img.complete&&o.img.naturalWidth)o.ready=true; }
+  else fetch('assets/'+d.file+'.json').then(r=>r.json()).then(m=>{o.meta=m; if(o.img.complete&&o.img.naturalWidth)o.ready=true;}).catch(()=>{});
+  MON_SPR[k]=o;
+}
+function pickMonFrame(e,d){
+  let a,idx;
+  if(e.dead){ a=d.die; idx=Math.min(a.length-1,Math.floor((e._t||0)/3)); }
+  else if(e.knockdown>0){ a=d.die; idx=0; }
+  else if(e.attackTimer>0){ a=d.attack; const dur=(e.kind==='boss'?28:22);
+    idx=Math.min(a.length-1,Math.floor(clamp(1-e.attackTimer/dur,0,1)*a.length)); }
+  else if(e.aggro){ a=d.walk; idx=Math.floor(performance.now()/110)%a.length; }
+  else { a=d.idle; idx=Math.floor(performance.now()/200)%a.length; }
+  return a[idx];
+}
+function drawMonsterSprite(e){
+  const o=MON_SPR[e.kind]; if(!o||!o.ready||!o.meta) return false;
+  const fi=pickMonFrame(e,o.def), F=o.meta.frames[fi]; if(!F) return false;
+  const sx=F[0],sy=F[1],sw=F[2],sh=F[3],ox=F[4],oy=F[5];
+  const s=o.def.scale*(e.scale?Math.min(1.5,0.85+0.15*e.scale):1), feetY=e.screenY(), flip=(e.dir!==o.def.face);
+  ctx.save(); ctx.translate(e.x,feetY);
+  if(e.elite&&!e.dead){ ctx.save(); ctx.globalAlpha=0.35+0.2*Math.sin(performance.now()/140);
+    ctx.fillStyle=e.eliteCol||'#ffcf4d'; ctx.beginPath(); ctx.ellipse(0,-6,40,15,0,0,7); ctx.fill(); ctx.restore(); }
+  ctx.scale(flip?-1:1,1);
+  if(e.dead) ctx.globalAlpha=clamp(1-(e._t||0)/30,0,1);
+  ctx.drawImage(o.img,sx,sy,sw,sh,ox*s,oy*s,sw*s,sh*s);
+  if((e.flash>0&&e.flash%2===0)||e.elite){ ctx.globalCompositeOperation='lighter';
+    ctx.globalAlpha=e.flash>0&&e.flash%2===0?0.55:(0.12+0.08*Math.sin(performance.now()/200));
+    ctx.drawImage(o.img,sx,sy,sw,sh,ox*s,oy*s,sw*s,sh*s); }
+  ctx.restore();
+  if(e.elite&&!e.dead){ ctx.fillStyle=e.eliteCol||'#ffcf4d'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('★ 精英',e.x,feetY+oy*s-8); ctx.textAlign='left'; }
   return true;
 }
 
@@ -1725,6 +1787,35 @@ function overlay(title,color,lines){
   ctx.textAlign='left';
 }
 
+/* ===================== 通关结算 ===================== */
+const GRADE_COL={S:'#ffcf4d',A:'#ff8c42',B:'#4da6ff',C:'#9a9a9a'};
+function drawClear(){
+  const ci=clearInfo||{dungeon:1,sec:0,kills:0,gold:0,grade:'B',lv:1,hp:100};
+  ctx.fillStyle='#0c0e16'; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#cfd8e6'; ctx.font='bold 22px sans-serif';
+  ctx.fillText('第 '+ci.dungeon+' 图 · 通关!',W/2,90);
+  // 评级大字
+  const col=GRADE_COL[ci.grade]||'#fff', pulse=1+0.05*Math.sin(performance.now()/200);
+  ctx.save(); ctx.translate(W/2,210); ctx.scale(pulse,pulse);
+  ctx.fillStyle=col; ctx.font='bold 130px sans-serif';
+  ctx.fillText(ci.grade,0,46);
+  ctx.globalAlpha=0.3; ctx.fillText(ci.grade,0,46);
+  ctx.restore();
+  ctx.fillStyle='#8ab4ff'; ctx.font='15px sans-serif'; ctx.fillText('评 级',W/2,118);
+  // 数据
+  const mm=String(Math.floor(ci.sec/60)).padStart(2,'0'), ss=String(ci.sec%60).padStart(2,'0');
+  const rows=[['用时',mm+':'+ss],['击杀',ci.kills+' 只'],['剩余血量',ci.hp+'%'],['获得金币',ci.gold+' 💰'],['当前等级','Lv.'+ci.lv]];
+  const bx=W/2-150, by=300, rh=34;
+  ctx.fillStyle='rgba(255,255,255,.05)'; ctx.fillRect(bx,by-26,300,rows.length*rh+16);
+  rows.forEach((r,i)=>{ const y=by+i*rh;
+    ctx.textAlign='left';  ctx.fillStyle='#8893a7'; ctx.font='15px sans-serif'; ctx.fillText(r[0],bx+16,y);
+    ctx.textAlign='right'; ctx.fillStyle='#fff';    ctx.font='bold 16px sans-serif'; ctx.fillText(r[1],bx+284,y); });
+  ctx.textAlign='center'; ctx.fillStyle='#ffcf4d'; ctx.font='15px sans-serif';
+  ctx.fillText('按 Enter / 空格 进入商店',W/2,H-46);
+  ctx.textAlign='left';
+}
+
 /* ===================== 商店 ===================== */
 const SHOP=[
   {key:'1',name:'攻击强化 +8%', base:50, apply(){player.shopAtk+=0.08;player.buy.atk++;}, lvl(){return player.buy.atk;}},
@@ -1865,15 +1956,21 @@ function drawShop(){
 
 /* ===================== 主菜单 / 选职业 / 帮助 ===================== */
 let menuIndex=0, selIndex=0;
-const MENU=['开始游戏','操作说明',()=> '音效: '+(Save.data.muted?'关':'开')];
+function getMenu(){
+  const m=[];
+  if(Save.data.run) m.push({label:'继续游戏 (第'+Save.data.run.dungeon+'图 '+Save.data.run.room+'房)',act:'continue'});
+  m.push({label:'开始游戏',act:'start'},{label:'操作说明',act:'help'},{label:'音效: '+(Save.data.muted?'关':'开'),act:'mute'});
+  return m;
+}
 function drawMenu(){
   drawBackground(); ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';
   ctx.fillStyle='#ffcf4d'; ctx.font='bold 46px sans-serif'; ctx.fillText('地下城与勇士',W/2,140);
   ctx.fillStyle='#8ab4ff'; ctx.font='bold 22px sans-serif'; ctx.fillText('· 鬼 剑 士 横 版 格 斗 ·',W/2,178);
-  MENU.forEach((m,i)=>{ const label=typeof m==='function'?m():m; const sel=i===menuIndex;
+  const menu=getMenu();
+  menu.forEach((m,i)=>{ const sel=i===menuIndex;
     ctx.fillStyle=sel?'#ffcf4d':'#cfd8e6'; ctx.font='bold '+(sel?26:22)+'px sans-serif';
-    ctx.fillText((sel?'▶ ':'')+label,W/2,260+i*52); });
+    ctx.fillText((sel?'▶ ':'')+m.label,W/2,250+i*48); });
   ctx.fillStyle='#7e879a'; ctx.font='13px sans-serif';
   ctx.fillText('↑↓ 选择    Enter 确认    M 静音',W/2,470);
   ctx.fillText('历史最高分: '+Save.data.high,W/2,498);
@@ -1943,9 +2040,33 @@ function startGame(clsKey){
   door=null; transition=0;
   gameState='play'; Audio2.ensure(); Audio2.startBgm(); enterRoom();
 }
+/* ===================== 运行存档(已穿装备/背包/快捷栏/金币/进度) ===================== */
+function serializeRun(){
+  if(!player||player.dead) return;
+  const p=player;
+  Save.data.run={ clsKey:p.clsKey, level:p.level, exp:p.exp, expNext:p.expNext, gold:p.gold,
+    crit:p._crit, shopAtk:p.shopAtk, buy:p.buy, maxhp:p.maxhp, maxmp:p.maxmp, hp:p.hp, mp:p.mp,
+    equipped:p.equipped, inventory:p.inventory, hotbar:p.hotbar, dungeon, room };
+  Save.save();
+}
+function clearRun(){ if(Save.data.run){ Save.data.run=null; Save.save(); } }
+function continueGame(){
+  const r=Save.data.run; if(!r){ gameState='select'; return; }
+  player=new Player(r.clsKey); enemies=[]; resetPools();
+  Object.assign(player,{ level:r.level, exp:r.exp, expNext:r.expNext, gold:r.gold,
+    _crit:r.crit, shopAtk:r.shopAtk, buy:r.buy||{atk:0,hp:0,mp:0,crit:0},
+    maxhp:r.maxhp, maxmp:r.maxmp, hp:r.hp, mp:r.mp,
+    equipped:r.equipped||{weapon:null,head:null,chest:null,legs:null,shoes:null},
+    inventory:r.inventory||[], hotbar:r.hotbar||new Array(6).fill(null) });
+  dungeon=r.dungeon||1; room=r.room||1; score=0; shake=0; hitstop=0; combo={count:0,dmg:0,timer:0};
+  door=null; transition=0;
+  gameState='play'; Audio2.ensure(); Audio2.startBgm(); enterRoom();
+  dunStats.gold0=player.gold;
+}
 function difficulty(){ return (dungeon-1)*ROOMS_PER_DUNGEON + room; } // 全局递增难度
 function enterRoom(){
   enemies=[]; resetPools();
+  if(room===1) dunStats={t:0,kills:0,gold0:player?player.gold:0}; // 新一图开始, 重置统计
   const diff=difficulty();
   const scale=1+(diff-1)*0.1;
   const isBoss=room===ROOMS_PER_DUNGEON;
@@ -1964,8 +2085,16 @@ function enterRoom(){
       else if(diff>=5 && r<0.6) kind='bomber';
       enemies.push(new Enemy(rand(WORLD_W*0.4,WORLD_W-120),rand(GROUND_TOP+10,GROUND_BOT-10),kind,scale));
     }
+    // 精英怪: 普通房有概率出现一只(更强更大发光, 必掉装备)
+    if(diff>=2 && enemies.length && Math.random()<0.24){
+      const e=enemies[Math.floor(Math.random()*enemies.length)];
+      e.elite=true; e.eliteCol='#ffcf4d';
+      e.maxhp=Math.round(e.maxhp*2.4); e.hp=e.maxhp;
+      e.atkScale*=1.45; e.scale*=1.3; e.aggroRange+=80;
+    }
     showBanner('第'+dungeon+'图 · 第'+room+'/'+ROOMS_PER_DUNGEON+'房','#cfd8e6');
   }
+  serializeRun(); // 每进一房存档
 }
 function openDoor(){
   // 房间清空 → 激活门(闪烁), 走进去才切下一房
@@ -1973,11 +2102,21 @@ function openDoor(){
   Audio2.sfx('select');
   spawnText(door.x-90,GROUND_TOP-6, door.boss?'通关之门 →':'前方门已开 →','#ffcf4d');
 }
+function computeClear(){
+  const hpR=player.hp/player.maxhp;
+  const par=ROOMS_PER_DUNGEON*1500;                 // 目标 ~25 秒/房
+  const timeR=clamp(par/Math.max(dunStats.t,1),0,2);
+  const sc=hpR*0.9+timeR*0.7;
+  const grade= sc>=1.45?'S': sc>=1.15?'A': sc>=0.85?'B':'C';
+  return {dungeon, sec:Math.round(dunStats.t/60), kills:dunStats.kills,
+          gold:Math.max(0,player.gold-dunStats.gold0), grade, lv:player.level, hp:Math.round(hpR*100)};
+}
 function nextRoom(){
   if(room>=ROOMS_PER_DUNGEON){
+    clearInfo=computeClear();             // 结算(基于刚通关的本图)
     dungeon++; room=1;
     generateShopItems();
-    shopPending=true;                    // transition 结束后进商店而非 play
+    clearPending=true;                    // transition 结束后先进结算界面
   } else {
     room++;
     enterRoom();
@@ -1999,6 +2138,11 @@ function dropLoot(e){
     // 并有机会掉消耗品
     if(Math.random()<0.6) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'consumable','hp_m'));
     if(Math.random()<0.4) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'consumable','mp_m'));
+  } else if(e.elite){
+    // 精英怪: 必掉 1 件装备 + 额外金币, 较高概率掉消耗品
+    for(let i=0;i<3;i++) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'gold',Math.round(rand(6,12))));
+    pickups.push(new Pickup(e.x+rand(-30,30),e.y,'equip',genEquip(difficulty()+4)));
+    if(Math.random()<0.5){ const types=['hp_m','mp_s','atk_p']; pickups.push(new Pickup(e.x,e.y,'consumable',types[Math.floor(Math.random()*types.length)])); }
   } else {
     // 普通怪 5% 概率掉装备、10% 掉消耗品
     if(Math.random()<0.05) pickups.push(new Pickup(e.x,e.y,'equip',genEquip(difficulty())));
@@ -2012,12 +2156,15 @@ function dropLoot(e){
 function update(){
   // 菜单类状态
   if(gameState==='menu'){
-    if(pressed('arrowup'))menuIndex=(menuIndex+2)%3;
-    if(pressed('arrowdown'))menuIndex=(menuIndex+1)%3;
+    const menu=getMenu(), N=menu.length; menuIndex=clamp(menuIndex,0,N-1);
+    if(pressed('arrowup'))menuIndex=(menuIndex+N-1)%N;
+    if(pressed('arrowdown'))menuIndex=(menuIndex+1)%N;
     if(pressed('enter')||pressed(' ')){ Audio2.sfx('select');
-      if(menuIndex===0){ gameState='select'; }
-      else if(menuIndex===1){ gameState='help'; }
-      else { Audio2.toggleMute(); } }
+      const a=menu[menuIndex].act;
+      if(a==='continue') continueGame();
+      else if(a==='start') gameState='select';
+      else if(a==='help') gameState='help';
+      else Audio2.toggleMute(); }
     return;
   }
   if(gameState==='help'){ if(pressed('enter')||pressed('escape')||pressed(' ')) gameState='menu'; return; }
@@ -2070,11 +2217,13 @@ function update(){
     return;
   }
   if(gameState==='pause'){ if(pressed('enter')) gameState='play'; return; }
+  if(gameState==='clear'){ if(pressed('enter')||pressed(' ')){ Audio2.sfx('select'); gameState='shop'; } return; }
   if(gameState==='transition'){
     transition--;
     if(transition===20) nextRoom();
     if(transition<=0){
-      if(shopPending){ gameState='shop'; shopPending=false; Audio2.stopBgm(); }
+      if(clearPending){ gameState='clear'; clearPending=false; Audio2.stopBgm(); Audio2.sfx('levelup'); }
+      else if(shopPending){ gameState='shop'; shopPending=false; Audio2.stopBgm(); }
       else gameState='play';
     }
     return;
@@ -2101,6 +2250,7 @@ function update(){
   }
 
   if(hitstop>0){ hitstop--; return; } // 命中冻帧
+  dunStats.t++;                        // 本图用时(帧)
 
   player.update();
   updateCam();
@@ -2110,7 +2260,7 @@ function update(){
   for(const h of hazards)h.update();
   for(const pk of pickups)pk.update();
 
-  for(const e of enemies) if(e.dead&&!e._counted){ e._counted=true; score+=Math.round(e.conf.exp*1.5); player.gainExp(e.conf.exp); dropLoot(e); Audio2.sfx('die'); spawnHit(e.x,e.screenY()-40,'#ffcf4d',12); }
+  for(const e of enemies) if(e.dead&&!e._counted){ e._counted=true; dunStats.kills++; score+=Math.round(e.conf.exp*1.5*(e.elite?2:1)); player.gainExp(e.conf.exp*(e.elite?2:1)); dropLoot(e); Audio2.sfx('die'); spawnHit(e.x,e.screenY()-40,'#ffcf4d',12); }
   enemies=enemies.filter(e=>!(e.dead&&(e._t=(e._t||0)+1)>30));
   for(let i=projectiles.length-1;i>=0;i--) if(projectiles[i].life<=0)projectiles.splice(i,1);
   for(let i=enemyProjectiles.length-1;i>=0;i--) if(enemyProjectiles[i].life<=0)enemyProjectiles.splice(i,1);
@@ -2124,7 +2274,7 @@ function update(){
       gameState='transition'; transition=40; Audio2.sfx('ui'); // 走进门 → 切下一房
     }
   }
-  if(player.dead){ gameState='dead'; Audio2.stopBgm();
+  if(player.dead){ gameState='dead'; Audio2.stopBgm(); clearRun();
     if(score>Save.data.high){ Save.data.high=score; Save.save(); } }
 
   if(combo.timer>0){ combo.timer--; if(combo.timer===0)combo={count:0,dmg:0,timer:0}; }
@@ -2167,6 +2317,7 @@ function render(){
   if(gameState==='help'){ drawHelp(); return; }
   if(gameState==='select'){ drawSelect(); return; }
   if(gameState==='shop'){ drawShop(); return; }
+  if(gameState==='clear'){ drawClear(); return; }
   ctx.save();
   const sx=shake>0?rand(-shake,shake):0, sy=shake>0?rand(-shake,shake):0;
   ctx.translate(-camX+sx, sy);                 // 摄像机 + 震动
@@ -2219,12 +2370,21 @@ gameState='menu';
 loop();
 
 // 调试: ?shot=blade&st=run 自动开局便于无头截图(正式使用无影响)
-(function(){const q=new URLSearchParams(location.search); if(!q.has('shot'))return;
+(function(){const q=new URLSearchParams(location.search);
+  if(q.has('cont')){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); continueGame(); }; g(); return; }
+  if(!q.has('shot'))return;
   const cls=q.get('shot')||'blade', st=q.get('st')||'idle';
   const go=()=>{ if(!SPR.ready) return setTimeout(go,50);
-    startGame(cls); player.x=420; updateCam();
+    startGame(cls); player.x=120; updateCam();
+    if(q.get('mon')){ // 调试: 一字排开所有怪物种类
+      enemies.length=0; const kinds=['gob','orc','archer','charger','bomber','boss'];
+      kinds.forEach((kk,i)=>{ const e=new Enemy(260+i*120,(GROUND_TOP+GROUND_BOT)/2,kk,1); e.aggro=false; e.dir=-1;
+        if(q.get('elite')&&i===0){ e.elite=true; e.eliteCol='#ffcf4d'; e.scale*=1.3; } enemies.push(e); });
+      door=null;
+    }
     if(st==='walk'||st==='run'){ keys['arrowright']=true; if(st==='run') player.running=1; }
     if(st==='attack'){ const a=()=>{ if(player&&!player.dead){ keys['x']=true; setTimeout(()=>keys['x']=false,30);} setTimeout(a,260); }; a(); }
+    if(q.get('clear')){ clearInfo={dungeon:1,sec:142,kills:27,gold:386,grade:q.get('clear'),lv:5,hp:73}; gameState='clear'; }
   }; go();
 })();
 </script>
