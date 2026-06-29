@@ -1,0 +1,14 @@
+# DNF 客户端原始资源(体积巨大,严禁提交)
+地下城与勇士/
+*.7z
+*.NPK
+*.npk
+
+# 解包中间产物
+tools/_extract/
+assets/raw/
+
+# 杂项
+index.html.bak
+*.log
+.DS_Store
