@@ -23,11 +23,13 @@
   <div class="title">地 下 城 与 勇 士 · 鬼 剑 士</div>
   <canvas id="game" width="960" height="540"></canvas>
   <div id="tips">
-    移动 <b>方向键</b> ·跳跃 <b>C</b> ·普攻 <b>X</b> ·技能 <b>Z A S D F G</b> ·奔跑 <b>双击←/→</b> ·药水 <b>1-6</b> ·背包 <b>I</b> ·暂停 <b>P</b> ·静音 <b>M</b> ·菜单 <b>0</b>
+    移动 <b>方向键</b> ·跳跃 <b>C</b> ·普攻 <b>X</b> ·上挑 <b>Z</b> ·技能 <b>Q W E A S D</b> ·奔跑 <b>双击←/→</b> ·药水 <b>1-6</b> ·背包 <b>I</b> ·暂停 <b>P</b> ·菜单 <b>0</b>　(技能栏可拖拽换键)
   </div>
 </div>
 <script src="assets/swordman.meta.js"></script>
+<script src="assets/weapons.meta.js"></script>
 <script src="assets/monsters.meta.js"></script>
+<script src="assets/skillfx.meta.js"></script>
 <script>
 "use strict";
 const canvas = document.getElementById('game');
@@ -66,6 +68,33 @@ window.addEventListener('keyup', e => {
 });
 const down = (...ks) => ks.some(k => keys[k]);
 function pressed(k){ if(keys[k]){ keys[k]=false; return true; } return false; }
+
+/* ===================== 技能栏拖拽换键 ===================== */
+let skillDrag=null;
+function skillBarGeom(){ const n=player?player.skills.length:7, sw=46, gap=8, total=n*sw+(n-1)*gap; return {n,sw,gap,total,sx0:(W-total)/2,sy:H-58}; }
+function skillSlotAt(mx,my){ const g=skillBarGeom(); if(my<g.sy||my>g.sy+g.sw) return -1;
+  for(let i=0;i<g.n;i++){ const x=g.sx0+i*(g.sw+g.gap); if(mx>=x&&mx<=x+g.sw) return i; } return -1; }
+function canvasXY(e){ const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height)}; }
+function rebindSkillKeys(){ player.skills.forEach((s,k)=>{ s.key = k===0 ? 'z' : SKILL_KEYS[k-1]; }); }
+function swapSkillSlots(i,j){ const sk=player.skills; const t=sk[i]; sk[i]=sk[j]; sk[j]=t; rebindSkillKeys(); }
+canvas.addEventListener('mousedown',e=>{ if(gameState!=='play'||!player) return;
+  const m=canvasXY(e), i=skillSlotAt(m.x,m.y);
+  if(i>0 && player.skills[i] && !player.skills[i].fixed){ skillDrag={from:i,x:m.x,y:m.y}; } });
+canvas.addEventListener('mousemove',e=>{ if(skillDrag){ const m=canvasXY(e); skillDrag.x=m.x; skillDrag.y=m.y; } });
+window.addEventListener('mouseup',e=>{ if(!skillDrag) return;
+  const m=canvasXY(e), j=skillSlotAt(m.x,m.y);
+  if(j>0 && j!==skillDrag.from && player.skills[j] && !player.skills[j].fixed){
+    swapSkillSlots(skillDrag.from,j); if(typeof serializeRun==='function')serializeRun(); Audio2.sfx('ui'); }
+  skillDrag=null; });
+function drawSkillDrag(){ if(!skillDrag||!player) return; const g=skillBarGeom();
+  const ti=skillSlotAt(skillDrag.x,skillDrag.y);
+  if(ti>0){ const tx=g.sx0+ti*(g.sw+g.gap); ctx.strokeStyle='#ffd24d'; ctx.lineWidth=3; ctx.strokeRect(tx-2,g.sy-2,g.sw+4,g.sw+4); }
+  const s=player.skills[skillDrag.from]; if(!s) return;
+  ctx.save(); ctx.globalAlpha=0.9; ctx.fillStyle='#11151c'; ctx.fillRect(skillDrag.x-21,skillDrag.y-21,42,42);
+  ctx.strokeStyle=s.color; ctx.lineWidth=2; ctx.strokeRect(skillDrag.x-21,skillDrag.y-21,42,42);
+  ctx.globalAlpha=0.32; ctx.fillStyle=s.color; ctx.fillRect(skillDrag.x-18,skillDrag.y-18,36,36); ctx.globalAlpha=1;
+  ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText(s.key.toUpperCase(),skillDrag.x,skillDrag.y-2);
+  ctx.font='9px sans-serif'; ctx.fillStyle='#cfd8e6'; ctx.fillText(s.name.slice(0,4),skillDrag.x,skillDrag.y+12); ctx.restore(); }
 
 /* ===================== 工具 ===================== */
 const rand = (a,b) => a + Math.random()*(b-a);
@@ -172,48 +201,51 @@ const CLASSES = {
     hp:280, mp:140, speed:3.7, atkMul:1.0, lifesteal:0,
     desc:'均衡剑客,剑气连斩、瞬步突进,无明显短板。',
     skills:[
-      {key:'z',name:'上挑',     mp:12,cd:42, type:'melee', dmg:[14,20], reach:78, launch:11, color:'#bfe6ff', dur:20, ul:1},
-      {key:'a',name:'三段斩',   mp:20,cd:78, type:'multi', hits:3, dmg:[9,14], reach:92, color:'#dff6ff', dur:30, ul:2},
-      {key:'s',name:'波动剑',   mp:22,cd:80, type:'proj',  dmg:[16,24], speed:11, pierce:3, color:'#6cf', dur:18, ul:3},
-      {key:'d',name:'瞬影斩',   mp:26,cd:115,type:'dash',  dmg:[20,28], reach:84, color:'#aef', dur:22, dash:17, ul:4},
-      {key:'f',name:'拔刀斩',   mp:30,cd:150,type:'aoe',   dmg:[24,34], ox:74, radius:96, color:'#cfefff', dur:26, launch:8, ul:5},
-      {key:'g',name:'极·武剑术',mp:55,cd:360,type:'ult',   dmg:[20,30], hits:6, radius:185, color:'#ffffff', dur:54, ul:6},
+      {key:'z',name:'三段斩',    mp:18,cd:60, type:'multi',hits:3,dmg:[10,15],reach:96, color:'#dff6ff', dur:30, ul:1, fx:'tripleslash',   fxScale:0.62,fxYo:64,fxAhead:70},
+      {key:'a',name:'拔刀斩',    mp:26,cd:115,type:'aoe',  dmg:[24,34],ox:60,radius:104,launch:6, color:'#cfefff', dur:26, ul:2, fx:'flashcut',      fxScale:0.72,fxYo:62,fxAhead:96},
+      {key:'s',name:'破军升龙击',mp:22,cd:90, type:'melee',dmg:[20,28],reach:74,launch:14, color:'#bfe6ff', dur:24, ul:3, fx:'dragonup',      fxScale:0.62,fxYo:98,fxAhead:32},
+      {key:'d',name:'猛龙断空斩',mp:26,cd:120,type:'dash', dmg:[22,32],reach:90, color:'#aef', dur:24, dash:17, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
+      {key:'f',name:'幻影剑舞',  mp:40,cd:150,type:'multi',hits:6,dmg:[12,18],reach:104, color:'#eaf6ff', dur:40, ul:5, fx:'illusionslash', fxScale:0.7, fxYo:64,fxAhead:72},
+      {key:'g',name:'里·鬼剑术',mp:55,cd:300,type:'dash', dmg:[30,44],reach:100, color:'#ffffff', dur:34, dash:20, ul:6, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
     ]},
   berserk: { name:'狂战士', color:'#c0392b', dark:'#6e1f1f', elem:'#ff7a3c',
     hp:380, mp:100, speed:3.5, atkMul:1.15, lifesteal:0.12,
     desc:'高血近战狂徒,攻击吸血,可狂暴翻倍输出,越战越勇。',
     skills:[
-      {key:'z',name:'暴走崩斩', mp:12,cd:45, type:'melee', dmg:[18,26], reach:80, knock:16, color:'#ff7a5a', dur:22, ul:1},
-      {key:'a',name:'怒气爆发', mp:28,cd:300,type:'buff',  buff:{atk:1.6,time:360}, color:'#ff3b3b', dur:26, ul:2},
-      {key:'s',name:'血气唤醒', mp:24,cd:120,type:'aoe',   dmg:[20,30], ox:0, radius:120, lifesteal:0.3, color:'#ff5050', dur:28, ul:3},
-      {key:'d',name:'崩山击',   mp:26,cd:110,type:'dash',  dmg:[24,34], reach:90, color:'#ff8c42', dur:24, dash:18, ul:4},
-      {key:'f',name:'暴击波',   mp:30,cd:140,type:'aoe',   dmg:[26,38], ox:82, radius:104, knock:14, color:'#ffb35a', dur:26, ul:5},
-      {key:'g',name:'血气之刃', mp:55,cd:360,type:'ult',   dmg:[22,34], hits:6, radius:190, lifesteal:0.25, color:'#ff2a2a', dur:56, ul:6},
+      {key:'z',name:'十字斩',    mp:14,cd:45, type:'melee',dmg:[18,26],reach:86,knock:14, color:'#ff7a5a', dur:22, ul:1, fx:'gorecross',     fxScale:0.62,fxYo:66,fxAhead:72},
+      {key:'a',name:'崩山击',    mp:26,cd:110,type:'dash', dmg:[24,34],reach:90, color:'#ff8c42', dur:24, dash:18, ul:2, fx:'mountaincrash',fxScale:0.6, fxYo:82,fxAhead:48},
+      {key:'s',name:'嗜魂之手',  mp:24,cd:95, type:'melee',dmg:[20,30],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'souldrain',     fxScale:0.6, fxYo:64,fxAhead:64},
+      {key:'d',name:'怒气爆发',  mp:28,cd:120,type:'aoe',  dmg:[22,32],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'frenzy',        fxScale:0.95,fxYo:58,fxAhead:0},
+      {key:'f',name:'嗜魂封魔斩',mp:30,cd:130,type:'melee',dmg:[26,38],reach:92,lifesteal:0.25, color:'#ff5050', dur:26, ul:5, fx:'bloodseal',     fxScale:0.66,fxYo:64,fxAhead:64},
+      {key:'g',name:'崩山裂地斩',mp:55,cd:320,type:'aoe',  dmg:[30,46],ox:50,radius:150,knock:16, color:'#ff2a2a', dur:40, ul:6, fx:'chargecrash',  fxScale:1.0, fxYo:46,fxAhead:50},
     ]},
   spectre: { name:'鬼泣', color:'#7d3cc9', dark:'#3f1d6e', elem:'#b98cff',
     hp:250, mp:150, speed:3.6, atkMul:1.0, lifesteal:0,
     desc:'操纵鬼神之力,鬼影斩击、冰封减速,控场与爆发兼备。',
     skills:[
-      {key:'z',name:'鬼斩',     mp:14,cd:50, type:'melee', dmg:[16,24], reach:96, launch:8, color:'#b98cff', dur:22, ul:1},
-      {key:'a',name:'鬼影闪',   mp:20,cd:90, type:'dash',  dmg:[18,26], reach:80, color:'#a06cff', dur:20, dash:16, ul:2},
-      {key:'s',name:'冰玦',     mp:22,cd:85, type:'proj',  dmg:[14,20], speed:9, pierce:2, slow:140, color:'#7fdfff', dur:18, ul:3},
-      {key:'d',name:'阴影剑舞', mp:28,cd:120,type:'multi', hits:4, dmg:[8,13], reach:100, color:'#caa6ff', dur:34, ul:4},
-      {key:'f',name:'鬼神·落',  mp:32,cd:150,type:'aoe',   dmg:[26,36], ox:92, radius:110, color:'#9b6cff', dur:28, launch:9, ul:5},
-      {key:'g',name:'帕授·虚影',mp:58,cd:380,type:'ult',   dmg:[24,36], hits:6, radius:195, color:'#d0a6ff', dur:58, ul:6},
+      {key:'z',name:'噬灵鬼斩',  mp:14,cd:50, type:'melee',dmg:[16,24],reach:96,launch:8, color:'#b98cff', dur:22, ul:1, fx:'darkslash',  fxScale:0.66,fxYo:62,fxAhead:74},
+      {key:'a',name:'满月斩',    mp:22,cd:85, type:'proj', dmg:[18,26],speed:10,pierce:3, color:'#caa6ff', dur:20, ul:2, fx:'liftslash',  fxScale:0.6, fxYo:56},
+      {key:'s',name:'冰霜之萨亚',mp:24,cd:100,type:'aoe',  dmg:[16,24],ox:60,radius:110,slow:150, color:'#7fdfff', dur:26, ul:3, fx:'saya',       fxScale:0.72,fxYo:58,fxAhead:60},
+      {key:'d',name:'瘟疫之罗刹',mp:30,cd:140,type:'aoe',  dmg:[24,34],ox:70,radius:120, color:'#9b6cff', dur:32, ul:4, fx:'epidemic',   fxScale:0.8, fxYo:78,fxAhead:74},
+      {key:'f',name:'鬼影闪',    mp:26,cd:115,type:'dash', dmg:[20,30],reach:84, color:'#a06cff', dur:22, dash:18, ul:5, fx:'ghoststep',  fxScale:0.72,fxYo:74,fxAhead:48},
+      {key:'g',name:'死亡墓碑',  mp:55,cd:300,type:'aoe',  dmg:[30,44],ox:60,radius:150,launch:9, color:'#d0a6ff', dur:40, ul:6, fx:'tombstone',  fxScale:0.95,fxYo:72,fxAhead:60},
     ]},
   asura: { name:'阿修罗', color:'#16a085', dark:'#0c5a4a', elem:'#7fe0ff',
     hp:230, mp:175, speed:3.4, atkMul:0.95, lifesteal:0,
     desc:'念气与元素的术士,波动剑、冰雹、爆炎,远程范围杀伤之王。',
     skills:[
-      {key:'z',name:'波动剑·闪',mp:14,cd:48, type:'proj',  dmg:[15,22], speed:12, pierce:2, color:'#5fe3c8', dur:18, ul:1},
-      {key:'a',name:'无双波',   mp:24,cd:95, type:'aoe',   dmg:[20,30], ox:80, radius:130, knock:10, color:'#8affe0', dur:28, ul:2},
-      {key:'s',name:'大冰雹',   mp:28,cd:120,type:'aoe',   dmg:[22,32], ox:130, radius:120, slow:160, color:'#7fe0ff', dur:30, ul:3},
-      {key:'d',name:'死亡爆炎', mp:30,cd:130,type:'aoe',   dmg:[28,40], ox:100, radius:118, color:'#ff9a3c', dur:30, fire:true, ul:4},
-      {key:'f',name:'不动明王阵',mp:30,cd:280,type:'buff', buff:{atk:1.4,time:300,regen:0.5}, color:'#ffd24d', dur:26, ul:5},
-      {key:'g',name:'修罗·灭魂',mp:60,cd:400,type:'ult',   dmg:[26,40], hits:6, radius:205, color:'#aaffe8', dur:60, ul:6},
+      {key:'z',name:'地裂·波动剑',mp:16,cd:50, type:'proj',dmg:[15,22],speed:11,pierce:2, color:'#cfd8e6', dur:18, ul:1, fx:'normalwave', fxScale:0.55,fxYo:42},
+      {key:'a',name:'冰刃·波动剑',mp:22,cd:90, type:'proj',dmg:[16,24],speed:10,pierce:2,slow:150, color:'#7fe0ff', dur:18, ul:2, fx:'icewave',    fxScale:0.7, fxYo:44},
+      {key:'s',name:'爆炎·波动剑',mp:28,cd:120,type:'aoe', dmg:[24,34],ox:90,radius:118,fire:true, color:'#ff9a3c', dur:28, ul:3, fx:'firewave',   fxScale:0.8, fxYo:56,fxAhead:96},
+      {key:'d',name:'邪光斩',    mp:24,cd:95, type:'proj',dmg:[20,28],speed:9,pierce:4,knock:10, color:'#ff5a6a', dur:22, ul:4, fx:'waveeye',    fxScale:0.72,fxYo:56},
+      {key:'f',name:'波动爆发',  mp:28,cd:120,type:'aoe', dmg:[22,32],ox:0,radius:130, color:'#8affe0', dur:28, ul:5, fx:'wavespin',   fxScale:0.9, fxYo:56,fxAhead:0},
+      {key:'g',name:'不动明王阵',mp:55,cd:300,type:'aoe', dmg:[28,42],ox:40,radius:150,launch:6, color:'#ffd24d', dur:42, ul:6, fx:'vajra',      fxScale:0.8, fxYo:82,fxAhead:40},
     ]},
 };
 const CLASS_KEYS = ['blade','berserk','spectre','asura'];
+// 通用技能: 上挑(所有职业共有, Z 键, 开局可用); 6 个职业技能键位为 Q W E A S D(可拖拽换键)
+const UPPERCUT={key:'z',name:'上挑',type:'melee',dmg:[12,18],reach:80,launch:13,color:'#ffe08a',dur:18,ul:1,fixed:true,fx:'liftslash',fxScale:0.6,fxYo:92,fxAhead:30};
+const SKILL_KEYS=['q','w','e','a','s','d'];
 
 /* ===================== 装备 & 消耗品数据 ===================== */
 const RARITY_COL  = {white:'#c8c8c8', blue:'#4da6ff', purple:'#b98cff', orange:'#ff8c42'};
@@ -332,6 +364,12 @@ class Projectile {
   }
   draw(){
     const y=this.y-this.z;
+    const sk=this.sk;
+    if(sk&&sk.fx&&SKILLFX.ready&&fxFrames(sk.fx)){ // 用客户端真实特效精灵作为飞行投射物外观(循环播放)
+      const n=fxFrames(sk.fx), idx=Math.floor(performance.now()/55)%n;
+      drawFXClip(sk.fx, idx, this.x, y-(sk.fxYo||44), sk.fxScale||0.6, this.dir, 0.95);
+      return;
+    }
     ctx.save(); ctx.globalAlpha=0.85;
     const grd=ctx.createRadialGradient(this.x,y-30,2,this.x,y-30,24);
     grd.addColorStop(0,'#fff'); grd.addColorStop(0.4,this.color); grd.addColorStop(1,'rgba(0,0,0,0)');
@@ -460,7 +498,8 @@ class Player extends Fighter {
     this.cls=c; this.clsKey=clsKey;
     this.mp=c.mp; this.maxmp=c.mp;
     this.combo=0; this.comboTimer=0; this.dashTimer=0; this.invuln=0; this.running=0;
-    this.skills=c.skills.map(s=>Object.assign({_cd:0},s));
+    // 槽位0=上挑(固定 Z), 其后6个职业技能映射到 Q W E A S D
+    this.skills=[Object.assign({_cd:0},UPPERCUT)].concat(c.skills.map((s,i)=>Object.assign({_cd:0},s,{key:SKILL_KEYS[i]})));
     this.skillHits=[]; this.pendingProj=null; this.buff=null;
     this.level=1; this.exp=0; this.expNext=80; this.gold=0;
     this._crit=0.16; this.shopAtk=0; this.buy={atk:0,hp:0,mp:0,crit:0};
@@ -556,7 +595,7 @@ class Player extends Fighter {
       if(down('arrowup'))mvy=-1;
       if(down('arrowdown'))mvy=1;
       const runOn = this.running && ((this.running<0&&mvx<0)||(this.running>0&&mvx>0));
-      const sp = runOn ? this.speed*1.5 : this.speed*0.30; // 慢步走: 慢走速度更小以表现小步
+      const sp = runOn ? this.speed*1.15 : this.speed*0.30; // 奔跑放慢(1.5→1.15, 更贴合迈步节奏); 慢走速度更小以表现小步
       this.x+=mvx*sp;
       if(this.onGround)this.y+=mvy*sp*0.7;
       if(mvx||mvy)this.walkPhase+=runOn?0.45:0.16; else this.walkPhase=0; // 非奔跑时步态推进更慢（小步）
@@ -852,12 +891,73 @@ SPR.img.onload=()=>{ if(SPR.meta)SPR.ready=true; };
 SPR.img.src='assets/swordman.png';
 if(window.SWORDMAN_META){ SPR.meta=window.SWORDMAN_META; if(SPR.img.complete&&SPR.img.naturalWidth)SPR.ready=true; }
 else fetch('assets/swordman.json').then(r=>r.json()).then(m=>{SPR.meta=m; if(SPR.img.complete&&SPR.img.naturalWidth)SPR.ready=true;}).catch(()=>{});
+
+/* ===================== 武器层(独立图集, 按职业/装备叠加) ===================== */
+const WEAPONS={};
+['lswd','beamswd'].forEach(key=>{ const o={img:new Image(),meta:null,ready:false};
+  o.img.onload=()=>{ if(o.meta)o.ready=true; }; o.img.src='assets/weapon_'+key+'.png'; WEAPONS[key]=o;
+  if(window.WEAPON_META&&window.WEAPON_META[key]){ o.meta=window.WEAPON_META[key]; if(o.img.complete&&o.img.naturalWidth)o.ready=true; }
+  else fetch('assets/weapon_'+key+'.json').then(r=>r.json()).then(m=>{o.meta=m; if(o.img.complete&&o.img.naturalWidth)o.ready=true;}).catch(()=>{});
+});
+// 职业默认武器外观: 剑魂=光剑, 其余=太刀
+function classWeaponKey(clsKey){ return clsKey==='blade'?'beamswd':'lswd'; }
+// 血刃染色帧缓存(离屏, 按需生成, 正确隔离不误染身体)
+const _tintCache={};
+function tintedWeaponFrame(key, fi, tint){
+  const ck=key+'|'+fi+'|'+tint; if(_tintCache[ck]!==undefined) return _tintCache[ck];
+  const w=WEAPONS[key], F=w&&w.meta&&w.meta.frames[fi];
+  if(!F){ return (_tintCache[ck]=null); }
+  const sw=F[2],sh=F[3], cv=document.createElement('canvas'); cv.width=sw; cv.height=sh;
+  const c=cv.getContext('2d');
+  c.drawImage(w.img,F[0],F[1],sw,sh,0,0,sw,sh);
+  c.globalCompositeOperation='source-atop'; c.fillStyle=tint; c.fillRect(0,0,sw,sh);
+  return (_tintCache[ck]={cv,ox:F[4],oy:F[5],sw,sh});
+}
+// 在已 translate/scale 到角色坐标系后, 绘制某武器层的第 fi 帧(tint!=null 用血刃染色, dx/dy 额外偏移)
+function drawWeaponLayer(key, fi, s, tint, alpha, dx, dy){
+  const w=WEAPONS[key]; if(!w||!w.ready||!w.meta) return;
+  if(alpha!=null) ctx.globalAlpha=alpha;
+  if(tint){ const t=tintedWeaponFrame(key,fi,tint); if(!t) return;
+    ctx.drawImage(t.cv, (t.ox+(dx||0))*s, (t.oy+(dy||0))*s, t.sw*s, t.sh*s); return; }
+  const F=w.meta.frames[fi]; if(!F) return;
+  ctx.drawImage(w.img, F[0],F[1],F[2],F[3], (F[4]+(dx||0))*s, (F[5]+(dy||0))*s, F[2]*s, F[3]*s);
+}
+
+/* ===================== 技能特效精灵图集(客户端真实特效) ===================== */
+const SKILLFX={img:new Image(),meta:null,ready:false,_ref:{}};
+SKILLFX.img.onload=()=>{ if(SKILLFX.meta)SKILLFX.ready=true; };
+SKILLFX.img.src='assets/skillfx.png';
+if(window.SKILLFX_META){ SKILLFX.meta=window.SKILLFX_META; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true; }
+else fetch('assets/skillfx.json').then(r=>r.json()).then(m=>{SKILLFX.meta=m; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true;}).catch(()=>{});
+// 这些 clip 是实体精灵(鬼神/明王/巨剑/符文), 用正常混合; 其余光效用加色混合
+const FX_NORMAL_BLEND={epidemic:1,ghoststep:1,vajra:1,descentsoul:1,mountaincrash:1};
+function fxFrames(clip){ const m=SKILLFX.meta&&SKILLFX.meta.frames[clip]; return m?m.length:0; }
+function fxRef(clip){ // 缓存 clip 首帧中心(作为锚点原点)
+  if(SKILLFX._ref[clip]) return SKILLFX._ref[clip];
+  const m=SKILLFX.meta&&SKILLFX.meta.frames[clip]; let r={x:0,y:0};
+  if(m&&m.length){ const f=m[0]; r={x:f[4]+f[2]/2, y:f[5]+f[3]/2}; }
+  SKILLFX._ref[clip]=r; return r;
+}
+// 在世界坐标 (x,y) 处绘制 clip 第 idx 帧; y 通常为脚底, 内部按帧原生偏移保留动作位移
+function drawFXClip(clip, idx, x, y, scale, dir, alpha){
+  if(!SKILLFX.ready) return false;
+  const m=SKILLFX.meta.frames[clip]; if(!m||!m.length) return false;
+  const f=m[Math.max(0,Math.min(idx,m.length-1))]; if(!f) return false;
+  const sx=f[0],sy=f[1],sw=f[2],sh=f[3],fx=f[4],fy=f[5];
+  const ref=fxRef(clip), relX=(fx+sw/2)-ref.x, relY=(fy+sh/2)-ref.y;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  if(!FX_NORMAL_BLEND[clip]) ctx.globalCompositeOperation='lighter';
+  ctx.translate(x,y); ctx.scale(dir,1);
+  ctx.drawImage(SKILLFX.img, sx,sy,sw,sh, relX*scale-sw*scale/2, relY*scale-sh*scale/2, sw*scale, sh*scale);
+  ctx.restore(); return true;
+}
 let SPR_SCALE=0.62; // Q版缩小比例(可调)
 // 动画区间(帧索引), 凭客户端帧序划分, 可微调
 const SWORD_ANIM={
   idle:  {f:[90,91,92,93,94],                   fps:5},   // 持剑站立(剑握在手垂于身侧)
   walk:  {f:[180,181,182,183,184,185,186,187],  fps:8},   // 走路(客户端真正的直立迈步循环, 持剑垂臂自然行走)
-  run:   {f:[104,105,106,107,108,109,110,111,112,113,114], fps:14}, // 奔跑(剑后摆冲刺)
+  run:   {f:[105,106,107,108,109,110,111,112], fps:12}, // 奔跑(干净的迈步循环; 去掉首帧104直立站姿和113-114急停姿, 避免"滑一下")
   // 普攻三段(DNF 经典连斩): 横斩→过顶劈→大横扫
   attack1:{f:[60,61,62,63,64]},
   attack2:{f:[145,146,147,148,149,150]}, // 前冲突刺(原 80-85 武器收于身侧几乎不可见, 换成全程持剑的弓步突刺)
@@ -868,12 +968,18 @@ const SWORD_ANIM={
   hurt:  {f:[98,99],                            fps:10},
   fall:  {f:[100,101,102],                      fps:9},
 };
+// 狂战双刀普攻: 三段动作不同于默认(更狂暴的连续前冲斩), 配合副手血刃
+const BERSERK_BASIC={
+  attack1:{f:[60,61,62,63]},
+  attack2:{f:[66,67,68,69]},
+  attack3:{f:[70,71,72,73,74]},
+};
 function pickSwordFrame(p){
   let a,idx;
   if(p.dead){ a=SWORD_ANIM.fall; idx=a.f.length-1; }
   else if(p.attackTimer>0&&p.attackType){
     const at=p.attackType;
-    if(at.basic) a=SWORD_ANIM['attack'+(at.combo||1)]||SWORD_ANIM.attack1;
+    if(at.basic){ const set=(p.clsKey==='berserk'?BERSERK_BASIC:SWORD_ANIM); a=set['attack'+(at.combo||1)]||SWORD_ANIM.attack1; }
     else a=(at.type==='proj'||at.type==='dash')?SWORD_ANIM.skillThrust:SWORD_ANIM.skillCast;
     const dur=at.dur||16, prog=clamp(1-p.attackTimer/dur,0,1);
     idx=Math.min(a.f.length-1,Math.floor(prog*a.f.length));
@@ -891,12 +997,40 @@ function drawSwordmanSprite(p){
   let feetY=p.screenY();
   // 走路用客户端真实迈步帧(180-187), 双腿自身交替, 无需再加额外步态弹跳
   ctx.save(); ctx.translate(p.x,feetY); ctx.scale(p.dir,1);
-  if(p.invuln>0&&Math.floor(p.invuln/3)%2===0) ctx.globalAlpha=0.55;
-  ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s);
+  const dim=(p.invuln>0&&Math.floor(p.invuln/3)%2===0)?0.55:1;
+  ctx.globalAlpha=dim;
+  ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s);          // 身体层
+  const wkey=classWeaponKey(p.clsKey);
+  ctx.globalAlpha=dim; drawWeaponLayer(wkey, fi, s);                     // 武器层(剑魂光剑/其余太刀)
+  const at=p.attackType;
+  if(p.clsKey==='berserk' && p.attackTimer>0 && at && at.basic){        // 狂战副手血刃(仅普攻显示)
+    ctx.globalAlpha=dim*0.9; drawWeaponLayer(wkey, fi, s, '#ff2538', 0.9, -16, 9);
+    if(Math.random()<0.6) particles.push({x:p.x+rand(-16,16),y:feetY-rand(20,80),vx:rand(-1,1),vy:rand(-2,-0.3),life:rand(10,20),max:20,color:'#ff3b3b',r:rand(2,4)});
+  }
+  ctx.globalAlpha=1;
   if(p.flash>0&&p.flash%2===0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.5;
-    ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s); }
+    ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s); drawWeaponLayer(wkey, fi, s); }
   ctx.restore();
+  drawClassAura(p, feetY);   // 职业常驻标识(修罗杀意波动/波动刻印, 鬼泣鬼神)
   return true;
+}
+// 职业进图常驻 buff 标识(世界坐标, 不随角色翻转)
+function drawClassAura(p, feetY){
+  if(p.dead) return;
+  const t=performance.now();
+  if(p.clsKey==='asura'){
+    if(SKILLFX.ready && fxFrames('wavemark')){            // 波动刻印: 头顶悬浮梵字符文
+      const n=fxFrames('wavemark'); drawFXClip('wavemark', Math.floor(t/200)%n, p.x, feetY-p.h*0.66-16, 0.26, 1, 0.85); }
+    const a=0.16+0.10*Math.sin(t/300);                    // 杀意波动: 脚下青色脉动环
+    ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle='#7fe0ff'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(p.x,feetY,27,9,0,0,7); ctx.stroke(); ctx.restore();
+    if(Math.random()<0.07) particles.push({x:p.x+rand(-14,14),y:feetY-rand(4,42),vx:0,vy:rand(-1,-0.3),life:rand(16,28),max:28,color:'#8affe0',r:rand(1.4,2.6)});
+  } else if(p.clsKey==='spectre'){                         // 鬼泣: 鬼神之力(紫色脉动环+鬼火)
+    const a=0.15+0.10*Math.sin(t/280);
+    ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle='#b98cff'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(p.x,feetY,27,9,0,0,7); ctx.stroke(); ctx.restore();
+    if(Math.random()<0.09) particles.push({x:p.x+rand(-16,16),y:feetY-rand(6,56),vx:rand(-0.4,0.4),vy:rand(-1.2,-0.3),life:rand(18,32),max:32,color:'#9b6cff',r:rand(1.5,3)});
+  }
 }
 
 /* ===================== 怪物精灵图集(客户端真实素材) ===================== */
@@ -1349,6 +1483,7 @@ function getSkillPose(cls, sk, prog, legH, bodyH){
 
 /* ===================== 技能世界空间特效 ===================== */
 function drawSkillFX(p, sk, prog, feetY, dir){
+  if(SKILLFX.ready) return;             // 已接入客户端真实特效精灵(由 spawnSkillFX→effects 渲染), 此处矢量特效仅作回退
   const x=p.x, k=sk.key, cls=p.clsKey;
   const a=Math.max(0, 1-prog);          // 随进度淡出
   ctx.save(); ctx.lineCap='round';
@@ -1597,44 +1732,18 @@ function drawHumanoid(x,feetY,dir,color,dark,ent,flash,invuln,big=false){
 }
 /* ===================== 技能专属特效派发 ===================== */
 function spawnSkillFX(p, sk){
-  const x=p.x, y=p.y, dir=p.dir, col=sk.color, k=sk.key, cls=p.clsKey;
-  const cx=x+dir*(sk.ox||50);
-  const W2={blade:'#eaf6ff',berserk:'#ffd08a',spectre:'#e0c0ff',asura:'#c8fff0'}[cls]||'#fff';
-  const E=o=>addEffect(Object.assign({x:cx,y,dir,color:col,color2:W2,yo:50},o));
-  shake=Math.max(shake, sk.type==='ult'?13:7);
-
-  if(cls==='blade'){
-    if(k==='z'){ E({type:'pillar',x:x+dir*34,h:155,r:32,max:26}); E({type:'arc',x,r:58,a0:0.4,span:1.7,max:18,yo:62}); }
-    else if(k==='a'){ for(let i=0;i<3;i++) E({type:'wave',x:x+dir*28,dist:250,yo:52+i*22,max:24,lw:6,delay:i*5}); }
-    else if(k==='s'){ E({type:'wave',x:x+dir*28,dist:420,max:36,yo:62,lw:10}); E({type:'wave',x:x+dir*28,dist:380,max:32,yo:62,lw:4,color:'#fff'}); }
-    else if(k==='d'){ E({type:'phantom',x,n:4,gap:24,max:22}); E({type:'arc',x,r:72,a0:0.5,span:2.1,max:18,yo:56}); }
-    else if(k==='f'){ E({type:'arc',x,r:98,a0:0.75,span:2.5,max:30,yo:72}); E({type:'arc',x,r:80,a0:0.55,span:2.3,max:26,yo:72,color:'#fff'}); }
-    else if(k==='g'){ E({type:'nova',x,r:175,n:12,rot:6,max:48,yo:82}); E({type:'spin',x,r:135,n:6,turns:4,max:48,yo:82}); E({type:'nova',x,r:120,n:8,rot:-4,max:40,yo:82,color:'#fff'}); }
+  const x=p.x, y=p.y, dir=p.dir;
+  shake=Math.max(shake, sk.type==='ult'?12:7);
+  // 投射类的特效随投射物飞行(Projectile.draw 自绘), 这里只补一个施放闪光; 其余技能在施放点叠加真实特效精灵
+  if(sk.type!=='proj' && sk.fx && SKILLFX.ready && fxFrames(sk.fx)){
+    const n=fxFrames(sk.fx), fxx=x+dir*(sk.fxAhead!=null?sk.fxAhead:46);
+    addEffect({type:'spr', clip:sk.fx, x:fxx, y, dir, scale:sk.fxScale||0.6,
+               yo:(sk.fxYo!=null?sk.fxYo:60), frames:n, max:sk.fxMax||Math.round(n*3),
+               alpha:sk.fxAlpha||1});
   }
-  else if(cls==='berserk'){
-    if(k==='z'){ E({type:'quake',x,r:135,n:8,max:28,color:'#ff5a3c',color2:'#fff'}); E({type:'arc',x,r:62,a0:0.3,span:1.7,max:18,yo:58}); }
-    else if(k==='a'){ E({type:'flame',x,n:5,spread:96,h:86,max:42,color:'#ff3b1a',color2:'#ff8800'}); E({type:'nova',x,r:96,n:8,rot:3,max:30,color:'#ff5a3c',yo:55}); }
-    else if(k==='s'){ E({type:'quake',x,r:155,n:10,max:36,color:'#cc1a1a',color2:'#ff4040'}); E({type:'flame',x,n:4,spread:120,h:60,max:34,color:'#cc1a1a',color2:'#ff5050'}); }
-    else if(k==='d'){ E({type:'wave',x:x+dir*30,dist:320,max:28,lw:11,color:'#ff8c42'}); E({type:'phantom',x,n:3,gap:26,max:24,color:'#ff8c42'}); }
-    else if(k==='f'){ E({type:'wave',x:x+dir*30,dist:360,max:30,lw:14,color:'#ffb35a',yo:60}); E({type:'wave',x:x+dir*30,dist:320,max:26,lw:5,color:'#fff',yo:60}); }
-    else if(k==='g'){ E({type:'spin',x,r:145,n:6,turns:5,max:52,color:'#ff2a2a',yo:84}); E({type:'nova',x,r:125,n:10,rot:5,max:48,color:'#ff1a1a',yo:84}); E({type:'flame',x,n:6,spread:150,h:70,max:46,color:'#ff2a2a',color2:'#ff9a3c'}); }
-  }
-  else if(cls==='spectre'){
-    if(k==='z'){ E({type:'arc',x,r:70,a0:0.5,span:2.0,max:22,yo:60}); E({type:'phantom',x,n:2,gap:22,max:20,color:'#9b6cff'}); }
-    else if(k==='a'){ E({type:'phantom',x,n:4,gap:22,max:24,color:'#9b6cff'}); E({type:'arc',x,r:62,a0:0.4,span:1.9,max:18,yo:56}); }
-    else if(k==='s'){ E({type:'nova',x:x+dir*42,r:64,n:6,rot:4,max:24,color:'#7fdfff',yo:55}); }
-    else if(k==='d'){ E({type:'spin',x,r:115,n:5,turns:3,max:38,color:'#caa6ff',yo:72}); E({type:'phantom',x,n:3,gap:20,max:32,color:'#9b6cff'}); }
-    else if(k==='f'){ E({type:'pillar',x:cx,h:165,r:48,max:30,color:'#9b6cff'}); E({type:'quake',x:cx,r:125,n:8,max:30,color:'#9b6cff',color2:'#d0a6ff'}); }
-    else if(k==='g'){ E({type:'beams',x,r:155,n:8,rot:4,max:52,color:'#9b6cff',color2:'#d0a6ff',yo:82}); E({type:'nova',x,r:125,n:8,rot:-3,max:48,color:'#b98cff',yo:82}); }
-  }
-  else if(cls==='asura'){
-    if(k==='z'){ E({type:'wave',x:x+dir*30,dist:360,max:30,lw:9,color:'#5fe3c8',yo:58}); }
-    else if(k==='a'){ E({type:'nova',x,r:150,n:10,rot:3,max:34,color:'#8affe0',yo:55}); E({type:'nova',x,r:110,n:8,rot:-3,max:28,color:'#fff',yo:55}); }
-    else if(k==='s'){ E({type:'hail',x:cx,n:9,spread:280,h:210,sz:9,max:50,color:'#7fe0ff'}); E({type:'quake',x:cx,r:130,n:8,max:30,color:'#7fe0ff',color2:'#fff'}); }
-    else if(k==='d'){ E({type:'flame',x:cx,n:6,spread:120,h:92,max:42,color:'#ff5a1a',color2:'#ffcf4d'}); E({type:'nova',x:cx,r:115,n:8,rot:4,max:32,color:'#ff9a3c',yo:55}); }
-    else if(k==='f'){ E({type:'rune',x,y,r:135,max:62,color:'#ffd24d'}); }
-    else if(k==='g'){ E({type:'beams',x,r:185,n:10,rot:5,max:56,color:'#7fe0ff',color2:'#aaffe8',yo:84}); E({type:'nova',x,r:155,n:12,rot:-4,max:52,color:'#aaffe8',yo:84}); }
-  }
+  // 地面/范围技能补一道地面冲击波(矢量), 增强打击感
+  if(sk.type==='aoe'||sk.type==='ult')
+    addEffect({type:'quake',x:x+dir*(sk.ox||0),y,r:sk.radius||120,n:8,max:24,color:sk.color,color2:'#fff'});
 }
 
 /* ===================== 特效渲染 ===================== */
@@ -1642,6 +1751,11 @@ function drawEffects(){
   for(const e of effects){
     if(e.delay>0) continue;
     const p=e.t/e.max; ctx.save();
+    if(e.type==='spr'){ // 客户端真实技能特效精灵
+      const idx=Math.min(e.frames-1,Math.floor(p*e.frames));
+      const a=p>0.78?(1-p)/0.22:1;
+      drawFXClip(e.clip, idx, e.x, e.y-(e.yo||0), e.scale, e.dir, (e.alpha||1)*a);
+      ctx.restore(); continue; }
     if(e.type==='ring'){ const r=e.r0+(e.r1-e.r0)*p;
       ctx.globalAlpha=(1-p)*0.8; ctx.strokeStyle=e.color; ctx.lineWidth=8*(1-p)+2;
       ctx.beginPath(); ctx.ellipse(e.x,e.y-40,r,r*0.45,0,0,7); ctx.stroke();
@@ -1917,6 +2031,7 @@ function drawHud(){
       ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.fillText(Math.ceil(s._cd/60),sx+sw/2,sy+sw/2+5); }
     sx+=sw+gap;
   }
+  drawSkillDrag();   // 拖拽中的技能图标 + 目标高亮
   ctx.textAlign='right';
   ctx.fillStyle='#ffd24d';ctx.font='bold 16px sans-serif';ctx.fillText('💰 '+player.gold,W-20,28);
   ctx.fillStyle='#fff';ctx.font='bold 15px sans-serif';
@@ -2187,7 +2302,8 @@ function drawHelp(){
     '【移动】方向键 ← ↑ ↓ →   ，上下为纵深走位',
     '【跳跃】C        【奔跑】双击并按住 ← 或 →（突进技能带无敌帧）',
     '【普攻】X        可三连击，第三段挑空；空中也能攻击',
-    '【技能】Z A S D F G   六个技能，随等级 Lv 解锁',
+    '【上挑】Z        所有职业通用，开局即可挑空',
+    '【技能】Q W E A S D   六个职业技能，随等级 Lv 解锁；技能栏可鼠标拖拽换键',
     '【连段】普攻/技能后摇均可被取消接技，搓招连段；浮空可追击',
     '【升级】击杀获得经验，升级回满血蓝并成长',
     '【选图】选职业后进入地下城选择；通关后解锁下一张图',
@@ -2232,7 +2348,8 @@ function serializeRun(){
   const p=player;
   Save.data.run={ clsKey:p.clsKey, level:p.level, exp:p.exp, expNext:p.expNext, gold:p.gold,
     crit:p._crit, shopAtk:p.shopAtk, buy:p.buy, maxhp:p.maxhp, maxmp:p.maxmp, hp:p.hp, mp:p.mp,
-    equipped:p.equipped, inventory:p.inventory, hotbar:p.hotbar, dungeonId, dungeon:dungeonId+1, room };
+    equipped:p.equipped, inventory:p.inventory, hotbar:p.hotbar, dungeonId, dungeon:dungeonId+1, room,
+    skillOrder:p.skills.slice(1).map(s=>s.name) };   // 技能槽自定义顺序(槽1..6)
   Save.save();
 }
 function clearRun(){ if(Save.data.run){ Save.data.run=null; Save.save(); } }
@@ -2244,6 +2361,10 @@ function continueGame(){
     maxhp:r.maxhp, maxmp:r.maxmp, hp:r.hp, mp:r.mp,
     equipped:r.equipped||{weapon:null,head:null,chest:null,legs:null,shoes:null},
     inventory:r.inventory||[], hotbar:r.hotbar||new Array(6).fill(null) });
+  if(r.skillOrder){ const head=player.skills[0], rest=player.skills.slice(1);   // 恢复技能槽自定义顺序
+    const ordered=r.skillOrder.map(nm=>rest.find(s=>s.name===nm)).filter(Boolean);
+    rest.forEach(s=>{ if(!ordered.includes(s)) ordered.push(s); });
+    player.skills=[head].concat(ordered); rebindSkillKeys(); }
   dungeonId = r.dungeonId!=null ? r.dungeonId : clamp((r.dungeon||1)-1,0,DUNGEONS.length-1);
   dungeon=dungeonId+1; room=r.room||1; score=0; shake=0; hitstop=0; combo={count:0,dmg:0,timer:0};
   door=null; transition=0; bossIntro=0; bossGate=false;
@@ -2594,8 +2715,11 @@ loop();
         if(q.get('elite')&&i===0){ e.elite=true; e.eliteCol='#ffcf4d'; e.scale*=1.3; } enemies.push(e); });
       door=null;
     }
+    if(q.get('lv')){ player.level=parseInt(q.get('lv'),10)||1; }
     if(st==='walk'||st==='run'){ keys['arrowright']=true; if(st==='run') player.running=1; }
     if(st==='attack'){ const a=()=>{ if(player&&!player.dead){ keys['x']=true; setTimeout(()=>keys['x']=false,30);} setTimeout(a,260); }; a(); }
+    if(q.get('sk')){ player.level=Math.max(player.level,6); const sk=q.get('sk'); // 反复释放某技能便于截图
+      const c=()=>{ if(player&&!player.dead){ player.mp=player.maxmp; for(const s of player.skills)s._cd=0; keys[sk]=true; setTimeout(()=>keys[sk]=false,40);} setTimeout(c,500); }; c(); }
     if(q.get('clear')){ clearInfo={dungeon:1,name:currentDungeonDef().name,sec:142,kills:27,gold:386,grade:q.get('clear'),lv:5,hp:73}; gameState='clear'; }
   }; go();
 })();
