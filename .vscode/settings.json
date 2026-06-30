@@ -1,0 +1,17 @@
+{
+  "files.exclude": {
+    "**/地下城与勇士": true,
+    "**/tools/_extract": true,
+    "**/assets/raw": true
+  },
+  "files.watcherExclude": {
+    "**/地下城与勇士/**": true,
+    "**/tools/_extract/**": true,
+    "**/assets/raw/**": true
+  },
+  "search.exclude": {
+    "**/地下城与勇士/**": true,
+    "**/tools/_extract/**": true,
+    "**/assets/raw/**": true
+  }
+}

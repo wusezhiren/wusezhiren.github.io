@@ -556,10 +556,10 @@ class Player extends Fighter {
       if(down('arrowup'))mvy=-1;
       if(down('arrowdown'))mvy=1;
       const runOn = this.running && ((this.running<0&&mvx<0)||(this.running>0&&mvx>0));
-      const sp = runOn ? this.speed*1.5 : this.speed*0.55; // 慢走更慢 vs 奔跑
+      const sp = runOn ? this.speed*1.5 : this.speed*0.30; // 慢步走: 慢走速度更小以表现小步
       this.x+=mvx*sp;
       if(this.onGround)this.y+=mvy*sp*0.7;
-      if(mvx||mvy)this.walkPhase+=runOn?0.45:0.25; else this.walkPhase=0;
+      if(mvx||mvy)this.walkPhase+=runOn?0.45:0.16; else this.walkPhase=0; // 非奔跑时步态推进更慢（小步）
       this.state = runOn ? 'run' : ((mvx||mvy)?'walk':'idle');
       if(runOn && this.onGround && Math.random()<0.4) spawnHit(this.x-this.dir*16,this.screenY()-4,'#cfd8e6',1); // 奔跑扬尘
     }
@@ -856,7 +856,7 @@ let SPR_SCALE=0.62; // Q版缩小比例(可调)
 // 动画区间(帧索引), 凭客户端帧序划分, 可微调
 const SWORD_ANIM={
   idle:  {f:[90,91,92,93,94],                   fps:5},   // 持剑站立(剑握在手垂于身侧)
-  walk:  {f:[90,91,92,93,94,93,92,91],          fps:6},   // 慢走(直立站姿, 配合 walkPhase 步态起伏, 悠闲散步而非前倾冲刺)
+  walk:  {f:[180,181,182,183,184,185,186,187],  fps:8},   // 走路(客户端真正的直立迈步循环, 持剑垂臂自然行走)
   run:   {f:[104,105,106,107,108,109,110,111,112,113,114], fps:14}, // 奔跑(剑后摆冲刺)
   // 普攻三段(DNF 经典连斩): 横斩→过顶劈→大横扫
   attack1:{f:[60,61,62,63,64]},
@@ -889,9 +889,7 @@ function drawSwordmanSprite(p){
   if(!F) return false;
   const sx=F[0],sy=F[1],sw=F[2],sh=F[3],ox=F[4],oy=F[5], s=SPR_SCALE;
   let feetY=p.screenY();
-  // 悠闲慢走: 直立站姿帧本身不迈腿, 用 walkPhase 给身体上下起伏的步态弹跳(慢节奏+较明显幅度), 读成"散步"而非平移
-  if(p.state==='walk' && p.attackTimer<=0 && p.hurt<=0 && !p.dead && p.onGround)
-    feetY -= Math.abs(Math.sin(p.walkPhase*0.5))*4.5;
+  // 走路用客户端真实迈步帧(180-187), 双腿自身交替, 无需再加额外步态弹跳
   ctx.save(); ctx.translate(p.x,feetY); ctx.scale(p.dir,1);
   if(p.invuln>0&&Math.floor(p.invuln/3)%2===0) ctx.globalAlpha=0.55;
   ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s);
