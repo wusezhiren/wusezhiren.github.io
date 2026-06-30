@@ -244,7 +244,7 @@ const CLASSES = {
 };
 const CLASS_KEYS = ['blade','berserk','spectre','asura'];
 // 通用技能: 上挑(所有职业共有, Z 键, 开局可用); 6 个职业技能键位为 Q W E A S D(可拖拽换键)
-const UPPERCUT={key:'z',name:'上挑',type:'melee',dmg:[12,18],reach:80,launch:13,color:'#ffe08a',dur:18,ul:1,fixed:true,fx:'liftslash',fxScale:0.6,fxYo:92,fxAhead:30};
+const UPPERCUT={key:'z',name:'上挑',type:'melee',dmg:[12,18],reach:80,launch:13,color:'#ffe08a',dur:18,ul:1,fixed:true,fx:'uppercut',fxScale:0.6,fxYo:92,fxAhead:30};
 const SKILL_KEYS=['q','w','e','a','s','d'];
 
 /* ===================== 装备 & 消耗品数据 ===================== */
@@ -930,7 +930,7 @@ SKILLFX.img.src='assets/skillfx.png';
 if(window.SKILLFX_META){ SKILLFX.meta=window.SKILLFX_META; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true; }
 else fetch('assets/skillfx.json').then(r=>r.json()).then(m=>{SKILLFX.meta=m; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true;}).catch(()=>{});
 // 这些 clip 是实体精灵(鬼神/明王/巨剑/符文), 用正常混合; 其余光效用加色混合
-const FX_NORMAL_BLEND={epidemic:1,ghoststep:1,vajra:1,descentsoul:1,mountaincrash:1};
+const FX_NORMAL_BLEND={};  // 所有特效均为"黑底发光", 统一加色混合(lighter)
 function fxFrames(clip){ const m=SKILLFX.meta&&SKILLFX.meta.frames[clip]; return m?m.length:0; }
 function fxRef(clip){ // 缓存 clip 首帧中心(作为锚点原点)
   if(SKILLFX._ref[clip]) return SKILLFX._ref[clip];

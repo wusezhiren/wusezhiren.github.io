@@ -6,40 +6,41 @@ from PIL import Image
 BASE="地下城与勇士/ImagePacks2/sprite_character_swordman_effect_"
 OUT="assets"
 
-# clip名 : (npk, img索引(None=自动选最多有效帧), 最多帧数)
+# clip名 : (npk, img索引(None=自动按主特效面积选), 最多帧数)
 SPEC = {
  # 剑魂
- 'tripleslash':   ('tripleslash',   5, 8),
- 'flashcut':      ('flashcut',      4, 10),
- 'dragonup':      ('atdragonup',    0, 12),
- 'revolvingsword':('atrevolvingsword',0,10),
- 'illusionslash': ('illusionslash', 7, 9),
- 'hiddenblade':   ('athiddenblade', 1, 9),
+ 'tripleslash':   ('tripleslash',   None, 12),
+ 'flashcut':      ('flashcut',      6, 12),     # 白色X斩(拔刀)
+ 'dragonup':      ('atdragonup',    None, 14),
+ 'revolvingsword':('atrevolvingsword',None,12),
+ 'illusionslash': ('illusionslash', None, 12),
+ 'hiddenblade':   ('athiddenblade', 1, 10),
+ 'uppercut':      ('atupperslash',  None, 10),  # 上挑(通用Z)
  # 狂战
- 'gorecross':     ('gorecross',     1, 10),
- 'mountaincrash': ('atmountaincrash',3,6),
- 'souldrain':     ('atsouldrain',   14,10),
- 'frenzy':        ('atfrenzy',      0, 6),
- 'bloodseal':     ('atbloodseal',   6, 9),
- 'chargecrash':   ('chargecrash',   0, 10),
+ 'gorecross':     ('gorecross',     1, 12),     # 火焰十字
+ 'mountaincrash': ('atmountaincrash',None, 10),
+ 'souldrain':     ('atsouldrain',   None, 12),
+ 'frenzy':        ('atfrenzy',      None, 8),
+ 'bloodseal':     ('atbloodseal',   None, 12),
+ 'chargecrash':   ('chargecrash',   None, 12),
  # 鬼泣
- 'darkslash':     ('atdarkslash',   0, 8),
- 'liftslash':     ('atliftslash',   0, 8),
- 'saya':          ('sayaex',        2, 9),
- 'epidemic':      ('epidemicrasa',  2, 10),
- 'ghoststep':     ('ghoststep',     3, 10),
- 'tombstone':     ('tombstoneex',   0, 12),
+ 'darkslash':     ('atdarkslash',   None, 10),
+ 'liftslash':     ('atliftslash',   None, 10),
+ 'saya':          ('sayaex',        6, 12),      # 冰爆
+ 'epidemic':      ('epidemicrasa',  None, 12),
+ 'ghoststep':     ('ghoststep',     4, 12),      # 蓝色鬼魂身影
+ 'tombstone':     ('tombstoneex',   None, 12),
  # 阿修罗
- 'normalwave':    ('normalwave',    2, 9),
- 'icewave':       ('icewaveex',     0, 4),
- 'firewave':      ('firewave',      14,12),
- 'waveeye':       ('waveeye',       18,10),
- 'wavespin':      ('wavespinarea',  12, 9),
- 'vajra':         ('vajra',         2, 12),
+ 'normalwave':    ('normalwave',    None, 10),
+ 'icewave':       ('icewaveex',     None, 6),
+ 'firewave':      ('firewave',      None, 12),
+ 'waveeye':       ('waveeye',       None, 12),
+ 'wavespin':      ('wavespinarea',  None, 10),
+ 'vajra':         ('vajra',         None, 14),
  # buff / 标识
- 'wavemark':      ('wavemark',      1, 4),
- 'wavemurderous': ('wavemurderous', 0, 4),
- 'descentsoul':   ('descentsoul',   4, 8),
+ 'wavemark':      ('wavemark',      None, 4),
+ 'wavemurderous': ('wavemurderous', None, 4),
+ 'descentsoul':   ('descentsoul',   None, 8),
 }
 
 def res(F,i):
@@ -50,11 +51,15 @@ def res(F,i):
 def load_clip(npk, imgidx, maxf):
     e=read_npk(BASE+npk+".NPK")
     if imgidx is None:
-        best,bestn=0,0
+        # 选"主特效图": 按有效帧的平均画面面积最大(主效果通常最大最完整, 子层是小火花/拖影)
+        best,bestscore=0,-1
         for i,(n,d) in enumerate(e):
             try:
-                fr=parse_img(d)['frames']; c=sum(1 for f in fr if f['image'] is not None)
-                if c>bestn: bestn,best=c,i
+                fr=parse_img(d)['frames']
+                areas=[f['w']*f['h'] for f in fr if f['image'] is not None]
+                if len(areas)<2: continue   # 跳过单帧(多为静态大闪光)
+                score=(sum(areas)/len(areas))*min(len(areas),8)  # 又大又有动画者为主特效
+                if score>bestscore: bestscore,best=score,i
             except: pass
         imgidx=best
     F=parse_img(e[imgidx][1])['frames']
