@@ -1,120 +1,152 @@
-# 抽取技能特效精灵 → 单张图集 assets/skillfx.png + skillfx.json + skillfx.meta.js
-# 每个 clip 保留每帧的原生偏移(IMG 帧 x,y), 运行时以"施放点"为原点 +偏移*scale 绘制(加色混合)
-import sys,os,json; sys.path.insert(0,os.path.dirname(__file__))
-from dnf_img import read_npk, parse_img
+# v2: 按 .ani 多图层合成技能特效 → assets/skillfx.png + skillfx.json + skillfx.meta.js
+# 层类(LAYERED): 从 PVF 的 effect/animation/<folder>/*.ani 取每层 img+锚点(posX,posY)+帧率, 叠放。
+# 单图类(SINGLE): 没有独立.ani, 直接按名字取 NPK 内正确的主视觉 img(native偏移当锚点)。
+# 输出数据模型: {clips:{name:{layers:[{anchor:[ax,ay],fps,frames:[[sx,sy,sw,sh,fx,fy],...]}]}}}
+import sys,os,json,glob,collections; sys.path.insert(0,os.path.dirname(__file__))
+from pvf import Pvf
+from ani import parse_ani
+from dnf_img import read_npk, read_npk_names, parse_img
 from PIL import Image
-BASE="地下城与勇士/ImagePacks2/sprite_character_swordman_effect_"
-OUT="assets"
 
-# clip名 : (npk, img索引(None=自动按主特效面积选), 最多帧数)
-SPEC = {
- # 剑魂
- 'tripleslash':   ('tripleslash',   None, 12),
- 'flashcut':      ('flashcut',      6, 12),     # 白色X斩(拔刀)
- 'dragonup':      ('atdragonup',    None, 14),
- 'revolvingsword':('atrevolvingsword',None,12),
- 'illusionslash': ('illusionslash', None, 12),
- 'hiddenblade':   ('athiddenblade', 1, 10),
- 'uppercut':      ('atupperslash',  None, 10),  # 上挑(通用Z)
- # 狂战
- 'gorecross':     ('gorecross',     1, 12),     # 火焰十字
- 'mountaincrash': ('atmountaincrash',None, 10),
- 'souldrain':     ('atsouldrain',   None, 12),
- 'frenzy':        ('atfrenzy',      None, 8),
- 'bloodseal':     ('atbloodseal',   None, 12),
- 'chargecrash':   ('chargecrash',   None, 12),
- # 鬼泣
- 'darkslash':     ('atdarkslash',   None, 10),
- 'liftslash':     ('atliftslash',   None, 10),
- 'saya':          ('sayaex',        6, 12),      # 冰爆
- 'epidemic':      ('epidemicrasa',  None, 12),
- 'ghoststep':     ('ghoststep',     4, 12),      # 蓝色鬼魂身影
- 'tombstone':     ('tombstoneex',   None, 12),
- # 阿修罗
- 'normalwave':    ('normalwave',    None, 10),
- 'icewave':       ('icewaveex',     None, 6),
- 'firewave':      ('firewave',      None, 12),
- 'waveeye':       ('waveeye',       None, 12),
- 'wavespin':      ('wavespinarea',  None, 10),
- 'vajra':         ('vajra',         None, 14),
- # buff / 标识
- 'wavemark':      ('wavemark',      None, 4),
- 'wavemurderous': ('wavemurderous', None, 4),
- 'descentsoul':   ('descentsoul',   None, 8),
+IP="地下城与勇士/ImagePacks2/"
+PFX="sprite_character_swordman_effect_"
+OUT="assets"
+pv=Pvf("地下城与勇士/Script.pvf")
+
+# ---- 全局 img 索引: basename -> [(npkstem, idx)] (跨所有effect NPK, .ani引用的img可能在别的NPK) ----
+print("建立全局img索引...")
+base2loc=collections.defaultdict(list)
+for f in glob.glob(IP+PFX+"*.NPK"):
+    stem=os.path.basename(f)[len(PFX):-4]
+    try:
+        for i,n,_,_ in read_npk_names(f):
+            base2loc[n.split('/')[-1].lower()].append((stem,i))
+    except: pass
+_npk_cache={}
+def npk_data(stem):
+    if stem not in _npk_cache:
+        _npk_cache[stem]=dict((i,d) for i,d in read_npk(IP+PFX+stem+".NPK"))
+    return _npk_cache[stem]
+def bad_variant(name):
+    n=name.lower()
+    return n.startswith('(18)') or n.startswith('(tn)') or '18eye' in n
+
+def load_frames(basename, prefer_npk=None, maxf=14):
+    """返回该img的帧列表 [{image,x,y}], 优先 prefer_npk, 跳过(18)/(tn)变体。"""
+    bn=basename.lower()
+    locs=base2loc.get(bn,[])
+    if not locs: return None
+    locs=sorted(locs, key=lambda l:(l[0]!=prefer_npk,))  # prefer_npk 优先
+    stem,idx=locs[0]
+    data=npk_data(stem)[idx]
+    P=parse_img(data); F=P['frames']
+    def res(i):
+        f=F[i]
+        if f['image'] is None and 0<=f.get('link',-1)<len(F): return F[f['link']]
+        return f
+    valid=[i for i in range(len(F)) if res(i)['image'] is not None]
+    if len(valid)>maxf:
+        step=len(valid)/maxf; valid=[valid[int(k*step)] for k in range(maxf)]
+    return [res(i) for i in valid]
+
+def ani_layer(folder, name, prefer_npk):
+    raw=pv.read("character/swordman/effect/animation/%s/%s.ani"%(folder,name))
+    if raw is None: return None
+    a=parse_ani(raw)
+    if not a or not a['images']: return None
+    img=a['images'][0].split('/')[-1]
+    fr=load_frames(img, prefer_npk)
+    if not fr: return None
+    fps=max(8, round(1000.0/max(20,a['delay'])))
+    return dict(frames=fr, ax=a['posX'], ay=a['posY'], fps=fps)
+
+def single_layer(basename, prefer_npk, fps=16):
+    fr=load_frames(basename, prefer_npk)
+    if not fr: return None
+    return dict(frames=fr, ax=0, ay=0, fps=fps)
+
+# ---- 层类: (folder, npk偏好, [(folder,layer)...]) 只取 normal 层 ----
+LAYERED={
+ 'gorecross':      ('gorecross',[('gorecross','slash1'),('gorecross','slash2')]),
+ 'tripleslash':    ('tripleslash',[('tripleslash','slash1'),('tripleslash','slash2'),('tripleslash','slash3')]),
+ 'illusionslash':  ('illusionslash',[('illusionslash','upper'),('illusionslash','smash')]),
+ 'chargecrash':    ('chargecrash',[('chargecrash','charge'),('chargecrash','dash'),('chargecrash','down-slash'),('chargecrash','up-slash'),('chargecrash','dustdash')]),
+ 'ghoststep':      ('ghoststep',[('ghoststepslash','slash1'),('ghoststepslash','slash2'),('ghoststepslash','skull'),('ghoststep','appear1'),('ghoststep','appear2')]),
+ 'waveeye':        ('waveeye',[('waveeye','wing1'),('waveeye','wing2'),('waveeye','attack1')]),
+ 'wavespin':       ('wavespinarea',[('wavespinarea','createbeadnormal'),('wavespinarea','circle'),('wavespinarea','circlefront'),('wavespinarea','hold')]),
+ 'frenzy':         ('atfrenzy',[('frenzy','cast'),('frenzy','blast'),('frenzy','sword1-1'),('frenzy','sword1-3'),('frenzy','sword1-4'),('frenzy','ball'),('frenzy','buff')]),
+}
+# ---- 单图类: clip -> (npk偏好, [img basename...]) ----
+SINGLE={
+ 'flashcut':      ('flashcut',['ld_sworda.img','ld_swordb.img','ld_finisheff_b.img']),
+ 'dragonup':      ('atdragonup',['4sword.img','twister_big.img','blast_normal.img']),
+ 'revolvingsword':('atrevolvingsword',['revolvingsword.img','revolvingsword_eff.img']),
+ 'hiddenblade':   ('athiddenblade',['atk_02.img','atk_03.img']),
+ 'uppercut':      ('atupperslash',['upper_eff.img','upper_dash.img']),
+ 'mountaincrash': ('atmountaincrash',['mountaincrash_sword.img','mountaincrash_force.img']),
+ 'souldrain':     ('atsouldrain',['start01.img','firstboom01.img','loop01.img']),
+ 'bloodseal':     ('atbloodseal',['blood_shot.img','blood_finish.img','blood_bull01.img']),
+ 'darkslash':     ('atdarkslash',['darkslash_normal.img']),
+ 'liftslash':     ('atliftslash',['lift_slash.img']),
+ 'saya':          ('sayaex',['readynormal.img','icenormal.img']),
+ 'epidemic':      ('epidemicrasa',['rasa.img','rasa_glow.img']),
+ 'tombstone':     ('tombstoneex',['stonestartupnormal.img','stoneendupnormal.img','explosionnormal125.img']),
+ 'normalwave':    ('normalwave',['waveboom_normal.img']),
+ 'icewave':       ('icewaveex',['ice_normal_down.img','ice_dodge_middle.img']),
+ 'firewave':      ('firewave',['fire_normal.img','blast-front.img','sword_normal.img']),
+ 'vajra':         ('vajra',['vajra_maincloud.img','vajra_lightning_a.img','vajra_start_eff.img']),
+ # buff 标识
+ 'wavemark':      ('wavemark',['font.img','wave.img']),
+ 'wavemurderous': ('wavemurderous',['wave.img']),
+ 'descentsoul':   ('descentsoul',['descentsoul_00.img','descentsoul_light.img']),
 }
 
-def res(F,i):
-    f=F[i]
-    if f['image'] is None and 0<=f.get('link',-1)<len(F): return F[f['link']]
-    return f
+clips={}
+for clip,(prefer,layerspec) in LAYERED.items():
+    layers=[]
+    for folder,name in layerspec:
+        L=ani_layer(folder,name,prefer)
+        if L: layers.append(L)
+        else: print("  [层缺] %s/%s"%(folder,name))
+    if layers: clips[clip]=layers; print("LAYERED %-14s %d层"%(clip,len(layers)))
+for clip,(prefer,imgs) in SINGLE.items():
+    layers=[]
+    for img in imgs:
+        L=single_layer(img,prefer)
+        if L: layers.append(L)
+    if layers: clips[clip]=layers; print("SINGLE  %-14s %d层"%(clip,len(layers)))
+    else: print("  [单图缺] %s %s"%(clip,imgs))
 
-def load_clip(npk, imgidx, maxf):
-    e=read_npk(BASE+npk+".NPK")
-    if imgidx is None:
-        # 选"主特效图": 按有效帧的平均画面面积最大(主效果通常最大最完整, 子层是小火花/拖影)
-        best,bestscore=0,-1
-        for i,(n,d) in enumerate(e):
-            try:
-                fr=parse_img(d)['frames']
-                areas=[f['w']*f['h'] for f in fr if f['image'] is not None]
-                if len(areas)<2: continue   # 跳过单帧(多为静态大闪光)
-                score=(sum(areas)/len(areas))*min(len(areas),8)  # 又大又有动画者为主特效
-                if score>bestscore: bestscore,best=score,i
-            except: pass
-        imgidx=best
-    F=parse_img(e[imgidx][1])['frames']
-    valid=[i for i in range(len(F)) if res(F,i)['image'] is not None]
-    if len(valid)>maxf:
-        step=len(valid)/maxf
-        valid=[valid[int(k*step)] for k in range(maxf)]
-    out=[]
-    for i in valid:
-        f=res(F,i)
-        out.append({'im':f['image'],'fx':f['x'],'fy':f['y']})
-    return out
-
-# 收集所有帧, shelf 打包
-clips={}; allcells=[]
-for name,(npk,idx,mf) in SPEC.items():
-    try:
-        frames=load_clip(npk,idx,mf)
-        clips[name]=frames
-        for fr in frames: allcells.append((name,fr))
-    except Exception as ex:
-        print("跳过",name,ex)
-
+# ---- 打包 atlas ----
+cells=[]  # (image, ownerRef)
+for clip,layers in clips.items():
+    for L in layers:
+        for f in L['frames']:
+            cells.append(f)
 pad=1; maxw=2048
-order=sorted(range(len(allcells)),key=lambda k:-allcells[k][1]['im'].height)
+order=sorted(range(len(cells)),key=lambda k:-cells[k]['image'].height)
 x=y=rowh=0; rects={}
 for k in order:
-    im=allcells[k][1]['im']; w,h=im.width+pad,im.height+pad
+    im=cells[k]['image']; w,h=im.width+pad,im.height+pad
     if x+w>maxw: x=0;y+=rowh;rowh=0
     rects[k]=(x,y,im.width,im.height); x+=w; rowh=max(rowh,h)
 H=y+rowh
 atlas=Image.new('RGBA',(maxw,H),(0,0,0,0))
-for k in order:
-    ax,ay,w,h=rects[k]; atlas.alpha_composite(allcells[k][1]['im'],(ax,ay))
-# 写每帧矩形回 clips
-meta={}
-ci=0
-for name,frames in clips.items():
-    arr=[]
-    for fr in frames:
-        # 找它在 allcells 的索引
-        pass
-    meta[name]=[]
-# 重新映射: 用 id() 对齐
-idmap={id(allcells[k][1]):rects[k] for k in range(len(allcells))}
-for name,frames in clips.items():
-    arr=[]
-    for fr in frames:
-        ax,ay,w,h=idmap[id(fr)]
-        arr.append([ax,ay,w,h,fr['fx'],fr['fy']])
-    meta[name]=arr
+for k in order: atlas.alpha_composite(cells[k]['image'],(rects[k][0],rects[k][1]))
+idmap={id(cells[k]):rects[k] for k in range(len(cells))}
+
+data={'clips':{}}
+for clip,layers in clips.items():
+    L2=[]
+    for L in layers:
+        frs=[]
+        for f in L['frames']:
+            ax,ay,w,h=idmap[id(f)]
+            frs.append([ax,ay,w,h,f['x'],f['y']])
+        L2.append({'anchor':[L['ax'],L['ay']],'fps':L['fps'],'frames':frs})
+    data['clips'][clip]=L2
 
 atlas.save(OUT+"/skillfx.png")
-data={'frames':meta}
 json.dump(data,open(OUT+"/skillfx.json",'w'),separators=(',',':'))
 open(OUT+"/skillfx.meta.js",'w').write("window.SKILLFX_META="+json.dumps(data,separators=(',',':'))+";")
-print("skillfx: atlas %dx%d, %d clips, PNG %.0fKB"%(maxw,H,len(clips),os.path.getsize(OUT+"/skillfx.png")/1024))
-for n,a in meta.items(): print("  %-16s %d帧"%(n,len(a)))
+print("\nskillfx v2: atlas %dx%d, %d clips, %d帧, PNG %.0fKB"%(maxw,H,len(clips),len(cells),os.path.getsize(OUT+"/skillfx.png")/1024))

@@ -5,6 +5,8 @@ from PIL import Image
 NPK_MAGIC=b'NeoplePack_Bill\x00'
 IMG_MAGIC=b'Neople Img File\x00'
 
+_NPK_NAME_KEY=(b"puchikon@neople dungeon and fighter "+b"DNF"*80)[:256]
+
 def read_npk(path):
     """返回 [(index, bytes_of_img)], 不依赖文件名解密"""
     d=open(path,'rb').read()
@@ -14,6 +16,20 @@ def read_npk(path):
     for i in range(cnt):
         off,size=struct.unpack('<II', d[20+i*264:20+i*264+8])
         out.append((i, d[off:off+size]))
+    return out
+
+def read_npk_names(path):
+    """返回 [(index, img内部路径名, off, size)]。文件名用 puchikon 密钥 XOR 解密。"""
+    d=open(path,'rb').read()
+    assert d[:16]==NPK_MAGIC, "not NPK"
+    cnt=struct.unpack('<I', d[16:20])[0]
+    out=[]
+    for i in range(cnt):
+        rec=d[20+i*264:20+i*264+264]
+        off,size=struct.unpack('<II', rec[0:8])
+        raw=rec[8:264]
+        name=bytes(raw[j]^_NPK_NAME_KEY[j] for j in range(256)).split(b'\x00')[0].decode('ascii','replace')
+        out.append((i, name, off, size))
     return out
 
 def _argb1555(buf,w,h):
