@@ -34,7 +34,7 @@ SKILL_SPECS = {
     ),
     "flashcut": SkillSpec(
         "momentaryslash",
-        images=("drawingsword_none_under.img", "drawingsword_none_upper.img"),
+        images=("drawingsword_white_ldodge_under.img", "drawingsword_white_ldodge_upper.img"),
     ),
     "gorecross": SkillSpec(
         "gorecross",

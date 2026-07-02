@@ -28,8 +28,8 @@ class SkillFxConfigTests(unittest.TestCase):
     def test_flashcut_uses_dof70_momentaryslash_assets(self):
         spec = cfg.SKILL_SPECS["flashcut"]
         self.assertEqual(spec.prefer_npk, "momentaryslash")
-        self.assertIn("drawingsword_none_under.img", spec.images)
-        self.assertIn("drawingsword_none_upper.img", spec.images)
+        self.assertIn("drawingsword_white_ldodge_under.img", spec.images)
+        self.assertIn("drawingsword_white_ldodge_upper.img", spec.images)
 
 
 if __name__ == "__main__":
