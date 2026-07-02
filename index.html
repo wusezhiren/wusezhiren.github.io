@@ -36,6 +36,8 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
+const DEFAULT_PLAYER_LEVEL=6;        // 测试技能用: 默认满级解锁所有技能
+const MAX_UNLOCKED_DUNGEON=3;        // 当前 4 张图, 索引 3 表示全开
 const GROUND_TOP = 300, GROUND_BOT = 510, GRAVITY = 0.8;
 const WORLD_W = 1800;        // 房间世界宽度(>屏幕, 横向卷轴)
 let camX = 0;                // 摄像机左边界(世界坐标), 渲染时整体 -camX
@@ -105,12 +107,12 @@ const aabb = (a,b) => Math.abs(a.x-b.x) < (a.w+b.w)/2 && Math.abs(a.y-b.y) < (a.
 
 /* ===================== 存档 ===================== */
 const Save = {
-  data:{ high:0, vol:0.5, muted:false, unlocked:0 },
+  data:{ high:0, vol:0.5, muted:false, unlocked:MAX_UNLOCKED_DUNGEON },
   load(){ try{ const s=JSON.parse(localStorage.getItem('dnf_save')); if(s) Object.assign(this.data,s); }catch(e){} },
   save(){ try{ localStorage.setItem('dnf_save', JSON.stringify(this.data)); }catch(e){} }
 };
 Save.load();
-Save.data.unlocked = Math.max(0, Math.min(3, Save.data.unlocked||0));
+Save.data.unlocked = Math.max(0, Math.min(MAX_UNLOCKED_DUNGEON, Save.data.unlocked ?? MAX_UNLOCKED_DUNGEON));
 
 /* ===================== 音频(WebAudio 合成) ===================== */
 const Audio2 = {
@@ -525,7 +527,7 @@ class Player extends Fighter {
     // 槽位0=上挑(固定 Z), 其后6个职业技能映射到 Q W E A S D
     this.skills=[Object.assign({_cd:0},UPPERCUT)].concat(c.skills.map((s,i)=>Object.assign({_cd:0},s,{key:SKILL_KEYS[i]})));
     this.skillHits=[]; this.pendingProj=null; this.buff=null;
-    this.level=1; this.exp=0; this.expNext=80; this.gold=0;
+    this.level=DEFAULT_PLAYER_LEVEL; this.exp=0; this.expNext=80; this.gold=0;
     this._crit=0.16; this.shopAtk=0; this.buy={atk:0,hp:0,mp:0,crit:0};
     // 装备 & 背包
     this.inventory=[]; this.equipped={weapon:null,head:null,chest:null,legs:null,shoes:null};
