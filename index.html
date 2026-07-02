@@ -246,14 +246,23 @@ const CLASS_KEYS = ['blade','berserk','spectre','asura'];
 // 通用技能: 上挑(所有职业共有, Z 键, 开局可用); 6 个职业技能键位为 Q W E A S D(可拖拽换键)
 const UPPERCUT={key:'z',name:'上挑',type:'melee',dmg:[12,18],reach:80,launch:13,color:'#ffe08a',dur:18,ul:1,fixed:true,fx:'uppercut',fxScale:0.6,fxYo:92,fxAhead:30};
 const SKILL_KEYS=['q','w','e','a','s','d'];
+// 已接入技能的原版还原档案: 统一控制身体帧、位移和真实特效摆放。
+const SKILL_RUNTIME_PROFILE={
+  tripleslash:{move:{vx:3.2,t:'dur'}, effect:{scale:0.62,yo:64,ahead:70,follow:true,maxMul:1.15}, pose:[2,3,4,5,6,189,190,191,192,193,195,196,197,198]},
+  flashcut:{move:{vx:8.0,t:10}, effect:{scale:0.72,yo:62,ahead:96,follow:true,maxMul:1.0}, pose:[21,22,23,24,25,26,27,28,29,30,31,32]},
+  gorecross:{move:{vx:2.2,t:'dur'}, effect:{scale:0.62,yo:66,ahead:72,follow:true,maxMul:1.0}, pose:[10,11,12,13,14,15,200,201,202,203]},
+  frenzy:{move:null, effect:{scale:0.95,yo:58,ahead:0,follow:false,maxMul:1.25}, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
+  ghoststep:{move:null, effect:{scale:0.72,yo:74,ahead:48,follow:true,maxMul:1.0}, pose:[194,195,196,197,198]},
+  wavespin:{move:null, effect:{scale:0.9,yo:56,ahead:0,follow:false,maxMul:1.1}, pose:[66,196,70,200]},
+};
 // 技能位移(还原原版"角色跟随/突进/上升"): 按 fx 键. vx=每tick前冲, rise=起跳初速, t=位移tick数('dur'=整个出招时长). dash类技能已由 dashTimer 位移, 不在此表.
 const SKILL_MOVE={
   uppercut:{vx:1.2,rise:9,t:8},      // 上挑: 原地略前+上升
-  tripleslash:{vx:3.4,t:'dur'},      // 三段斩: 逐段前进
-  flashcut:{vx:8.5,t:12},            // 拔刀斩: 居合突进
+  tripleslash:SKILL_RUNTIME_PROFILE.tripleslash.move,
+  flashcut:SKILL_RUNTIME_PROFILE.flashcut.move,
   dragonup:{vx:2.5,rise:12,t:9},     // 破军升龙击: 上升
   illusionslash:{vx:4,t:'dur'},      // 幻影剑舞: 连斩前压
-  gorecross:{vx:2.6,t:'dur'},        // 十字斩: 小步前进
+  gorecross:SKILL_RUNTIME_PROFILE.gorecross.move,
   souldrain:{vx:2.2,t:10},           // 嗜魂之手: 探手前压
   bloodseal:{vx:4.5,t:14},           // 嗜魂封魔斩: 前突斩
   chargecrash:{vx:9,t:18},           // 崩山裂地斩: 长距突进
@@ -1039,6 +1048,7 @@ function pickSwordFrame(p){
   else if(p.attackTimer>0&&p.attackType){
     const at=p.attackType;
     if(at.basic){ const set=(p.clsKey==='berserk'?BERSERK_BASIC:SWORD_ANIM); a=set['attack'+(at.combo||1)]||SWORD_ANIM.attack1; }
+    else if(at.fx&&SKILL_RUNTIME_PROFILE[at.fx]?.pose) a={f:SKILL_RUNTIME_PROFILE[at.fx].pose}; // 优先使用已调校的原版还原档案
     else if(at.fx&&SKILL_POSE[at.fx]) a={f:SKILL_POSE[at.fx]};   // 逐技能真实身体动作序列
     else a=(at.type==='proj'||at.type==='dash')?SWORD_ANIM.skillThrust:SWORD_ANIM.skillCast;
     const dur=at.dur||16, prog=clamp(1-p.attackTimer/dur,0,1);
@@ -1797,13 +1807,16 @@ function spawnSkillFX(p, sk){
   // 投射类的特效随投射物飞行(Projectile.draw 自绘), 这里只补一个施放闪光; 其余技能在施放点叠加真实特效精灵
   if(sk.type!=='proj' && sk.fx && SKILLFX.ready && fxFrames(sk.fx)){
     const n=fxFrames(sk.fx);
-    // 多图层真实特效: 按技能类型给合理缩放/前伸(包围盒居中于身前躯干高度)
-    const scale=sk.type==='ult'?0.58:sk.type==='aoe'?0.5:0.42;
-    const aheadPx=(sk.type==='aoe'||sk.type==='ult')?18:42;
-    // follow=true: 特效锚定施法者当前身位(角色突进/上升时特效跟随移动); 范围/大招不跟随, 落在施放点
-    const follow=!!SKILL_MOVE[sk.fx] || !(sk.type==='aoe'||sk.type==='ult');
-    addEffect({type:'spr', clip:sk.fx, x:x+dir*aheadPx, y, dir, scale, yo:56, ahead:aheadPx, follow,
-               frames:n, max:Math.max(20,Math.round(n*2.2)), alpha:1});
+    const prof=SKILL_RUNTIME_PROFILE[sk.fx]?.effect;
+    // 多图层真实特效: 目标技能用原版还原档案, 其他技能保留通用摆放。
+    const scale=prof?.scale ?? (sk.fxScale || (sk.type==='ult'?0.58:sk.type==='aoe'?0.5:0.42));
+    const aheadPx=prof?.ahead ?? (sk.fxAhead ?? ((sk.type==='aoe'||sk.type==='ult')?18:42));
+    const yo=prof?.yo ?? (sk.fxYo ?? 56);
+    // follow=true: 特效锚定施法者当前身位(角色突进/上升时特效跟随移动); 范围/大招不跟随, 落在施放点。
+    const follow=prof?.follow ?? (!!SKILL_MOVE[sk.fx] || !(sk.type==='aoe'||sk.type==='ult'));
+    const maxMul=prof?.maxMul ?? 2.2;
+    addEffect({type:'spr', clip:sk.fx, x:x+dir*aheadPx, y, dir, scale, yo, ahead:aheadPx, follow,
+               frames:n, max:Math.max(20,Math.round(n*maxMul)), alpha:1});
   }
   // 地面/范围技能补一道地面冲击波(矢量), 增强打击感
   if(sk.type==='aoe'||sk.type==='ult')
