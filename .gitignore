@@ -13,3 +13,6 @@ assets/raw/
 index.html.bak
 *.log
 .DS_Store
+
+# Agent worktrees
+.worktrees/
