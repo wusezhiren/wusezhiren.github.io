@@ -33,8 +33,8 @@ SKILL_SPECS = {
         ),
     ),
     "flashcut": SkillSpec(
-        "flashcut",
-        images=("ld_sworda.img", "ld_swordb.img", "ld_finisheff_b.img"),
+        "momentaryslash",
+        images=("drawingsword_none_under.img", "drawingsword_none_upper.img"),
     ),
     "gorecross": SkillSpec(
         "gorecross",
@@ -72,6 +72,34 @@ SKILL_SPECS = {
         ),
     ),
 }
+
+
+OPTIONAL_SKILL_SPECS = {
+    "illusionslash": SkillSpec("illusionslash", layers=(LayerSpec("illusionslash", "upper"), LayerSpec("illusionslash", "smash"))),
+    "chargecrash": SkillSpec("chargecrash", layers=(LayerSpec("chargecrash", "charge"), LayerSpec("chargecrash", "dash"), LayerSpec("chargecrash", "down-slash"), LayerSpec("chargecrash", "up-slash"), LayerSpec("chargecrash", "dustdash"))),
+    "waveeye": SkillSpec("waveeye", layers=(LayerSpec("waveeye", "wing1"), LayerSpec("waveeye", "wing2"), LayerSpec("waveeye", "attack1"))),
+    "dragonup": SkillSpec("atdragonup", images=("4sword.img", "twister_big.img", "blast_normal.img")),
+    "revolvingsword": SkillSpec("atrevolvingsword", images=("revolvingsword.img", "revolvingsword_eff.img")),
+    "hiddenblade": SkillSpec("athiddenblade", images=("atk_02.img", "atk_03.img")),
+    "uppercut": SkillSpec("atupperslash", images=("upper_eff.img", "upper_dash.img")),
+    "mountaincrash": SkillSpec("atmountaincrash", images=("mountaincrash_sword.img", "mountaincrash_force.img")),
+    "souldrain": SkillSpec("atsouldrain", images=("start01.img", "firstboom01.img", "loop01.img")),
+    "bloodseal": SkillSpec("atbloodseal", images=("blood_shot.img", "blood_finish.img", "blood_bull01.img")),
+    "darkslash": SkillSpec("atdarkslash", images=("darkslash_normal.img",)),
+    "liftslash": SkillSpec("atliftslash", images=("lift_slash.img",)),
+    "saya": SkillSpec("sayaex", images=("readynormal.img", "icenormal.img")),
+    "epidemic": SkillSpec("epidemicrasa", images=("rasa.img", "rasa_glow.img")),
+    "tombstone": SkillSpec("tombstoneex", images=("stonestartupnormal.img", "stoneendupnormal.img", "explosionnormal125.img")),
+    "normalwave": SkillSpec("normalwave", images=("waveboom_normal.img",)),
+    "icewave": SkillSpec("icewaveex", images=("ice_normal_down.img", "ice_dodge_middle.img")),
+    "firewave": SkillSpec("firewave", images=("fire_normal.img", "blast-front.img", "sword_normal.img")),
+    "vajra": SkillSpec("vajra", images=("vajra_maincloud.img", "vajra_lightning_a.img", "vajra_start_eff.img")),
+    "wavemark": SkillSpec("wavemark", images=("font.img", "wave.img")),
+    "wavemurderous": SkillSpec("wavemurderous", images=("wave.img",)),
+    "descentsoul": SkillSpec("descentsoul", images=("descentsoul_00.img", "descentsoul_light.img")),
+}
+
+BUILD_SKILL_SPECS = {**SKILL_SPECS, **OPTIONAL_SKILL_SPECS}
 
 
 def _candidate_roots(root: Path):

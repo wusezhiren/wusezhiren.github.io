@@ -19,6 +19,18 @@ class SkillFxConfigTests(unittest.TestCase):
         self.assertTrue(cfg.is_bad_variant("abc18eye.img"))
         self.assertFalse(cfg.is_bad_variant("blank_timing_gap.img"))
 
+    def test_build_specs_preserve_existing_non_target_clips(self):
+        for name in ("uppercut", "dragonup", "waveeye", "tombstone", "vajra"):
+            self.assertIn(name, cfg.BUILD_SKILL_SPECS)
+        for name in cfg.TARGET_CLIPS:
+            self.assertIs(cfg.BUILD_SKILL_SPECS[name], cfg.SKILL_SPECS[name])
+
+    def test_flashcut_uses_dof70_momentaryslash_assets(self):
+        spec = cfg.SKILL_SPECS["flashcut"]
+        self.assertEqual(spec.prefer_npk, "momentaryslash")
+        self.assertIn("drawingsword_none_under.img", spec.images)
+        self.assertIn("drawingsword_none_upper.img", spec.images)
+
 
 if __name__ == "__main__":
     unittest.main()
