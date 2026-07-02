@@ -16,3 +16,7 @@ index.html.bak
 
 # Agent worktrees
 .worktrees/
+
+# Python cache
+__pycache__/
+*.pyc
