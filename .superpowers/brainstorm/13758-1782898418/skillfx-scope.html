@@ -1,0 +1,33 @@
+
+<h2>技能特效还原：当前判断</h2>
+<p class="subtitle">我已看到 DOF（重生70版本）源码、客户端 ImagePacks2 和 Script.pvf。下一步需要先定“优先还原范围”。</p>
+
+<div class="mockup">
+  <div class="mockup-header">可用资源 → 当前网页资产</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:14px;align-items:center">
+      <div class="placeholder">DOF 70 客户端<br><strong>Script.pvf</strong><br><strong>ImagePacks2/*.NPK</strong></div>
+      <div style="font-size:28px">→</div>
+      <div class="placeholder">解析 .ani / .img<br>抽帧、锚点、帧率、图层</div>
+      <div style="font-size:28px">→</div>
+      <div class="placeholder">assets/skillfx.png<br>assets/skillfx.json<br>index.html 播放动作</div>
+    </div>
+  </div>
+</div>
+
+<h3>优先范围</h3>
+<p class="subtitle">请选择这轮优化先聚焦哪一类，我会按原版资源反查动作、图层、锚点和时序。</p>
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>先修已接入技能</h3><p>优先把现有 skillfx 的动作和特效做准，风险低、见效最快。</p></div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>按 SKILLS_SELECT 全部补齐</h3><p>四职业选中的 6 个技能都尽量还原，范围更大，需要分批验收。</p></div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content"><h3>指定几个最不像原版的技能</h3><p>你指出问题技能，我集中对比 DOF 源码修正动作、偏移和层级。</p></div>
+  </div>
+</div>
