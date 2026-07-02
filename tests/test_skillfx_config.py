@@ -5,8 +5,15 @@ from tools import skillfx_config as cfg
 
 
 class SkillFxConfigTests(unittest.TestCase):
-    def test_target_specs_cover_integrated_first_pass_skills(self):
-        self.assertEqual(set(cfg.TARGET_CLIPS), set(cfg.SKILL_SPECS))
+    def test_target_specs_cover_every_current_skill_clip(self):
+        expected = {
+            "uppercut", "tripleslash", "flashcut", "dragonup", "revolvingsword", "illusionslash", "hiddenblade",
+            "gorecross", "mountaincrash", "souldrain", "frenzy", "bloodseal", "chargecrash",
+            "darkslash", "liftslash", "saya", "epidemic", "ghoststep", "tombstone",
+            "normalwave", "icewave", "firewave", "waveeye", "wavespin", "vajra",
+        }
+        self.assertEqual(set(cfg.TARGET_CLIPS), expected)
+        self.assertTrue(set(cfg.TARGET_CLIPS).issubset(cfg.BUILD_SKILL_SPECS))
 
     def test_dof_source_paths_are_preferred_when_present_near_repo_or_parent_worktree(self):
         pvf, imagepacks = cfg.resolve_source_paths(Path.cwd())
@@ -23,7 +30,7 @@ class SkillFxConfigTests(unittest.TestCase):
         for name in ("uppercut", "dragonup", "waveeye", "tombstone", "vajra"):
             self.assertIn(name, cfg.BUILD_SKILL_SPECS)
         for name in cfg.TARGET_CLIPS:
-            self.assertIs(cfg.BUILD_SKILL_SPECS[name], cfg.SKILL_SPECS[name])
+            self.assertIn(name, cfg.BUILD_SKILL_SPECS)
 
     def test_flashcut_uses_dof70_momentaryslash_assets(self):
         spec = cfg.SKILL_SPECS["flashcut"]

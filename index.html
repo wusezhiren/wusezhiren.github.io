@@ -693,7 +693,8 @@ class Player extends Fighter {
     for(const kk in keys) if(kk.startsWith('__dash_')&&!down(kk.replace('__dash_','')))keys[kk]=false;
   }
   cast(sk){
-    this.mp-=sk.mp; sk._cd=sk.cd; this.attackTimer=Math.max(8,Math.round(sk.dur*this.attackSpeedMul())); this.attackType=sk;
+    this.mp-=sk.mp; sk._cd=sk.cd; const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
+    this.attackTimer=Math.max(8,Math.round(actionDur*this.attackSpeedMul())); sk._castDur=this.attackTimer; this.attackType=sk;
     spawnText(this.x,this.screenY()-this.h-30,sk.name+'!',sk.color);
     Audio2.sfx(sk.type==='ult'?'ult':'skill');
     spawnSkillFX(this, sk);                         // 每个技能的专属大型特效
@@ -929,6 +930,11 @@ const SKILL_ACTIONS={meta:null};
 if(window.SKILL_ACTIONS_META) SKILL_ACTIONS.meta=window.SKILL_ACTIONS_META;
 else fetch('assets/skill_actions.json').then(r=>r.json()).then(m=>{SKILL_ACTIONS.meta=m;}).catch(()=>{});
 function skillActionClip(fx){ return SKILL_ACTIONS.meta && SKILL_ACTIONS.meta.clips && SKILL_ACTIONS.meta.clips[fx]; }
+function skillActionDurationTicks(fx,fallback){
+  const clip=skillActionClip(fx);
+  if(!clip||!clip.total) return fallback;
+  return Math.max(8,Math.round(clip.total/1000*LOGIC_HZ));
+}
 function pickSwordActionFrame(at, prog){
   const clip=at&&at.fx?skillActionClip(at.fx):null;
   if(!clip||!clip.frames||!clip.frames.length) return null;
@@ -977,6 +983,11 @@ SKILLFX.img.src='assets/skillfx.png';
 if(window.SKILLFX_META){ SKILLFX.meta=window.SKILLFX_META; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true; }
 else fetch('assets/skillfx.json').then(r=>r.json()).then(m=>{SKILLFX.meta=m; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true;}).catch(()=>{});
 const FX_NORMAL_BLEND={};  // 所有特效均为"黑底发光", 统一加色混合(lighter)
+const SKILL_LAYER_TIMING={
+  tripleslash:[[0,0.45],[0.25,0.7],[0.55,1]],
+  frenzy:[[0,0.25],[0.08,0.4],[0.2,0.75],[0.35,0.85],[0.5,1],[0,1],[0,1]],
+};
+const SKILL_FX_REF={frenzy:{cx:300,cy:-70}};
 function fxLayers(clip){ return SKILLFX.meta && SKILLFX.meta.clips && SKILLFX.meta.clips[clip]; }
 function fxFrames(clip){ const L=fxLayers(clip); if(!L) return 0; let n=1; for(const l of L) n=Math.max(n,l.frames.length); return n; }
 function fxClipInfo(clip){ // 缓存: 最大帧数 + 全图层包围盒中心(anchor+帧偏移空间)
@@ -987,6 +998,8 @@ function fxClipInfo(clip){ // 缓存: 最大帧数 + 全图层包围盒中心(an
       for(const f of l.frames){ const x=ax+f[4],y=ay+f[5]; if(x<minx)minx=x; if(y<miny)miny=y; if(x+f[2]>maxx)maxx=x+f[2]; if(y+f[3]>maxy)maxy=y+f[3]; } }
     r={n, cx:(minx+maxx)/2, cy:(miny+maxy)/2};
   }
+  const ref=SKILL_FX_REF[clip];
+  if(ref) r={...r,...ref};
   SKILLFX._ref[clip]=r; return r;
 }
 // 多图层绘制: 特效包围盒中心落在世界坐标 (ox,oy), 进度 prog∈[0,1]; dir 水平翻转; 加色混合
@@ -997,7 +1010,10 @@ function drawFXClipLayers(clip, prog, ox, oy, scale, dir, alpha){
   ctx.save(); ctx.globalAlpha=alpha;
   if(!FX_NORMAL_BLEND[clip]) ctx.globalCompositeOperation='lighter';
   ctx.translate(ox,oy); ctx.scale(dir*scale, scale);
-  for(const l of L){ const nf=l.frames.length; let fi=Math.floor(prog*nf); if(fi<0)fi=0; if(fi>=nf)fi=nf-1;
+  const timing=SKILL_LAYER_TIMING[clip];
+  for(let li=0;li<L.length;li++){ const l=L[li], nf=l.frames.length; let lp=prog;
+    if(timing&&timing[li]){ const st=timing[li][0], ed=timing[li][1]; if(prog<st||prog>ed) continue; lp=(prog-st)/Math.max(0.001,ed-st); }
+    let fi=Math.floor(lp*nf); if(fi<0)fi=0; if(fi>=nf)fi=nf-1;
     const f=l.frames[fi]; const lx=l.anchor[0]+f[4]-info.cx, ly=l.anchor[1]+f[5]-info.cy;
     ctx.drawImage(SKILLFX.img, f[0],f[1],f[2],f[3], lx, ly, f[2], f[3]);
   }
@@ -1065,7 +1081,7 @@ function pickSwordFrame(p){
   if(p.dead){ a=SWORD_ANIM.fall; idx=a.f.length-1; }
   else if(p.attackTimer>0&&p.attackType){
     const at=p.attackType;
-    const dur=at.dur||16, prog=clamp(1-p.attackTimer/dur,0,1);
+    const dur=at._castDur||at.dur||16, prog=clamp(1-p.attackTimer/dur,0,1);
     if(!at.basic) action=pickSwordActionFrame(at,prog);
     if(action) return action;
     if(at.basic){ const set=(p.clsKey==='berserk'?BERSERK_BASIC:SWORD_ANIM); a=set['attack'+(at.combo||1)]||SWORD_ANIM.attack1; }
@@ -1835,8 +1851,9 @@ function spawnSkillFX(p, sk){
     // follow=true: 特效锚定施法者当前身位(角色突进/上升时特效跟随移动); 范围/大招不跟随, 落在施放点。
     const follow=prof?.follow ?? (!!SKILL_MOVE[sk.fx] || !(sk.type==='aoe'||sk.type==='ult'));
     const maxMul=prof?.maxMul ?? 2.2;
+    const actionMax=skillActionDurationTicks(sk.fx,0);
     addEffect({type:'spr', clip:sk.fx, x:x+dir*aheadPx, y, dir, scale, yo, ahead:aheadPx, follow,
-               frames:n, max:Math.max(20,Math.round(n*maxMul)), alpha:1});
+               frames:n, max:Math.max(20,prof?.max||actionMax||Math.round(n*maxMul)), alpha:1});
   }
   // 地面/范围技能补一道地面冲击波(矢量), 增强打击感
   if(sk.type==='aoe'||sk.type==='ult')

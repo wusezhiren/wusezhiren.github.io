@@ -17,18 +17,36 @@ class ActionPart:
 
 
 ACTION_SPECS = {
+    "uppercut": (ActionPart("upperslashafter"),),
     # The web skill fires three slashes in one cast, so trim recovery holds from
     # the first two source actions and keep the final recovery from slash3.
     "tripleslash": (ActionPart("tripleslash1", True), ActionPart("tripleslash2", True), ActionPart("tripleslash3")),
     "flashcut": (ActionPart("momentaryslash"),),
+    "dragonup": (ActionPart("chargecrashupper"),),
+    "revolvingsword": (ActionPart("rapidmoveslashready1"), ActionPart("rapidmoveslashmove1"), ActionPart("rapidmoveslashready2"), ActionPart("rapidmoveslashmove2")),
+    "illusionslash": (ActionPart("illusionslash1"), ActionPart("illusionslash2"), ActionPart("illusionslash3"), ActionPart("illusionslash4"), ActionPart("illusionslashfinal")),
+    "hiddenblade": (ActionPart("weaponcomboblade1"), ActionPart("weaponcomboblade2"), ActionPart("weaponcomboblade3"), ActionPart("weaponcomboblade4")),
     "gorecross": (ActionPart("gorecross"),),
+    "mountaincrash": (ActionPart("hopsmashready"), ActionPart("hopsmash"),),
+    "souldrain": (ActionPart("grab"),),
     "frenzy": (ActionPart("frenzy1"), ActionPart("frenzy2"), ActionPart("frenzy3"), ActionPart("frenzy4"),),
+    "bloodseal": (ActionPart("bloodyraveinhale"), ActionPart("bloodyraveslash"),),
+    "chargecrash": (ActionPart("outragebreakready"), ActionPart("outragebreakslash"),),
+    "darkslash": (ActionPart("hardattack"),),
+    "liftslash": (ActionPart("moonlightslash1"), ActionPart("moonlightslash2"), ActionPart("moonlightslashfull"),),
+    "saya": (ActionPart("summon1"),),
+    "epidemic": (ActionPart("summon2"),),
     "ghoststep": (ActionPart("ghoststepslashready"), ActionPart("ghoststepslashmove"),),
+    "tombstone": (ActionPart("tombstoneex"),),
+    "normalwave": (ActionPart("wave"),),
+    "icewave": (ActionPart("shockwaveareacast"),),
+    "firewave": (ActionPart("shockwaveareasmash"),),
+    "waveeye": (ActionPart("waveeyeattack1"),),
     # wavespinareabomb is only partially decoded by the current body parser; the
     # cast action is the reliable original body lead-in for the in-game burst.
     "wavespin": (ActionPart("shockwaveareacast"),),
+    "vajra": (ActionPart("waveeyeclaw"),),
 }
-
 
 def _read_action(pvf, name):
     path = f"character/swordman/animation/{name}.ani"
@@ -46,7 +64,7 @@ def _normalize_frame(frame):
         "img": int(frame["img"]),
         "x": int(frame["x"]),
         "y": int(frame["y"]),
-        "delay": max(10, int(frame["delay"])),
+        "delay": min(500, max(10, int(frame["delay"]))),
     }
 
 

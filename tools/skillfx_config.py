@@ -5,7 +5,12 @@ DOF_CLIENT = Path("DOF（重生70版本）/DOF_src/DOF重生/客户端")
 FALLBACK_CLIENT = Path("地下城与勇士")
 PFX = "sprite_character_swordman_effect_"
 OUT_DIR = Path("assets")
-TARGET_CLIPS = ("tripleslash", "flashcut", "gorecross", "frenzy", "ghoststep", "wavespin")
+TARGET_CLIPS = (
+    "uppercut", "tripleslash", "flashcut", "dragonup", "revolvingsword", "illusionslash", "hiddenblade",
+    "gorecross", "mountaincrash", "souldrain", "frenzy", "bloodseal", "chargecrash",
+    "darkslash", "liftslash", "saya", "epidemic", "ghoststep", "tombstone",
+    "normalwave", "icewave", "firewave", "waveeye", "wavespin", "vajra",
+)
 
 
 @dataclass(frozen=True)
@@ -78,22 +83,22 @@ OPTIONAL_SKILL_SPECS = {
     "illusionslash": SkillSpec("illusionslash", layers=(LayerSpec("illusionslash", "upper"), LayerSpec("illusionslash", "smash"))),
     "chargecrash": SkillSpec("chargecrash", layers=(LayerSpec("chargecrash", "charge"), LayerSpec("chargecrash", "dash"), LayerSpec("chargecrash", "down-slash"), LayerSpec("chargecrash", "up-slash"), LayerSpec("chargecrash", "dustdash"))),
     "waveeye": SkillSpec("waveeye", layers=(LayerSpec("waveeye", "wing1"), LayerSpec("waveeye", "wing2"), LayerSpec("waveeye", "attack1"))),
-    "dragonup": SkillSpec("atdragonup", images=("4sword.img", "twister_big.img", "blast_normal.img")),
-    "revolvingsword": SkillSpec("atrevolvingsword", images=("revolvingsword.img", "revolvingsword_eff.img")),
-    "hiddenblade": SkillSpec("athiddenblade", images=("atk_02.img", "atk_03.img")),
-    "uppercut": SkillSpec("atupperslash", images=("upper_eff.img", "upper_dash.img")),
-    "mountaincrash": SkillSpec("atmountaincrash", images=("mountaincrash_sword.img", "mountaincrash_force.img")),
-    "souldrain": SkillSpec("atsouldrain", images=("start01.img", "firstboom01.img", "loop01.img")),
-    "bloodseal": SkillSpec("atbloodseal", images=("blood_shot.img", "blood_finish.img", "blood_bull01.img")),
-    "darkslash": SkillSpec("atdarkslash", images=("darkslash_normal.img",)),
-    "liftslash": SkillSpec("atliftslash", images=("lift_slash.img",)),
+    "dragonup": SkillSpec("chargecrash", images=("up-slash.img", "dash.img", "dustdash.img")),
+    "revolvingsword": SkillSpec("rapidmoveslash", images=("face.img", "m-02.img", "s-01.img", "s-02.img")),
+    "hiddenblade": SkillSpec("rapidmoveslash", images=("s-01.img", "s-02.img", "m-02.img")),
+    "uppercut": SkillSpec("chargecrash", images=("up-slash.img",)),
+    "mountaincrash": SkillSpec("shockwavearea", images=("wave-opening.img", "wave-explode.img")),
+    "souldrain": SkillSpec("grabblastblood", images=("normal.img", "impact-normal.img", "blood-normal.img")),
+    "bloodseal": SkillSpec("bloodyrave", images=("start-normal.img", "loop-normal.img", "line-normal.img", "lslash-normal.img", "end-normal.img")),
+    "darkslash": SkillSpec("standalonewave", images=("basis_swing.img", "mu-swing.img")),
+    "liftslash": SkillSpec("momentaryslashex", images=("cutfrontdodge.img", "cutbackdodge.img", "bigwavenormal.img")),
     "saya": SkillSpec("sayaex", images=("readynormal.img", "icenormal.img")),
     "epidemic": SkillSpec("epidemicrasa", images=("rasa.img", "rasa_glow.img")),
     "tombstone": SkillSpec("tombstoneex", images=("stonestartupnormal.img", "stoneendupnormal.img", "explosionnormal125.img")),
-    "normalwave": SkillSpec("normalwave", images=("waveboom_normal.img",)),
+    "normalwave": SkillSpec("standalonewave", images=("mu-asura.img", "mu-energy.img", "mu-explode.img")),
     "icewave": SkillSpec("icewaveex", images=("ice_normal_down.img", "ice_dodge_middle.img")),
     "firewave": SkillSpec("firewave", images=("fire_normal.img", "blast-front.img", "sword_normal.img")),
-    "vajra": SkillSpec("vajra", images=("vajra_maincloud.img", "vajra_lightning_a.img", "vajra_start_eff.img")),
+    "vajra": SkillSpec("wavespinarea", images=("action.img", "action_normal.img", "effect.img", "target-effect-light.img")),
     "wavemark": SkillSpec("wavemark", images=("font.img", "wave.img")),
     "wavemurderous": SkillSpec("wavemurderous", images=("wave.img",)),
     "descentsoul": SkillSpec("descentsoul", images=("descentsoul_00.img", "descentsoul_light.img")),

@@ -29,11 +29,26 @@ class SkillActionBuildTests(unittest.TestCase):
 
     def test_build_all_actions_covers_six_target_runtime_skills(self):
         actions = build_all_actions(self.pvf)
-        self.assertEqual(set(actions["clips"]), {"tripleslash", "flashcut", "gorecross", "frenzy", "ghoststep", "wavespin"})
+        self.assertTrue({"tripleslash", "flashcut", "gorecross", "frenzy", "ghoststep", "wavespin"}.issubset(actions["clips"]))
         for name, clip in actions["clips"].items():
             self.assertGreater(clip["total"], 0, name)
             self.assertTrue(clip["frames"], name)
             self.assertTrue({"img", "delay", "x", "y"}.issubset(clip["frames"][0]), name)
+
+    def test_build_all_actions_covers_every_current_skill_fx(self):
+        expected = {
+            "uppercut", "tripleslash", "flashcut", "dragonup", "revolvingsword", "illusionslash", "hiddenblade",
+            "gorecross", "mountaincrash", "souldrain", "frenzy", "bloodseal", "chargecrash",
+            "darkslash", "liftslash", "saya", "epidemic", "ghoststep", "tombstone",
+            "normalwave", "icewave", "firewave", "waveeye", "wavespin", "vajra",
+        }
+        actions = build_all_actions(self.pvf)
+        self.assertEqual(set(actions["clips"]), expected)
+
+    def test_export_caps_extreme_body_frame_delays_for_web_playback(self):
+        actions = build_all_actions(self.pvf)
+        for name, clip in actions["clips"].items():
+            self.assertLessEqual(max(frame["delay"] for frame in clip["frames"]), 500, name)
 
 
 if __name__ == "__main__":
