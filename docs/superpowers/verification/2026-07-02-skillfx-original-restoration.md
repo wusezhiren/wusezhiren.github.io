@@ -52,3 +52,29 @@ Manual in-browser casting is still recommended after merge from the main workspa
 - 怒气爆发: confirm burst stays around the cast point.
 - 鬼影闪: confirm ghost/slash layers face the same direction as the player.
 - 波动爆发: confirm the spin effect is centered and does not drift vertically.
+
+## Body Action Timeline Extraction
+
+Second-stage commands used after adding original body action parsing:
+
+```bash
+python3 -m unittest tests.test_skillfx_config tests.test_skillfx_verify tests.test_skill_actions -v
+python3 tools/build_skill_actions.py
+python3 tools/build_skillfx.py
+python3 tools/verify_skillfx.py assets/skillfx.json
+python3 tools/fx_montage.py /tmp/skillfx-targets.png --from-meta assets/skillfx.json tripleslash flashcut gorecross frenzy ghoststep wavespin
+node --check /tmp/index-inline.js
+```
+
+Results observed:
+
+- 11 unittest checks passed.
+- `tools/build_skill_actions.py` generated `assets/skill_actions.json` and `assets/skill_actions.meta.js` from DOF 70 body `.ani` files.
+- Extracted body action clips:
+  - `tripleslash`: `tripleslash1`, `tripleslash2`, `tripleslash3`, 13 frames, 1140 ms.
+  - `flashcut`: `momentaryslash`, 12 frames, 1055 ms.
+  - `gorecross`: `gorecross`, 29 frames, 1330 ms.
+  - `frenzy`: `frenzy1` to `frenzy4`, 22 frames, 2580 ms.
+  - `ghoststep`: `ghoststepslashready`, `ghoststepslashmove`, 5 frames, 640 ms.
+  - `wavespin`: `shockwaveareacast`, 2 frames, 510 ms.
+- `index.html` now loads `assets/skill_actions.meta.js` and prefers original-delay action timelines before falling back to legacy pose arrays.

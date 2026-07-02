@@ -30,6 +30,7 @@
 <script src="assets/weapons.meta.js"></script>
 <script src="assets/monsters.meta.js"></script>
 <script src="assets/skillfx.meta.js"></script>
+<script src="assets/skill_actions.meta.js"></script>
 <script>
 "use strict";
 const canvas = document.getElementById('game');
@@ -921,6 +922,21 @@ SPR.img.src='assets/swordman.png';
 if(window.SWORDMAN_META){ SPR.meta=window.SWORDMAN_META; if(SPR.img.complete&&SPR.img.naturalWidth)SPR.ready=true; }
 else fetch('assets/swordman.json').then(r=>r.json()).then(m=>{SPR.meta=m; if(SPR.img.complete&&SPR.img.naturalWidth)SPR.ready=true;}).catch(()=>{});
 
+/* ===================== 技能身体动作时间轴(客户端原版 .ani 解析) ===================== */
+const SKILL_ACTIONS={meta:null};
+if(window.SKILL_ACTIONS_META) SKILL_ACTIONS.meta=window.SKILL_ACTIONS_META;
+else fetch('assets/skill_actions.json').then(r=>r.json()).then(m=>{SKILL_ACTIONS.meta=m;}).catch(()=>{});
+function skillActionClip(fx){ return SKILL_ACTIONS.meta && SKILL_ACTIONS.meta.clips && SKILL_ACTIONS.meta.clips[fx]; }
+function pickSwordActionFrame(at, prog){
+  const clip=at&&at.fx?skillActionClip(at.fx):null;
+  if(!clip||!clip.frames||!clip.frames.length) return null;
+  const frames=clip.frames, total=Math.max(1,clip.total||frames.reduce((n,f)=>n+(f.delay||50),0));
+  let t=clamp(prog,0,0.999)*total, acc=0, frame=frames[frames.length-1];
+  for(const f of frames){ acc+=Math.max(10,f.delay||50); if(t<acc){ frame=f; break; } }
+  const base=frames[0];
+  return {fi:frame.img, dx:(frame.x||0)-(base.x||0), dy:(frame.y||0)-(base.y||0)};
+}
+
 /* ===================== 武器层(独立图集, 按职业/装备叠加) ===================== */
 const WEAPONS={};
 ['lswd','beamswd'].forEach(key=>{ const o={img:new Image(),meta:null,ready:false};
@@ -1043,30 +1059,32 @@ const SKILL_POSE={
   vajra:         [201,203,205],               // 不动明王阵: 结印施法
 };
 function pickSwordFrame(p){
-  let a,idx;
+  let a,idx, action=null;
   if(p.dead){ a=SWORD_ANIM.fall; idx=a.f.length-1; }
   else if(p.attackTimer>0&&p.attackType){
     const at=p.attackType;
+    const dur=at.dur||16, prog=clamp(1-p.attackTimer/dur,0,1);
+    if(!at.basic) action=pickSwordActionFrame(at,prog);
+    if(action) return action;
     if(at.basic){ const set=(p.clsKey==='berserk'?BERSERK_BASIC:SWORD_ANIM); a=set['attack'+(at.combo||1)]||SWORD_ANIM.attack1; }
-    else if(at.fx&&SKILL_RUNTIME_PROFILE[at.fx]?.pose) a={f:SKILL_RUNTIME_PROFILE[at.fx].pose}; // 优先使用已调校的原版还原档案
+    else if(at.fx&&SKILL_RUNTIME_PROFILE[at.fx]?.pose) a={f:SKILL_RUNTIME_PROFILE[at.fx].pose}; // 旧 profile 仅作动作时间轴未加载时的回退
     else if(at.fx&&SKILL_POSE[at.fx]) a={f:SKILL_POSE[at.fx]};   // 逐技能真实身体动作序列
     else a=(at.type==='proj'||at.type==='dash')?SWORD_ANIM.skillThrust:SWORD_ANIM.skillCast;
-    const dur=at.dur||16, prog=clamp(1-p.attackTimer/dur,0,1);
     idx=Math.min(a.f.length-1,Math.floor(prog*a.f.length));
   }
   else if(p.hurt>0){ a=SWORD_ANIM.hurt; idx=Math.floor(performance.now()/(1000/a.fps))%a.f.length; }
   else if(p.state==='run'){ a=SWORD_ANIM.run; idx=Math.floor(performance.now()/(1000/a.fps))%a.f.length; }
   else if(p.state==='walk'){ a=SWORD_ANIM.walk; idx=Math.floor(performance.now()/(1000/a.fps))%a.f.length; }
   else { a=SWORD_ANIM.idle; idx=Math.floor(performance.now()/(1000/a.fps))%a.f.length; }
-  return a.f[idx];
+  return {fi:a.f[idx],dx:0,dy:0};
 }
 function drawSwordmanSprite(p){
-  const fi=pickSwordFrame(p), F=SPR.meta.frames[fi];
+  const sf=pickSwordFrame(p), fi=sf.fi, F=SPR.meta.frames[fi];
   if(!F) return false;
   const sx=F[0],sy=F[1],sw=F[2],sh=F[3],ox=F[4],oy=F[5], s=SPR_SCALE;
   let feetY=p.screenY();
   // 走路用客户端真实迈步帧(180-187), 双腿自身交替, 无需再加额外步态弹跳
-  ctx.save(); ctx.translate(p.x,feetY); ctx.scale(p.dir,1);
+  ctx.save(); ctx.translate(p.x+p.dir*(sf.dx||0)*SPR_SCALE,feetY+(sf.dy||0)*SPR_SCALE); ctx.scale(p.dir,1);
   const dim=(p.invuln>0&&Math.floor(p.invuln/3)%2===0)?0.55:1;
   ctx.globalAlpha=dim;
   ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s);          // 身体层
