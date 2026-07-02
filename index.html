@@ -249,28 +249,49 @@ const CLASS_KEYS = ['blade','berserk','spectre','asura'];
 // 通用技能: 上挑(所有职业共有, Z 键, 开局可用); 6 个职业技能键位为 Q W E A S D(可拖拽换键)
 const UPPERCUT={key:'z',name:'上挑',type:'melee',dmg:[12,18],reach:80,launch:13,color:'#ffe08a',dur:18,ul:1,fixed:true,fx:'uppercut',fxScale:0.6,fxYo:92,fxAhead:30};
 const SKILL_KEYS=['q','w','e','a','s','d'];
-// 已接入技能的原版还原档案: 统一控制身体帧、位移和真实特效摆放。
+// 已接入技能的原版还原档案: 统一控制身体帧(pose=动作时间轴缺失时的回退)和位移(move)。
+// 特效摆放不再手调: skillfx v3 携带原版逐帧坐标/延迟, 默认以脚底为原点、与身体同缩放绘制;
+// effect 仅保留 {scale,yo,ahead,follow} 覆盖口(null=全按原版数据)。
 const SKILL_RUNTIME_PROFILE={
-  tripleslash:{move:{vx:3.2,t:'dur'}, effect:{scale:0.62,yo:64,ahead:70,follow:true,maxMul:1.15}, pose:[2,3,4,5,6,189,190,191,192,193,195,196,197,198]},
-  flashcut:{move:{vx:8.0,t:10}, effect:{scale:0.72,yo:62,ahead:96,follow:true,maxMul:1.0}, pose:[21,22,23,24,25,26,27,28,29,30,31,32]},
-  gorecross:{move:{vx:2.2,t:'dur'}, effect:{scale:0.62,yo:66,ahead:72,follow:true,maxMul:1.0}, pose:[10,11,12,13,14,15,200,201,202,203]},
-  frenzy:{move:null, effect:{scale:0.95,yo:58,ahead:0,follow:false,maxMul:1.25}, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
-  ghoststep:{move:null, effect:{scale:0.72,yo:74,ahead:48,follow:true,maxMul:1.0}, pose:[194,195,196,197,198]},
-  wavespin:{move:null, effect:{scale:0.9,yo:56,ahead:0,follow:false,maxMul:1.1}, pose:[66,196,70,200]},
+  uppercut:{move:{vx:1.2,rise:9,t:8}, effect:null, pose:[199,200,201,202,203]},
+  tripleslash:{move:{vx:3.2,t:'dur'}, effect:null, pose:[2,3,4,5,6,189,190,191,192,193,195,196,197,198]},
+  flashcut:{move:{vx:8.0,t:10}, effect:null, pose:[21,22,23,24,25,26,27,28,29,30,31,32]},
+  dragonup:{move:{vx:2.5,rise:12,t:9}, effect:null, pose:[199]},
+  revolvingsword:{move:null, effect:null, pose:[194,195,196,199,200,201]},
+  illusionslash:{move:{vx:4,t:'dur'}, effect:null, pose:[1,10,188,194,199]},
+  hiddenblade:{move:null, effect:null, pose:[194,195,196,197,198,188,189,190,191,192,193,1,2,3,4,5,6,11,12,13,14,15,16]},
+  gorecross:{move:{vx:2.2,t:'dur'}, effect:null, pose:[10,11,12,13,14,15,200,201,202,203]},
+  mountaincrash:{move:null, effect:null, pose:[125,126,127,204]},
+  souldrain:{move:{vx:2.2,t:10}, effect:null, pose:[159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175]},
+  frenzy:{move:null, effect:null, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
+  bloodseal:{move:{vx:4.5,t:14}, effect:null, pose:[164,175]},
+  chargecrash:{move:{vx:9,t:18}, effect:null, pose:[124,125,126,127]},
+  darkslash:{move:{vx:4,t:'dur'}, effect:null, pose:[139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156]},
+  liftslash:{move:{vx:1.4,t:'dur'}, effect:null, pose:[194,201,202,203,203,203,33,34,35,36,37,38,39,40,41]},
+  saya:{move:null, effect:null, pose:[75,76,77]},
+  epidemic:{move:null, effect:null, pose:[78,79,80,81,82,83,84,85,86,87,88,89]},
+  ghoststep:{move:null, effect:null, pose:[194,195,196,197,198]},
+  tombstone:{move:null, effect:null, pose:[165,166,167,168,169,170,171,172,173,174,175]},
+  normalwave:{move:null, effect:null, pose:[42,43,44,45,46,47,48,49,50]},
+  icewave:{move:null, effect:null, pose:[204,205]},
+  firewave:{move:null, effect:null, pose:[206]},
+  waveeye:{move:null, effect:null, pose:[0,1,2,3,4,5,6,7,8,9]},
+  wavespin:{move:null, effect:null, pose:[66,196,70,200]},
+  vajra:{move:null, effect:null, pose:[204,205,206,207,208,209]},
 };
 // 技能位移(还原原版"角色跟随/突进/上升"): 按 fx 键. vx=每tick前冲, rise=起跳初速, t=位移tick数('dur'=整个出招时长). dash类技能已由 dashTimer 位移, 不在此表.
 const SKILL_MOVE={
-  uppercut:{vx:1.2,rise:9,t:8},      // 上挑: 原地略前+上升
+  uppercut:SKILL_RUNTIME_PROFILE.uppercut.move,
   tripleslash:SKILL_RUNTIME_PROFILE.tripleslash.move,
   flashcut:SKILL_RUNTIME_PROFILE.flashcut.move,
-  dragonup:{vx:2.5,rise:12,t:9},     // 破军升龙击: 上升
-  illusionslash:{vx:4,t:'dur'},      // 幻影剑舞: 连斩前压
+  dragonup:SKILL_RUNTIME_PROFILE.dragonup.move,
+  illusionslash:SKILL_RUNTIME_PROFILE.illusionslash.move,
   gorecross:SKILL_RUNTIME_PROFILE.gorecross.move,
-  souldrain:{vx:2.2,t:10},           // 嗜魂之手: 探手前压
-  bloodseal:{vx:4.5,t:14},           // 嗜魂封魔斩: 前突斩
-  chargecrash:{vx:9,t:18},           // 崩山裂地斩: 长距突进
-  darkslash:{vx:4,t:'dur'},          // 噬灵鬼斩: 前压斩
-  liftslash:{vx:1.4,t:'dur'},        // 满月斩: 原地挥(投射)
+  souldrain:SKILL_RUNTIME_PROFILE.souldrain.move,
+  bloodseal:SKILL_RUNTIME_PROFILE.bloodseal.move,
+  chargecrash:SKILL_RUNTIME_PROFILE.chargecrash.move,
+  darkslash:SKILL_RUNTIME_PROFILE.darkslash.move,
+  liftslash:SKILL_RUNTIME_PROFILE.liftslash.move,
 };
 
 /* ===================== 装备 & 消耗品数据 ===================== */
@@ -391,10 +412,9 @@ class Projectile {
   draw(){
     const y=this.y-this.z;
     const sk=this.sk;
-    if(sk&&sk.fx&&SKILLFX.ready&&fxFrames(sk.fx)){ // 用客户端真实特效精灵作为飞行投射物外观(循环播放)
-      const n=fxFrames(sk.fx), idx=Math.floor(performance.now()/55)%n;
-      drawFXClip(sk.fx, idx, this.x, y-28, 0.42, this.dir, 0.95);
-      return;
+    if(sk&&sk.fx&&SKILLFX.ready){ // 用客户端真实特效精灵作为飞行投射物外观(优先 <fx>_proj 飞行层, 循环播放)
+      const clip=fxHasClip(sk.fx+'_proj')?sk.fx+'_proj':(fxHasClip(sk.fx)?sk.fx:null);
+      if(clip){ drawFXClip(clip, performance.now(), this.x, y-28, SPR_SCALE*0.8, this.dir, 0.95); return; }
     }
     ctx.save(); ctx.globalAlpha=0.85;
     const grd=ctx.createRadialGradient(this.x,y-30,2,this.x,y-30,24);
@@ -982,47 +1002,55 @@ SKILLFX.img.onload=()=>{ if(SKILLFX.meta)SKILLFX.ready=true; };
 SKILLFX.img.src='assets/skillfx.png';
 if(window.SKILLFX_META){ SKILLFX.meta=window.SKILLFX_META; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true; }
 else fetch('assets/skillfx.json').then(r=>r.json()).then(m=>{SKILLFX.meta=m; if(SKILLFX.img.complete&&SKILLFX.img.naturalWidth)SKILLFX.ready=true;}).catch(()=>{});
-const FX_NORMAL_BLEND={};  // 所有特效均为"黑底发光", 统一加色混合(lighter)
-const SKILL_LAYER_TIMING={
-  tripleslash:[[0,0.45],[0.25,0.7],[0.55,1]],
-  frenzy:[[0,0.25],[0.08,0.4],[0.2,0.75],[0.35,0.85],[0.5,1],[0,1],[0,1]],
-};
-const SKILL_FX_REF={frenzy:{cx:300,cy:-70}};
-function fxLayers(clip){ return SKILLFX.meta && SKILLFX.meta.clips && SKILLFX.meta.clips[clip]; }
-function fxFrames(clip){ const L=fxLayers(clip); if(!L) return 0; let n=1; for(const l of L) n=Math.max(n,l.frames.length); return n; }
-function fxClipInfo(clip){ // 缓存: 最大帧数 + 全图层包围盒中心(anchor+帧偏移空间)
+// v3 元数据: {clips:{name:{dur,layers:[{loop,frames:[[sx,sy,sw,sh,ox,oy,delay,rx,ry,a]|[delay]...]}]}}}
+// 实帧偏移 ox/oy = 原版 .ani 逐帧坐标 + .img 帧偏移(角色脚底为原点), rx/ry=缩放%, a=透明度0..255
+function fxClip(clip){ return SKILLFX.meta && SKILLFX.meta.clips && SKILLFX.meta.clips[clip]; }
+function fxHasClip(clip){ const c=fxClip(clip); return !!(c&&c.layers&&c.layers.length); }
+function fxClipInfo(clip){ // 缓存: 时长 + 各层总时长 + 非空帧包围盒中心(供投射物/挂饰居中)
   if(SKILLFX._ref[clip]) return SKILLFX._ref[clip];
-  const L=fxLayers(clip); let r={n:1,cx:0,cy:0};
-  if(L&&L.length){ let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9,n=1;
-    for(const l of L){ n=Math.max(n,l.frames.length); const ax=l.anchor[0],ay=l.anchor[1];
-      for(const f of l.frames){ const x=ax+f[4],y=ay+f[5]; if(x<minx)minx=x; if(y<miny)miny=y; if(x+f[2]>maxx)maxx=x+f[2]; if(y+f[3]>maxy)maxy=y+f[3]; } }
-    r={n, cx:(minx+maxx)/2, cy:(miny+maxy)/2};
+  const c=fxClip(clip); let r={dur:500,totals:[],cx:0,cy:0};
+  if(c&&c.layers){ let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+    r.dur=c.dur||500;
+    for(const l of c.layers){ let t=0;
+      for(const f of l.frames){ if(f.length===1){ t+=f[0]; continue; } t+=f[6];
+        if(f[4]<minx)minx=f[4]; if(f[5]<miny)miny=f[5];
+        if(f[4]+f[2]>maxx)maxx=f[4]+f[2]; if(f[5]+f[3]>maxy)maxy=f[5]+f[3]; }
+      r.totals.push(t); }
+    if(minx<1e9){ r.cx=(minx+maxx)/2; r.cy=(miny+maxy)/2; }
   }
-  const ref=SKILL_FX_REF[clip];
-  if(ref) r={...r,...ref};
   SKILLFX._ref[clip]=r; return r;
 }
-// 多图层绘制: 特效包围盒中心落在世界坐标 (ox,oy), 进度 prog∈[0,1]; dir 水平翻转; 加色混合
-function drawFXClipLayers(clip, prog, ox, oy, scale, dir, alpha){
+// 按原版时间轴绘制: tMs=特效经过毫秒, 原点(ox,oy)=施法者脚底; dir 水平翻转; 加色混合
+// loopAll: 全部图层循环(投射物飞行/常驻挂饰); dx/dy: 额外平移(包围盒居中用)
+function drawFXClipLayers(clip, tMs, ox, oy, scale, dir, alpha, loopAll, dx, dy){
   if(!SKILLFX.ready) return false;
-  const L=fxLayers(clip); if(!L||!L.length) return false;
+  const c=fxClip(clip); if(!c||!c.layers||!c.layers.length) return false;
   const info=fxClipInfo(clip);
-  ctx.save(); ctx.globalAlpha=alpha;
-  if(!FX_NORMAL_BLEND[clip]) ctx.globalCompositeOperation='lighter';
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';   // 原版特效全部黑底发光(GRAPHIC EFFECT=加色)
   ctx.translate(ox,oy); ctx.scale(dir*scale, scale);
-  const timing=SKILL_LAYER_TIMING[clip];
-  for(let li=0;li<L.length;li++){ const l=L[li], nf=l.frames.length; let lp=prog;
-    if(timing&&timing[li]){ const st=timing[li][0], ed=timing[li][1]; if(prog<st||prog>ed) continue; lp=(prog-st)/Math.max(0.001,ed-st); }
-    let fi=Math.floor(lp*nf); if(fi<0)fi=0; if(fi>=nf)fi=nf-1;
-    const f=l.frames[fi]; const lx=l.anchor[0]+f[4]-info.cx, ly=l.anchor[1]+f[5]-info.cy;
-    ctx.drawImage(SKILLFX.img, f[0],f[1],f[2],f[3], lx, ly, f[2], f[3]);
+  for(let li=0;li<c.layers.length;li++){
+    const l=c.layers[li], total=info.totals[li]; if(!total) continue;
+    let t=tMs;
+    if(l.loop||loopAll) t=tMs%total;
+    else if(t>=total) continue;              // 一次性图层播完即隐(还原各层错峰出现/消失)
+    let f=null, acc=0;
+    for(const fr of l.frames){ const d=fr.length===1?fr[0]:fr[6]; if(t<acc+d){ f=fr; break; } acc+=d; }
+    if(!f||f.length===1) continue;           // 空帧(原版用它做图层延时出场)
+    const kx=(f[7]==null?100:f[7])/100, ky=(f[8]==null?100:f[8])/100;
+    ctx.globalAlpha=alpha*((f[9]==null?255:f[9])/255);
+    const fx=f[4]+(dx||0), fy=f[5]+(dy||0);
+    if(kx<0||ky<0){ ctx.save(); ctx.translate(fx,fy); ctx.scale(kx<0?-1:1,ky<0?-1:1);
+      ctx.drawImage(SKILLFX.img, f[0],f[1],f[2],f[3], 0,0, f[2]*Math.abs(kx), f[3]*Math.abs(ky)); ctx.restore(); }
+    else ctx.drawImage(SKILLFX.img, f[0],f[1],f[2],f[3], fx, fy, f[2]*kx, f[3]*ky);
   }
   ctx.restore(); return true;
 }
-// 兼容旧调用(投射物/波动刻印按 idx 循环): idx→prog, 居中于 (x,y)
-function drawFXClip(clip, idx, x, y, scale, dir, alpha){
-  const n=fxFrames(clip); if(!n) return false;
-  return drawFXClipLayers(clip, n>1?(idx%n)/(n-1):0, x, y, scale, dir, alpha);
+// 居中循环绘制(投射物飞行外观/波动刻印等挂饰): 包围盒中心落在 (x,y), 全层循环
+function drawFXClip(clip, tMs, x, y, scale, dir, alpha){
+  if(!fxHasClip(clip)) return false;
+  const info=fxClipInfo(clip);
+  return drawFXClipLayers(clip, tMs, x, y, scale, dir, alpha, true, -info.cx, -info.cy);
 }
 let SPR_SCALE=0.62; // Q版缩小比例(可调)
 // 动画区间(帧索引), 凭客户端帧序划分, 可微调
@@ -1125,8 +1153,8 @@ function drawClassAura(p, feetY){
   if(p.dead) return;
   const t=performance.now();
   if(p.clsKey==='asura'){
-    if(SKILLFX.ready && fxFrames('wavemark')){            // 波动刻印: 头顶悬浮梵字符文
-      const n=fxFrames('wavemark'); drawFXClip('wavemark', Math.floor(t/200)%n, p.x, feetY-p.h*0.66-16, 0.26, 1, 0.85); }
+    if(SKILLFX.ready && fxHasClip('wavemark'))            // 波动刻印: 头顶悬浮梵字符文
+      drawFXClip('wavemark', t, p.x, feetY-p.h*0.66-16, 0.26, 1, 0.85);
     const a=0.16+0.10*Math.sin(t/300);                    // 杀意波动: 脚下青色脉动环
     ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle='#7fe0ff'; ctx.lineWidth=2;
     ctx.beginPath(); ctx.ellipse(p.x,feetY,27,9,0,0,7); ctx.stroke(); ctx.restore();
@@ -1840,20 +1868,18 @@ function drawHumanoid(x,feetY,dir,color,dark,ent,flash,invuln,big=false){
 function spawnSkillFX(p, sk){
   const x=p.x, y=p.y, dir=p.dir;
   shake=Math.max(shake, sk.type==='ult'?12:7);
-  // 投射类的特效随投射物飞行(Projectile.draw 自绘), 这里只补一个施放闪光; 其余技能在施放点叠加真实特效精灵
-  if(sk.type!=='proj' && sk.fx && SKILLFX.ready && fxFrames(sk.fx)){
-    const n=fxFrames(sk.fx);
+  // 施放特效: 原版特效与身体同坐标系(脚底原点)同缩放, 逐帧时序/坐标由 skillfx v3 数据驱动。
+  // proj 类的飞行外观由 Projectile 自绘 <fx>_proj; 仅当存在独立飞行层时才叠加施放层, 避免重复。
+  const castClip=sk.fx && SKILLFX.ready && fxHasClip(sk.fx) && (sk.type!=='proj' || fxHasClip(sk.fx+'_proj'));
+  if(castClip){
     const prof=SKILL_RUNTIME_PROFILE[sk.fx]?.effect;
-    // 多图层真实特效: 目标技能用原版还原档案, 其他技能保留通用摆放。
-    const scale=prof?.scale ?? (sk.fxScale || (sk.type==='ult'?0.58:sk.type==='aoe'?0.5:0.42));
-    const aheadPx=prof?.ahead ?? (sk.fxAhead ?? ((sk.type==='aoe'||sk.type==='ult')?18:42));
-    const yo=prof?.yo ?? (sk.fxYo ?? 56);
-    // follow=true: 特效锚定施法者当前身位(角色突进/上升时特效跟随移动); 范围/大招不跟随, 落在施放点。
+    const scale=prof?.scale ?? SPR_SCALE;
+    const aheadPx=prof?.ahead ?? 0, yo=prof?.yo ?? 0;
+    // follow=true: 特效锚定施法者当前身位(突进/起跳跟随, 含 SKILL_MOVE 位移技); 范围/大招落在施放点。
     const follow=prof?.follow ?? (!!SKILL_MOVE[sk.fx] || !(sk.type==='aoe'||sk.type==='ult'));
-    const maxMul=prof?.maxMul ?? 2.2;
-    const actionMax=skillActionDurationTicks(sk.fx,0);
-    addEffect({type:'spr', clip:sk.fx, x:x+dir*aheadPx, y, dir, scale, yo, ahead:aheadPx, follow,
-               frames:n, max:Math.max(20,prof?.max||actionMax||Math.round(n*maxMul)), alpha:1});
+    const durMs=fxClipInfo(sk.fx).dur;
+    addEffect({type:'spr', clip:sk.fx, x:x+dir*aheadPx, y, sy:p.screenY(), dir, scale, yo, ahead:aheadPx, follow,
+               max:Math.max(12,Math.round(durMs/1000*LOGIC_HZ)), alpha:1});
   }
   // 地面/范围技能补一道地面冲击波(矢量), 增强打击感
   if(sk.type==='aoe'||sk.type==='ult')
@@ -1865,11 +1891,11 @@ function drawEffects(){
   for(const e of effects){
     if(e.delay>0) continue;
     const p=e.t/e.max; ctx.save();
-    if(e.type==='spr'){ // 客户端真实技能特效精灵(多图层合成)
-      const a=p>0.84?(1-p)/0.16:1;
-      let ex=e.x, ey=e.y-(e.yo||0);
+    if(e.type==='spr'){ // 客户端真实技能特效精灵(多图层, 原版逐帧时序/坐标)
+      const a=p>0.9?(1-p)/0.1:1;
+      let ex=e.x, ey=(e.sy!=null?e.sy:e.y)-(e.yo||0);
       if(e.follow && player && !player.dead){ ex=player.x+e.dir*(e.ahead||0); ey=player.screenY()-(e.yo||0); } // 跟随施法者身位(含突进/起跳)
-      drawFXClipLayers(e.clip, Math.min(0.999,p), ex, ey, e.scale, e.dir, (e.alpha||1)*a);
+      drawFXClipLayers(e.clip, e.t*(1000/LOGIC_HZ), ex, ey, e.scale, e.dir, (e.alpha||1)*a);
       ctx.restore(); continue; }
     if(e.type==='ring'){ const r=e.r0+(e.r1-e.r0)*p;
       ctx.globalAlpha=(1-p)*0.8; ctx.strokeStyle=e.color; ctx.lineWidth=8*(1-p)+2;

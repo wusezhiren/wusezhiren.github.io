@@ -26,17 +26,37 @@ class SkillFxConfigTests(unittest.TestCase):
         self.assertTrue(cfg.is_bad_variant("abc18eye.img"))
         self.assertFalse(cfg.is_bad_variant("blank_timing_gap.img"))
 
-    def test_build_specs_preserve_existing_non_target_clips(self):
-        for name in ("uppercut", "dragonup", "waveeye", "tombstone", "vajra"):
-            self.assertIn(name, cfg.BUILD_SKILL_SPECS)
-        for name in cfg.TARGET_CLIPS:
-            self.assertIn(name, cfg.BUILD_SKILL_SPECS)
-
-    def test_flashcut_uses_dof70_momentaryslash_assets(self):
+    def test_flashcut_uses_dof70_momentaryslash_ani_layers(self):
         spec = cfg.SKILL_SPECS["flashcut"]
         self.assertEqual(spec.prefer_npk, "momentaryslash")
-        self.assertIn("drawingsword_white_ldodge_under.img", spec.images)
-        self.assertIn("drawingsword_white_ldodge_upper.img", spec.images)
+        self.assertIn("momentaryslash", spec.anis)  # 根目录主刀光
+        self.assertTrue(any("momentaryslash_none_under" in a for a in spec.anis))
+
+    def test_authoritative_skill_effect_mappings_from_pvf_skill_list(self):
+        """映射经 skill/swordmanskill.lst + .skl 名称核对(见 skillfx_config 注释)."""
+        # 崩山裂地斩 = Outrage Break(而非破军升龙击的 chargecrash 素材)
+        self.assertTrue(all(a.startswith("outragebreak/") for a in cfg.SKILL_SPECS["chargecrash"].anis))
+        # 破军升龙击 = Charge Crash
+        self.assertTrue(all(a.startswith("chargecrash/") for a in cfg.SKILL_SPECS["dragonup"].anis))
+        # 邪光斩 = grandwave(Evil Light Slash), 飞行层独立
+        self.assertTrue(all(a.startswith("grandwave") for a in cfg.SKILL_SPECS["waveeye"].anis))
+        self.assertEqual(cfg.SKILL_SPECS["waveeye_proj"].anis, ("grandwave",))
+        # 波动爆发 = releasewave(Release Wave)
+        self.assertTrue(all(a.startswith("releasewave") for a in cfg.SKILL_SPECS["wavespin"].anis))
+        # 不动明王阵 = wavespinarea(Acalanatha Array)
+        self.assertTrue(all(a.startswith("wavespinarea/") for a in cfg.SKILL_SPECS["vajra"].anis))
+        # 噬灵鬼斩 = hardattack(Devil Slash)
+        self.assertTrue(all(a.startswith("hardattack") for a in cfg.SKILL_SPECS["darkslash"].anis))
+        # 崩山击 = hopsmash(Hill Breaker)
+        self.assertTrue(all(a.startswith("hopsmash/") for a in cfg.SKILL_SPECS["mountaincrash"].anis))
+        # 满月斩 = moonlightslash, 满月飞行层独立
+        self.assertEqual(cfg.SKILL_SPECS["liftslash_proj"].anis, ("moonlightslashfull",))
+        # 上挑 = upperslash
+        self.assertEqual(cfg.SKILL_SPECS["uppercut"].anis, ("upperslash1", "upperslash2"))
+
+    def test_gorecross_includes_delayed_cross_layers(self):
+        self.assertIn("gorecross/slash3", cfg.SKILL_SPECS["gorecross"].anis)
+        self.assertIn("gorecross/slash4", cfg.SKILL_SPECS["gorecross"].anis)
 
 
 if __name__ == "__main__":

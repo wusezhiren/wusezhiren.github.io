@@ -63,37 +63,53 @@ def render_raw(out, names):
 
 
 def _clip_bounds(layers):
+    """v3 图层集合的包围盒(只统计实帧)."""
     minx = miny = 10**9
     maxx = maxy = -10**9
-    max_frames = 1
     for layer in layers:
-        ax, ay = layer.get("anchor", [0, 0])
-        frames = layer.get("frames", [])
-        max_frames = max(max_frames, len(frames))
-        for frame in frames:
-            x = ax + frame[4]
-            y = ay + frame[5]
+        for frame in layer.get("frames", []):
+            if len(frame) == 1:
+                continue
+            x, y = frame[4], frame[5]
             minx = min(minx, x)
             miny = min(miny, y)
             maxx = max(maxx, x + frame[2])
             maxy = max(maxy, y + frame[3])
     if maxx < minx or maxy < miny:
-        return (0, 0, 1, 1, max_frames)
-    return (minx, miny, maxx, maxy, max_frames)
+        return (0, 0, 1, 1)
+    return (minx, miny, maxx, maxy)
 
 
-def _compose_clip_frame(atlas, layers, frame_index, box):
-    minx, miny, maxx, maxy, _ = box
+def _layer_total(layer):
+    return sum(f[0] if len(f) == 1 else f[6] for f in layer.get("frames", []))
+
+
+def _frame_at(layer, t_ms, total):
+    if total <= 0:
+        return None
+    if layer.get("loop"):
+        t_ms = t_ms % total
+    elif t_ms >= total:
+        return None
+    acc = 0
+    for frame in layer.get("frames", []):
+        d = frame[0] if len(frame) == 1 else frame[6]
+        if t_ms < acc + d:
+            return None if len(frame) == 1 else frame
+        acc += d
+    return None
+
+
+def _compose_clip_time(atlas, layers, t_ms, box):
+    minx, miny, maxx, maxy = box
     canvas = Image.new("RGBA", (max(1, int(maxx - minx)), max(1, int(maxy - miny))), (0, 0, 0, 0))
     for layer in layers:
-        frames = layer.get("frames", [])
-        if not frames:
+        frame = _frame_at(layer, t_ms, _layer_total(layer))
+        if frame is None:
             continue
-        ax, ay = layer.get("anchor", [0, 0])
-        fi = min(len(frames) - 1, frame_index)
-        sx, sy, sw, sh, fx, fy = frames[fi][:6]
+        sx, sy, sw, sh, ox, oy = frame[:6]
         tile = atlas.crop((sx, sy, sx + sw, sy + sh))
-        canvas.alpha_composite(tile, (int(ax + fx - minx), int(ay + fy - miny)))
+        canvas.alpha_composite(tile, (int(ox - minx), int(oy - miny)))
     return canvas
 
 
@@ -110,21 +126,22 @@ def render_from_meta(out, meta_path, clips):
     all_clips = meta.get("clips", {})
     for r, clip in enumerate(clips):
         y0 = r * rowh
-        layers = all_clips.get(clip)
+        entry = all_clips.get(clip) or {}
+        layers = entry.get("layers")
         _safe_text(draw, (4, y0 + 4), clip, (255, 230, 80, 255))
         if not layers:
             _safe_text(draw, (labelw + 4, y0 + 45), "missing clip", (255, 80, 80, 255))
             continue
+        dur = max(1, entry.get("dur", 500))
         box = _clip_bounds(layers)
-        max_frames = box[4]
-        _safe_text(draw, (4, y0 + 22), f"layers {len(layers)} frames {max_frames}", (150, 150, 160, 255))
-        picks = [round(i * max(0, max_frames - 1) / max(1, cols - 1)) for i in range(cols)]
-        for c, fi in enumerate(picks):
-            im = _compose_clip_frame(atlas, layers, fi, box)
+        _safe_text(draw, (4, y0 + 22), f"layers {len(layers)} dur {dur}ms", (150, 150, 160, 255))
+        for c in range(cols):
+            t_ms = round(c * (dur - 1) / max(1, cols - 1))
+            im = _compose_clip_time(atlas, layers, t_ms, box)
             s = min(cw / max(1, im.width), (ch - 18) / max(1, im.height), 1.0)
             im2 = im.resize((max(1, int(im.width * s)), max(1, int(im.height * s))))
             sheet.alpha_composite(im2, (labelw + c * cw + (cw - im2.width) // 2, y0 + 18 + (ch - 18 - im2.height) // 2))
-            _safe_text(draw, (labelw + c * cw + 4, y0 + 2), str(fi), (120, 130, 150, 255))
+            _safe_text(draw, (labelw + c * cw + 4, y0 + 2), f"{t_ms}ms", (120, 130, 150, 255))
     sheet.save(out)
     print("saved", out, "rows", len(clips))
 

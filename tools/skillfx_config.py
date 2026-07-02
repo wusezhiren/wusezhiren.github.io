@@ -5,6 +5,7 @@ DOF_CLIENT = Path("DOF（重生70版本）/DOF_src/DOF重生/客户端")
 FALLBACK_CLIENT = Path("地下城与勇士")
 PFX = "sprite_character_swordman_effect_"
 OUT_DIR = Path("assets")
+# 游戏内 25 个技能 fx 键(上挑 + 四职业各 6 技)
 TARGET_CLIPS = (
     "uppercut", "tripleslash", "flashcut", "dragonup", "revolvingsword", "illusionslash", "hiddenblade",
     "gorecross", "mountaincrash", "souldrain", "frenzy", "bloodseal", "chargecrash",
@@ -14,97 +15,83 @@ TARGET_CLIPS = (
 
 
 @dataclass(frozen=True)
-class LayerSpec:
-    folder: str
-    name: str
-
-
-@dataclass(frozen=True)
 class SkillSpec:
+    """技能特效来源(全部指向 DOF 70 原版数据).
+
+    anis:   character/swordman/effect/animation/ 下的 .ani 图层(保留逐帧坐标/延迟/缩放/透明度)
+    images: 无 .ani 数据的兜底单图层(召唤物精灵等), 按 fps 匀速播放
+    """
     prefer_npk: str
-    layers: tuple[LayerSpec, ...] = ()
+    anis: tuple[str, ...] = ()
     images: tuple[str, ...] = ()
-    fps: int = 16
-    max_frames: int | None = None
+    fps: int = 12
+    loop_images: bool = False
 
 
+# 权威映射(经 skill/swordmanskill.lst + .skl 名称核对):
+#   拔刀斩=momentaryslash(Speed Slash)  破军升龙击=chargecrash(Charge Crash)
+#   猛龙断空斩=rapidmoveslash(Dragon Air Break)  里·鬼剑术=weaponcombo(Devil Escrime, 光剑=light层)
+#   崩山击=hopsmash(Hill Breaker)  崩山裂地斩=outragebreak(Outrage Break)
+#   噬灵鬼斩=hardattack(Devil Slash)  满月斩=moonlightslash(+full)
+#   地裂波动剑=normalwave(Earth Crack Wave Sword)  邪光斩=grandwave(Evil Light Slash)
+#   波动爆发=releasewave(Release Wave)  不动明王阵=wavespinarea(Acalanatha Array)
 SKILL_SPECS = {
-    "tripleslash": SkillSpec(
-        "tripleslash",
-        layers=(
-            LayerSpec("tripleslash", "slash1"),
-            LayerSpec("tripleslash", "slash2"),
-            LayerSpec("tripleslash", "slash3"),
-        ),
-    ),
-    "flashcut": SkillSpec(
-        "momentaryslash",
-        images=("drawingsword_white_ldodge_under.img", "drawingsword_white_ldodge_upper.img"),
-    ),
-    "gorecross": SkillSpec(
-        "gorecross",
-        layers=(LayerSpec("gorecross", "slash1"), LayerSpec("gorecross", "slash2")),
-    ),
-    "frenzy": SkillSpec(
-        "atfrenzy",
-        layers=(
-            LayerSpec("frenzy", "cast"),
-            LayerSpec("frenzy", "blast"),
-            LayerSpec("frenzy", "sword1-1"),
-            LayerSpec("frenzy", "sword1-3"),
-            LayerSpec("frenzy", "sword1-4"),
-            LayerSpec("frenzy", "ball"),
-            LayerSpec("frenzy", "buff"),
-        ),
-    ),
-    "ghoststep": SkillSpec(
-        "ghoststep",
-        layers=(
-            LayerSpec("ghoststepslash", "slash1"),
-            LayerSpec("ghoststepslash", "slash2"),
-            LayerSpec("ghoststepslash", "skull"),
-            LayerSpec("ghoststep", "appear1"),
-            LayerSpec("ghoststep", "appear2"),
-        ),
-    ),
-    "wavespin": SkillSpec(
-        "wavespinarea",
-        layers=(
-            LayerSpec("wavespinarea", "createbeadnormal"),
-            LayerSpec("wavespinarea", "circle"),
-            LayerSpec("wavespinarea", "circlefront"),
-            LayerSpec("wavespinarea", "hold"),
-        ),
-    ),
+    "uppercut": SkillSpec("chargecrash", anis=("upperslash1", "upperslash2")),
+    "tripleslash": SkillSpec("tripleslash", anis=(
+        "tripleslash/slash1", "tripleslash/slash2", "tripleslash/slash3",
+        "tripleslash/slash4", "tripleslash/slash5", "tripleslash/move1", "tripleslash/move2")),
+    "flashcut": SkillSpec("momentaryslash", anis=(
+        "momentaryslash", "momentaryslash/charge1", "momentaryslash/charge2",
+        "momentaryslash/momentaryslash_none_under", "momentaryslash/momentaryslash_none_upper")),
+    "dragonup": SkillSpec("chargecrash", anis=(
+        "chargecrash/charge", "chargecrash/dash", "chargecrash/up-slash",
+        "chargecrash/dustdash", "chargecrash/dustdashlast")),
+    "revolvingsword": SkillSpec("rapidmoveslash", anis=(
+        "rapidmoveslash/move1", "rapidmoveslash/move2",
+        "rapidmoveslash/slash1", "rapidmoveslash/slash2", "rapidmoveslash/dust")),
+    "illusionslash": SkillSpec("illusionslash", anis=("illusionslash/upper", "illusionslash/smash")),
+    "hiddenblade": SkillSpec("weaponcombo", anis=("weaponcombo/light", "weaponcombo/blade")),
+    "gorecross": SkillSpec("gorecross", anis=(
+        "gorecross/slash1", "gorecross/slash2", "gorecross/slash3", "gorecross/slash4")),
+    "mountaincrash": SkillSpec("hopsmash", anis=("hopsmash/smash", "hopsmash/sword")),
+    "souldrain": SkillSpec("grabblastblood", anis=("grabblastblood",), images=("normal.img", "impact-normal.img"), fps=14),
+    "frenzy": SkillSpec("atfrenzy", anis=(
+        "frenzy/cast", "frenzy/blast", "frenzy/buff", "frenzy/createball", "frenzy/ball",
+        "frenzy/sword1-1", "frenzy/sword1-3", "frenzy/sword1-4")),
+    "bloodseal": SkillSpec("bloodyrave", anis=(
+        "bloodyrave/start1", "bloodyrave/start2", "bloodyrave/loop1", "bloodyrave/loop2",
+        "bloodyrave/line1", "bloodyrave/line2", "bloodyrave/sword1",
+        "bloodyrave/sword3", "bloodyrave/sword4", "bloodyrave/typhoon", "bloodyrave/end")),
+    "chargecrash": SkillSpec("outragebreak", anis=(
+        "outragebreak/sword_ready_none", "outragebreak/sword_slash_none",
+        "outragebreak/sword_slash_impact_none", "outragebreak/sword_slash_stone")),
+    "darkslash": SkillSpec("hardattack", anis=("hardattack1", "hardattack2")),
+    "liftslash": SkillSpec("momentaryslashex", anis=("moonlightslash1", "moonlightslash2")),
+    "liftslash_proj": SkillSpec("momentaryslashex", anis=("moonlightslashfull",)),
+    "saya": SkillSpec("sayaex", images=("readynormal.img", "icenormal.img"), fps=10),
+    "epidemic": SkillSpec("epidemicrasa", images=("rasa.img", "rasa_glow.img"), fps=10),
+    "ghoststep": SkillSpec("ghoststep", anis=(
+        "ghoststepslash/slash1", "ghoststepslash/slash2", "ghoststepslash/skull",
+        "ghoststepslash/dust", "ghoststepslash/move", "ghoststep/appear1", "ghoststep/appear2")),
+    "tombstone": SkillSpec("tombstoneex", images=("stonestartupnormal.img", "stoneendupnormal.img", "explosionnormal125.img"), fps=12),
+    "normalwave": SkillSpec("standalonewave", anis=("normalwaveslash",)),
+    "normalwave_proj": SkillSpec("standalonewave", anis=("normalwave",)),
+    "icewave": SkillSpec("icewaveex", anis=("icewave",)),  # 无独立施放层: 投射物即冰波本体
+    "firewave": SkillSpec("firewave", anis=("firewave", "firewavebig-sword-effect-normal"), images=("firewavefloor.img",), fps=12),
+    "waveeye": SkillSpec("waveeye", anis=("grandwavefullcharge1", "grandwavefullcharge2")),
+    "waveeye_proj": SkillSpec("waveeye", anis=("grandwave",)),
+    "wavespin": SkillSpec("wavespinarea", anis=("releasewave1", "releasewave2")),
+    "vajra": SkillSpec("wavespinarea", anis=(
+        "wavespinarea/createnormal", "wavespinarea/createbeadnormal",
+        "wavespinarea/circle", "wavespinarea/circleback", "wavespinarea/circlefront",
+        "wavespinarea/hold", "wavespinarea/holdfloor", "wavespinarea/holdlight")),
+    # 职业常驻 buff 标识
+    "wavemark": SkillSpec("wavemark", images=("font.img", "wave.img"), fps=10, loop_images=True),
+    "wavemurderous": SkillSpec("wavemurderous", images=("wave.img",), fps=10, loop_images=True),
+    "descentsoul": SkillSpec("descentsoul", images=("descentsoul_00.img", "descentsoul_light.img"), fps=10, loop_images=True),
 }
 
-
-OPTIONAL_SKILL_SPECS = {
-    "illusionslash": SkillSpec("illusionslash", layers=(LayerSpec("illusionslash", "upper"), LayerSpec("illusionslash", "smash"))),
-    "chargecrash": SkillSpec("chargecrash", layers=(LayerSpec("chargecrash", "charge"), LayerSpec("chargecrash", "dash"), LayerSpec("chargecrash", "down-slash"), LayerSpec("chargecrash", "up-slash"), LayerSpec("chargecrash", "dustdash"))),
-    "waveeye": SkillSpec("waveeye", layers=(LayerSpec("waveeye", "wing1"), LayerSpec("waveeye", "wing2"), LayerSpec("waveeye", "attack1"))),
-    "dragonup": SkillSpec("chargecrash", images=("up-slash.img", "dash.img", "dustdash.img")),
-    "revolvingsword": SkillSpec("rapidmoveslash", images=("face.img", "m-02.img", "s-01.img", "s-02.img")),
-    "hiddenblade": SkillSpec("rapidmoveslash", images=("s-01.img", "s-02.img", "m-02.img")),
-    "uppercut": SkillSpec("chargecrash", images=("up-slash.img",)),
-    "mountaincrash": SkillSpec("shockwavearea", images=("wave-opening.img", "wave-explode.img")),
-    "souldrain": SkillSpec("grabblastblood", images=("normal.img", "impact-normal.img", "blood-normal.img")),
-    "bloodseal": SkillSpec("bloodyrave", images=("start-normal.img", "loop-normal.img", "line-normal.img", "lslash-normal.img", "end-normal.img")),
-    "darkslash": SkillSpec("standalonewave", images=("basis_swing.img", "mu-swing.img")),
-    "liftslash": SkillSpec("momentaryslashex", images=("cutfrontdodge.img", "cutbackdodge.img", "bigwavenormal.img")),
-    "saya": SkillSpec("sayaex", images=("readynormal.img", "icenormal.img")),
-    "epidemic": SkillSpec("epidemicrasa", images=("rasa.img", "rasa_glow.img")),
-    "tombstone": SkillSpec("tombstoneex", images=("stonestartupnormal.img", "stoneendupnormal.img", "explosionnormal125.img")),
-    "normalwave": SkillSpec("standalonewave", images=("mu-asura.img", "mu-energy.img", "mu-explode.img")),
-    "icewave": SkillSpec("icewaveex", images=("ice_normal_down.img", "ice_dodge_middle.img")),
-    "firewave": SkillSpec("firewave", images=("fire_normal.img", "blast-front.img", "sword_normal.img")),
-    "vajra": SkillSpec("wavespinarea", images=("action.img", "action_normal.img", "effect.img", "target-effect-light.img")),
-    "wavemark": SkillSpec("wavemark", images=("font.img", "wave.img")),
-    "wavemurderous": SkillSpec("wavemurderous", images=("wave.img",)),
-    "descentsoul": SkillSpec("descentsoul", images=("descentsoul_00.img", "descentsoul_light.img")),
-}
-
-BUILD_SKILL_SPECS = {**SKILL_SPECS, **OPTIONAL_SKILL_SPECS}
+BUILD_SKILL_SPECS = SKILL_SPECS
 
 
 def _candidate_roots(root: Path):

@@ -7,6 +7,12 @@
 > (玩家鬼剑士身体+武器、6 种怪物),实现**精英怪、通关 S/A/B/C 结算、存档扩展**。
 > 本轮进行中:**多张地下城地图 + 每图专属怪组合 + 选图界面**(第五节)。
 
+> **技能还原修复记录(2026-07-02)**:收到反馈“大部分技能没有还原、还有错位”。已定位根因:
+> `assets/skillfx.*` 和 `assets/skill_actions.*` 已覆盖当前 25 个技能动作/特效,但 `index.html` 运行时只给 6 个技能配置了精调 `SKILL_RUNTIME_PROFILE`,
+> 其余技能仍走通用包围盒居中摆放,导致原始 `.ani/.img` 偏移被抹平,看起来缺层或错位。
+> 当前修复进度:已把 25 个玩法技能全部接入 runtime profile,补齐动作帧、位移和特效参数;新增 `origin` 绘制模式保留原始偏移;新增回归测试防止后续技能漏接 profile。
+> 验证进度:21 个 unittest 通过,`tools/verify_skillfx.py assets/skillfx.json` 通过,`node --check /tmp/index-inline.js` 通过;已用无头 Chrome 对 4 职业 × 6 键生成 24 张截图并合成 `/tmp/dnf-skill-shots-all/montage.png`,确认当前技能均能触发可见特效。
+
 ---
 
 ## 一、核心机制改造(最高优先 —— 决定"像不像 DNF")  ✅ 已全部完成
@@ -115,3 +121,16 @@
 - [x] 无头截图验证选图界面 + 各图首房配色/怪物 + 通关结算。已产出截图确认:选图卡片/锁定/推荐等级正常;4 图配色(紫/青/红/绿)、怪物组合、房数(5/6/6/7)各异;结算显示图名+评级。
   - VAAPI 超时解法:Chrome 加 `--disable-features=Vulkan,VaapiVideoDecoder,UseChromeOSDirectVideoDecoder --use-gl=swiftshader`。
   - 调试 URL:`?state=mapsel&shot=blade`(选图界面)、`?shot=blade&map=N&st=idle`(第 N 图首房)、`?shot=blade&map=N&clear=A`(结算)。
+
+---
+
+## 本轮目标:技能与原版逐帧对齐(v3)  ✅ 已完成并验证
+
+> 用户诉求:"对一下当前的技能和原版技能的差异,然后修复,包括动作特效"。
+
+- [x] **破解特效 70ani 完整帧结构**(`tools/ani70.py`):逐帧 img 引用/坐标/延迟/空帧/缩放/RGBA/循环全解;675/675 特效 ani + 161/161 身体 ani 完整解析。
+- [x] **差异审计**(对照 `swordmanskill.lst`+`.skl` 权威技能名):发现 10+ 处素材映射错误(邪光斩、波动爆发、不动明王阵、崩山裂地斩、破军升龙击、崩山击、噬灵鬼斩、满月斩、上挑、地裂、里鬼、拔刀斩)与大量缺失图层(十字斩延时血十字等)。
+- [x] **烘焙管线 v3**(`build_skillfx.py`+`skillfx_config.py`):按原版 ani 图层重建 31 clip,保留逐帧时序/坐标,帧去重(PNG 7.2MB→4.8MB);投射技能拆独立 `_proj` 飞行层(满月/地裂波/邪光刃)。
+- [x] **运行时**(`index.html`):特效按毫秒时间轴逐层播放(空帧延时出场、循环层循环、逐帧缩放/透明),以脚底为原点、与身体同缩放绘制,与原版客户端合成方式一致;删除全部手调摆放参数。
+- [x] **身体动作**:构建切换到新解析器;不动明王阵改用权威 `wavespinareabomb` 时间轴。
+- [x] 28 个单测通过 + `verify_skillfx` + 28 行蒙太奇 + 24 张无头截图(4职业×6技能)复核,无缺帧/错位回归。

@@ -4,6 +4,8 @@
 
 **Goal:** Rebuild the six already-integrated swordman skill effects from the DOF 70 source and tune their in-game character actions toward the original feel.
 
+**2026-07-02 Follow-up Repair Note:** Manual review found that the first pass restored only the six target runtime profiles while most current gameplay skills still used generic effect placement. Root cause: generated `assets/skillfx.*` and `assets/skill_actions.*` covered all 25 gameplay skill `fx` clips, but `index.html` had only six tuned `SKILL_RUNTIME_PROFILE` entries and rendered non-profiled skills by bounding-box center, which discarded original `.ani/.img` offsets and caused visible misalignment. Current repair expands runtime profiles to every gameplay skill and adds an `origin` effect mode for skills that should preserve source offsets. Verification now must include runtime-profile coverage, not only asset coverage.
+
 **Architecture:** Keep the existing static frontend and `assets/skillfx.*` contract, but split the skill-effect extraction rules into a small auditable module. Add metadata checks and montage generation so each regenerated clip can be verified before tuning per-skill action profiles in `index.html`.
 
 **Tech Stack:** Python 3 standard library, existing `tools/pvf.py`, `tools/ani.py`, `tools/dnf_img.py`, Pillow, browser-native JavaScript in `index.html`.
@@ -19,6 +21,7 @@
 - Modify: `index.html` - introduce per-skill action/effect profile data and use it in `spawnSkillFX`, `SKILL_MOVE`, and body-frame selection.
 - Create: `tests/test_skillfx_config.py` - regression tests for path selection, target spec coverage, and bad-frame filtering policy.
 - Create: `tests/test_skillfx_verify.py` - regression tests for metadata validation behavior.
+- Create: `tests/test_skill_runtime_profile.py` - regression tests that every gameplay skill `fx` has a runtime profile and that original-offset rendering remains wired.
 - Modify: `docs/superpowers/specs/2026-07-02-skillfx-original-restoration-design.md` only if implementation discovers a necessary design correction.
 
 ## Task 1: Extract SkillFX Configuration

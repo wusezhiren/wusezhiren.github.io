@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
-from ani_body import parse_body_ani
+from ani70 import parse_ani70
 from pvf import Pvf
 from skillfx_config import OUT_DIR, resolve_source_paths
 
@@ -42,10 +42,10 @@ ACTION_SPECS = {
     "icewave": (ActionPart("shockwaveareacast"),),
     "firewave": (ActionPart("shockwaveareasmash"),),
     "waveeye": (ActionPart("waveeyeattack1"),),
-    # wavespinareabomb is only partially decoded by the current body parser; the
-    # cast action is the reliable original body lead-in for the in-game burst.
+    # 波动爆发=releasewave, 无专属身体动画, 用冲击波施放式作近似
     "wavespin": (ActionPart("shockwaveareacast"),),
-    "vajra": (ActionPart("waveeyeclaw"),),
+    # 不动明王阵=wavespinarea(Acalanatha Array), 权威身体动画 wavespinareabomb
+    "vajra": (ActionPart("wavespinareabomb"),),
 }
 
 def _read_action(pvf, name):
@@ -53,10 +53,11 @@ def _read_action(pvf, name):
     raw = pvf.read(path)
     if raw is None:
         raise KeyError(f"missing body action {path}")
-    parsed = parse_body_ani(raw)
+    parsed = parse_ani70(raw)
     if not parsed or not parsed["frames"]:
         raise ValueError(f"could not parse body action {path}")
-    return parsed["frames"]
+    return [dict(img=f["imgFrame"], x=f["x"], y=f["y"], delay=f["delay"])
+            for f in parsed["frames"] if f["imgIdx"] >= 0]
 
 
 def _normalize_frame(frame):
