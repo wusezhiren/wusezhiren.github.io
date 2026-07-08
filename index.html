@@ -204,59 +204,60 @@ const CLASSES = {
     hp:280, mp:140, speed:3.7, atkMul:1.0, lifesteal:0,
     desc:'均衡剑客,剑气连斩、瞬步突进,无明显短板。',
     skills:[
-      {key:'z',name:'三段斩',    mp:18,cd:60, type:'multi',hits:3,dmg:[10,15],reach:96, color:'#dff6ff', dur:30, ul:1, fx:'tripleslash',   fxScale:0.62,fxYo:64,fxAhead:70},
-      {key:'a',name:'拔刀斩',    mp:26,cd:115,type:'aoe',  dmg:[24,34],ox:60,radius:104,launch:6, color:'#cfefff', dur:26, ul:2, fx:'flashcut',      fxScale:0.72,fxYo:62,fxAhead:96},
-      {key:'s',name:'破军升龙击',mp:22,cd:90, type:'melee',dmg:[20,28],reach:74,launch:14, color:'#bfe6ff', dur:24, ul:3, fx:'dragonup',      fxScale:0.62,fxYo:98,fxAhead:32},
-      {key:'d',name:'猛龙断空斩',mp:26,cd:120,type:'dash', dmg:[22,32],reach:90, color:'#aef', dur:24, dash:17, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
-      {key:'f',name:'幻影剑舞',  mp:40,cd:150,type:'multi',hits:6,dmg:[12,18],reach:104, color:'#eaf6ff', dur:40, ul:5, fx:'illusionslash', fxScale:0.7, fxYo:64,fxAhead:72},
-      {key:'g',name:'里·鬼剑术',mp:55,cd:300,type:'dash', dmg:[30,44],reach:100, color:'#ffffff', dur:34, dash:20, ul:6, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
+      // 数值(mp/cd/dmg/ul)由 tools/build_skill_stats.py 从 DOF 70 原版 Script.pvf 换算, 见 assets/skill_stats.json
+      {key:'z',name:'三段斩',    mp:4, cd:360, type:'multi',hits:3,dmg:[16,19],reach:96, color:'#dff6ff', dur:30, ul:1, fx:'tripleslash',   fxScale:0.62,fxYo:64,fxAhead:70},
+      {key:'a',name:'拔刀斩',    mp:16,cd:900, type:'aoe',  dmg:[122,148],ox:60,radius:104,launch:6, color:'#cfefff', dur:26, ul:3, fx:'flashcut',      fxScale:0.72,fxYo:62,fxAhead:96},
+      {key:'s',name:'破军升龙击',mp:11,cd:600, type:'melee',dmg:[81,99],reach:74,launch:14, color:'#bfe6ff', dur:24, ul:2, fx:'dragonup',      fxScale:0.62,fxYo:98,fxAhead:32},
+      {key:'d',name:'猛龙断空斩',mp:6, cd:1200,type:'dash', dmg:[22,26],reach:90, color:'#aef', dur:24, dash:17, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
+      {key:'f',name:'幻影剑舞',  mp:41,cd:2700,type:'multi',hits:6,dmg:[38,46],reach:104, color:'#eaf6ff', dur:40, ul:6, fx:'illusionslash', fxScale:0.7, fxYo:64,fxAhead:72},
+      {key:'g',name:'里·鬼剑术',mp:30,cd:1200,type:'dash', dmg:[32,40],reach:100, color:'#ffffff', dur:34, dash:20, ul:5, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
     ]},
   berserk: { name:'狂战士', color:'#c0392b', dark:'#6e1f1f', elem:'#ff7a3c',
     hp:380, mp:100, speed:3.5, atkMul:1.15, lifesteal:0.12,
     desc:'高血近战狂徒,攻击吸血,可狂暴翻倍输出,越战越勇。',
     skills:[
-      {key:'z',name:'十字斩',    mp:14,cd:45, type:'melee',dmg:[18,26],reach:86,knock:14, color:'#ff7a5a', dur:22, ul:1, fx:'gorecross',     fxScale:0.62,fxYo:66,fxAhead:72},
-      {key:'a',name:'崩山击',    mp:26,cd:110,type:'dash', dmg:[24,34],reach:90, color:'#ff8c42', dur:24, dash:18, ul:2, fx:'mountaincrash',fxScale:0.6, fxYo:82,fxAhead:48},
-      {key:'s',name:'嗜魂之手',  mp:24,cd:95, type:'melee',dmg:[20,30],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'souldrain',     fxScale:0.6, fxYo:64,fxAhead:64},
-      {key:'d',name:'怒气爆发',  mp:28,cd:120,type:'aoe',  dmg:[22,32],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'frenzy',        fxScale:0.95,fxYo:58,fxAhead:0},
-      {key:'f',name:'嗜魂封魔斩',mp:30,cd:130,type:'melee',dmg:[26,38],reach:92,lifesteal:0.25, color:'#ff5050', dur:26, ul:5, fx:'bloodseal',     fxScale:0.66,fxYo:64,fxAhead:64},
-      {key:'g',name:'崩山裂地斩',mp:55,cd:320,type:'aoe',  dmg:[30,46],ox:50,radius:150,knock:16, color:'#ff2a2a', dur:40, ul:6, fx:'chargecrash',  fxScale:1.0, fxYo:46,fxAhead:50},
+      {key:'z',name:'十字斩',    mp:5, cd:180, type:'melee',dmg:[21,26],reach:86,knock:14, color:'#ff7a5a', dur:22, ul:1, fx:'gorecross',     fxScale:0.62,fxYo:66,fxAhead:72},
+      {key:'a',name:'崩山击',    mp:3, cd:240, type:'dash', dmg:[9,11],reach:90, color:'#ff8c42', dur:24, dash:18, ul:2, fx:'mountaincrash',fxScale:0.6, fxYo:82,fxAhead:48},
+      {key:'s',name:'嗜魂之手',  mp:5, cd:360, type:'melee',dmg:[60,73],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'souldrain',     fxScale:0.6, fxYo:64,fxAhead:64},
+      {key:'d',name:'怒气爆发',  mp:13,cd:960, type:'aoe',  dmg:[43,52],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'frenzy',        fxScale:0.95,fxYo:58,fxAhead:0},
+      {key:'f',name:'嗜魂封魔斩',mp:18,cd:1800,type:'melee',dmg:[115,140],reach:92,lifesteal:0.25, color:'#ff5050', dur:26, ul:5, fx:'bloodseal',     fxScale:0.66,fxYo:64,fxAhead:64},
+      {key:'g',name:'崩山裂地斩',mp:0, hpCost:19,cd:2400,type:'aoe',  dmg:[247,302],ox:50,radius:150,knock:16, color:'#ff2a2a', dur:40, ul:6, fx:'chargecrash',  fxScale:1.0, fxYo:46,fxAhead:50},
     ]},
   spectre: { name:'鬼泣', color:'#7d3cc9', dark:'#3f1d6e', elem:'#b98cff',
     hp:250, mp:150, speed:3.6, atkMul:1.0, lifesteal:0,
     desc:'操纵鬼神之力,鬼影斩击、冰封减速,控场与爆发兼备。',
     skills:[
-      {key:'z',name:'噬灵鬼斩',  mp:14,cd:50, type:'melee',dmg:[16,24],reach:96,launch:8, color:'#b98cff', dur:22, ul:1, fx:'darkslash',  fxScale:0.66,fxYo:62,fxAhead:74},
-      {key:'a',name:'满月斩',    mp:22,cd:85, type:'proj', dmg:[18,26],speed:10,pierce:3, color:'#caa6ff', dur:20, ul:2, fx:'liftslash',  fxScale:0.6, fxYo:56},
-      {key:'s',name:'冰霜之萨亚',mp:24,cd:100,type:'aoe',  dmg:[16,24],ox:60,radius:110,slow:150, color:'#7fdfff', dur:26, ul:3, fx:'saya',       fxScale:0.72,fxYo:58,fxAhead:60},
-      {key:'d',name:'瘟疫之罗刹',mp:30,cd:140,type:'aoe',  dmg:[24,34],ox:70,radius:120, color:'#9b6cff', dur:32, ul:4, fx:'epidemic',   fxScale:0.8, fxYo:78,fxAhead:74},
-      {key:'f',name:'鬼影闪',    mp:26,cd:115,type:'dash', dmg:[20,30],reach:84, color:'#a06cff', dur:22, dash:18, ul:5, fx:'ghoststep',  fxScale:0.72,fxYo:74,fxAhead:48},
-      {key:'g',name:'死亡墓碑',  mp:55,cd:300,type:'aoe',  dmg:[30,44],ox:60,radius:150,launch:9, color:'#d0a6ff', dur:40, ul:6, fx:'tombstone',  fxScale:0.95,fxYo:72,fxAhead:60},
+      {key:'z',name:'噬灵鬼斩',  mp:18,cd:360, type:'melee',dmg:[30,36],reach:96,launch:8, color:'#b98cff', dur:22, ul:2, fx:'darkslash',  fxScale:0.66,fxYo:62,fxAhead:74},
+      {key:'a',name:'满月斩',    mp:5, cd:240, type:'proj', dmg:[28,35],speed:10,pierce:3, color:'#caa6ff', dur:20, ul:1, fx:'liftslash',  fxScale:0.6, fxYo:56},
+      {key:'s',name:'冰霜之萨亚',mp:26,cd:1200,type:'aoe',  dmg:[36,45],ox:60,radius:110,slow:150, color:'#7fdfff', dur:26, ul:3, fx:'saya',       fxScale:0.72,fxYo:58,fxAhead:60},
+      {key:'d',name:'瘟疫之罗刹',mp:12,cd:1800,type:'aoe',  dmg:[145,178],ox:70,radius:120, color:'#9b6cff', dur:32, ul:4, fx:'epidemic',   fxScale:0.8, fxYo:78,fxAhead:74},
+      {key:'f',name:'鬼影闪',    mp:27,cd:1200,type:'dash', dmg:[49,59],reach:84, color:'#a06cff', dur:22, dash:18, ul:6, fx:'ghoststep',  fxScale:0.72,fxYo:74,fxAhead:48},
+      {key:'g',name:'死亡墓碑',  mp:25,cd:1200,type:'aoe',  dmg:[154,188],ox:60,radius:150,launch:9, color:'#d0a6ff', dur:40, ul:5, fx:'tombstone',  fxScale:0.95,fxYo:72,fxAhead:60},
     ]},
   asura: { name:'阿修罗', color:'#16a085', dark:'#0c5a4a', elem:'#7fe0ff',
     hp:230, mp:175, speed:3.4, atkMul:0.95, lifesteal:0,
     desc:'念气与元素的术士,波动剑、冰雹、爆炎,远程范围杀伤之王。',
     skills:[
-      {key:'z',name:'地裂·波动剑',mp:16,cd:50, type:'proj',dmg:[15,22],speed:11,pierce:2, color:'#cfd8e6', dur:18, ul:1, fx:'normalwave', fxScale:0.55,fxYo:42},
-      {key:'a',name:'冰刃·波动剑',mp:22,cd:90, type:'proj',dmg:[16,24],speed:10,pierce:2,slow:150, color:'#7fe0ff', dur:18, ul:2, fx:'icewave',    fxScale:0.7, fxYo:44},
-      {key:'s',name:'爆炎·波动剑',mp:28,cd:120,type:'aoe', dmg:[24,34],ox:90,radius:118,fire:true, color:'#ff9a3c', dur:28, ul:3, fx:'firewave',   fxScale:0.8, fxYo:56,fxAhead:96},
-      {key:'d',name:'邪光斩',    mp:24,cd:95, type:'proj',dmg:[20,28],speed:9,pierce:4,knock:10, color:'#ff5a6a', dur:22, ul:4, fx:'waveeye',    fxScale:0.72,fxYo:56},
-      {key:'f',name:'波动爆发',  mp:28,cd:120,type:'aoe', dmg:[22,32],ox:0,radius:130, color:'#8affe0', dur:28, ul:5, fx:'wavespin',   fxScale:0.9, fxYo:56,fxAhead:0},
-      {key:'g',name:'不动明王阵',mp:55,cd:300,type:'aoe', dmg:[28,42],ox:40,radius:150,launch:6, color:'#ffd24d', dur:42, ul:6, fx:'vajra',      fxScale:0.8, fxYo:82,fxAhead:40},
+      {key:'z',name:'地裂·波动剑',mp:7, cd:120, type:'proj',dmg:[18,21],speed:11,pierce:2, color:'#cfd8e6', dur:18, ul:1, fx:'normalwave', fxScale:0.55,fxYo:42},
+      {key:'a',name:'冰刃·波动剑',mp:5, cd:420, type:'proj',dmg:[27,33],speed:10,pierce:2,slow:150, color:'#7fe0ff', dur:18, ul:4, fx:'icewave',    fxScale:0.7, fxYo:44},
+      {key:'s',name:'爆炎·波动剑',mp:23,cd:900, type:'aoe', dmg:[160,196],ox:90,radius:118,fire:true, color:'#ff9a3c', dur:28, ul:5, fx:'firewave',   fxScale:0.8, fxYo:56,fxAhead:96},
+      {key:'d',name:'邪光斩',    mp:18,cd:600, type:'proj',dmg:[89,109],speed:9,pierce:4,knock:10, color:'#ff5a6a', dur:22, ul:2, fx:'waveeye',    fxScale:0.72,fxYo:56},
+      {key:'f',name:'波动爆发',  mp:15,cd:900, type:'aoe', dmg:[104,128],ox:0,radius:130, color:'#8affe0', dur:28, ul:3, fx:'wavespin',   fxScale:0.9, fxYo:56,fxAhead:0},
+      {key:'g',name:'不动明王阵',mp:56,cd:2700,type:'aoe', dmg:[238,290],ox:40,radius:150,launch:6, color:'#ffd24d', dur:42, ul:6, fx:'vajra',      fxScale:0.8, fxYo:82,fxAhead:40},
     ]},
 };
 const CLASS_KEYS = ['blade','berserk','spectre','asura'];
 // 通用技能: 上挑(所有职业共有, Z 键, 开局可用); 6 个职业技能键位为 Q W E A S D(可拖拽换键)
-const UPPERCUT={key:'z',name:'上挑',type:'melee',dmg:[12,18],reach:80,launch:13,color:'#ffe08a',dur:18,ul:1,fixed:true,fx:'uppercut',fxScale:0.6,fxYo:92,fxAhead:30};
+const UPPERCUT={key:'z',name:'上挑',mp:6,cd:120,type:'melee',dmg:[14,16],reach:80,launch:13,color:'#ffe08a',dur:18,ul:1,fixed:true,fx:'uppercut',fxScale:0.6,fxYo:92,fxAhead:30};
 const SKILL_KEYS=['q','w','e','a','s','d'];
 // 已接入技能的原版还原档案: 统一控制身体帧(pose=动作时间轴缺失时的回退)和位移(move)。
 // 特效摆放不再手调: skillfx v3 携带原版逐帧坐标/延迟, 默认以脚底为原点、与身体同缩放绘制;
 // effect 仅保留 {scale,yo,ahead,follow} 覆盖口(null=全按原版数据)。
 const SKILL_RUNTIME_PROFILE={
-  uppercut:{move:{vx:1.2,rise:9,t:8}, effect:null, pose:[199,200,201,202,203]},
+  uppercut:{move:{vx:1.2,t:8}, effect:null, pose:[199,200,201,202,203]},   // 原版上挑角色不离地, 只挑空敌人
   tripleslash:{move:{vx:3.2,t:'dur'}, effect:null, pose:[2,3,4,5,6,189,190,191,192,193,195,196,197,198]},
   flashcut:{move:{vx:8.0,t:10}, effect:null, pose:[21,22,23,24,25,26,27,28,29,30,31,32]},
-  dragonup:{move:{vx:2.5,rise:12,t:9}, effect:null, pose:[199]},
+  dragonup:{move:{vx:2.5,t:9}, effect:null, pose:[199]},                   // 原版破军升龙击角色贴地前冲上斩, 不起跳
   revolvingsword:{move:null, effect:null, pose:[194,195,196,199,200,201]},
   illusionslash:{move:{vx:4,t:'dur'}, effect:null, pose:[1,10,188,194,199]},
   hiddenblade:{move:null, effect:null, pose:[194,195,196,197,198,188,189,190,191,192,193,1,2,3,4,5,6,11,12,13,14,15,16]},
@@ -681,6 +682,7 @@ class Player extends Fighter {
           if(s.ul>this.level){ spawnText(this.x,this.screenY()-this.h-26,'Lv.'+s.ul+'解锁','#888'); }
           else if(s._cd>0){ }
           else if(this.mp<s.mp){ spawnText(this.x,this.screenY()-this.h-26,'蓝量不足','#6cf'); }
+          else if(s.hpCost&&this.hp<=s.hpCost){ spawnText(this.x,this.screenY()-this.h-26,'血量不足','#f66'); }
           else this.cast(s);
         }
       }
@@ -713,7 +715,8 @@ class Player extends Fighter {
     for(const kk in keys) if(kk.startsWith('__dash_')&&!down(kk.replace('__dash_','')))keys[kk]=false;
   }
   cast(sk){
-    this.mp-=sk.mp; sk._cd=sk.cd; const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
+    this.mp-=sk.mp; if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost);  // 血气技能按原版消耗HP
+    sk._cd=sk.cd; const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
     this.attackTimer=Math.max(8,Math.round(actionDur*this.attackSpeedMul())); sk._castDur=this.attackTimer; this.attackType=sk;
     spawnText(this.x,this.screenY()-this.h-30,sk.name+'!',sk.color);
     Audio2.sfx(sk.type==='ult'?'ult':'skill');
@@ -2161,7 +2164,7 @@ function drawHud(){
   // 技能栏
   const n=player.skills.length, sw=46, gap=8, total=n*sw+(n-1)*gap; let sx=(W-total)/2, sy=H-58;
   for(const s of player.skills){
-    const locked=s.ul>player.level, ready=!locked&&s._cd<=0&&player.mp>=s.mp;
+    const locked=s.ul>player.level, ready=!locked&&s._cd<=0&&player.mp>=s.mp&&(!s.hpCost||player.hp>s.hpCost);
     ctx.fillStyle='#11151c'; ctx.fillRect(sx,sy,sw,sw);
     ctx.strokeStyle=ready?s.color:'#444'; ctx.lineWidth=2; ctx.strokeRect(sx,sy,sw,sw);
     ctx.globalAlpha=locked?0.12:(ready?0.35:0.2); ctx.fillStyle=locked?'#444':s.color; ctx.fillRect(sx+3,sy+3,sw-6,sw-6); ctx.globalAlpha=1;

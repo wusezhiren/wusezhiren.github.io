@@ -13,6 +13,18 @@
 > 当前修复进度:已把 25 个玩法技能全部接入 runtime profile,补齐动作帧、位移和特效参数;新增 `origin` 绘制模式保留原始偏移;新增回归测试防止后续技能漏接 profile。
 > 验证进度:21 个 unittest 通过,`tools/verify_skillfx.py assets/skillfx.json` 通过,`node --check /tmp/index-inline.js` 通过;已用无头 Chrome 对 4 职业 × 6 键生成 24 张截图并合成 `/tmp/dnf-skill-shots-all/montage.png`,确认当前技能均能触发可见特效。
 
+> **技能数值还原记录(2026-07-08)**:视觉对齐后,技能的 MP/冷却/伤害/解锁顺序仍是随手拍的数值,与原版差异巨大
+> (如原版三段斩冷却 6 秒、幻影剑舞/不动明王阵 45 秒,网页里只有 1~2.5 秒)。本轮新增:
+> - `tools/skl.py`:Script.pvf 二进制技能脚本(.skl)解码器(字符串表/本地化 .str/[dungeon] 分段);
+> - `tools/build_skill_stats.py`:从 DOF 70 客户端 Script.pvf 提取 25 个玩法技能的权威数值,
+>   换算后写入 `assets/skill_stats.json`(冷却 1:1 换算成帧;MP 按"原版消耗 ÷ 原版蓝量池(140+25×(lv-1)) × 职业游戏蓝量池";
+>   伤害以上挑为锚按原版 lv1 攻击力比例折算,多段技均分;解锁顺序 ul 按原版 required level 排名);
+> - `index.html`:CLASSES/UPPERCUT 全部 25 技换用上表数值;崩山裂地斩按原版改为 0 MP + 消耗 HP(新增 hpCost 机制:
+>   施放扣血、血量不足禁放、技能栏就绪判定);上挑补上原版 MP6/冷却2秒(顺带修复其无 mp 字段导致扣蓝 NaN 的隐患);
+> - `tests/test_skill_stats.py`:回归测试锁定 index.html 与 skill_stats.json 一致。
+> 验证:32 个 unittest 通过;`node --check` 通过;无头 Chrome 实测 三段斩/破军升龙击/波动爆发/死亡墓碑/瘟疫之罗刹 正常施放,
+> 崩山裂地斩正确扣 HP 不扣 MP。
+
 ---
 
 ## 一、核心机制改造(最高优先 —— 决定"像不像 DNF")  ✅ 已全部完成

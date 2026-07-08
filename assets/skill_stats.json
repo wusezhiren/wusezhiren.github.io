@@ -1,0 +1,447 @@
+{
+ "uppercut": {
+  "name": "上挑",
+  "skl": "upperslash",
+  "reqLv": 1,
+  "origMpLv1": 6,
+  "origCdMs": 2000,
+  "origDmgUnits": 100,
+  "hits": 1,
+  "mp": 6,
+  "cd": 120,
+  "dmg": [
+   14,
+   16
+  ],
+  "_ul_req": 1
+ },
+ "classes": {
+  "blade": [
+   {
+    "name": "三段斩",
+    "skl": "tripleslash",
+    "reqLv": 10,
+    "origMpLv1": 10,
+    "origCdMs": 6000,
+    "origDmgUnits": 350,
+    "hits": 3,
+    "mp": 4,
+    "cd": 360,
+    "dmg": [
+     16,
+     19
+    ],
+    "key": "z",
+    "ul": 1
+   },
+   {
+    "name": "拔刀斩",
+    "skl": "momentaryslash",
+    "reqLv": 35,
+    "origMpLv1": 110,
+    "origCdMs": 15000,
+    "origDmgUnits": 900,
+    "hits": 1,
+    "mp": 16,
+    "cd": 900,
+    "dmg": [
+     122,
+     148
+    ],
+    "key": "a",
+    "ul": 3
+   },
+   {
+    "name": "破军升龙击",
+    "skl": "chargecrash",
+    "reqLv": 30,
+    "origMpLv1": 70,
+    "origCdMs": 10000,
+    "origDmgUnits": 600,
+    "hits": 1,
+    "mp": 11,
+    "cd": 600,
+    "dmg": [
+     81,
+     99
+    ],
+    "key": "s",
+    "ul": 2
+   },
+   {
+    "name": "猛龙断空斩",
+    "skl": "rapidmoveslash",
+    "reqLv": 40,
+    "origMpLv1": 50,
+    "origCdMs": 20000,
+    "origDmgUnits": 800,
+    "hits": 5,
+    "mp": 6,
+    "cd": 1200,
+    "dmg": [
+     22,
+     26
+    ],
+    "estimate": "后续%×2段+终结%(段数上限列缺失)",
+    "key": "d",
+    "ul": 4
+   },
+   {
+    "name": "幻影剑舞",
+    "skl": "illusionslash",
+    "reqLv": 45,
+    "origMpLv1": 360,
+    "origCdMs": 45000,
+    "origDmgUnits": 1674,
+    "hits": 6,
+    "mp": 41,
+    "cd": 2700,
+    "dmg": [
+     38,
+     46
+    ],
+    "estimate": "斩击%×6+剑气两段",
+    "key": "f",
+    "ul": 6
+   },
+   {
+    "name": "里·鬼剑术",
+    "skl": "weaponcombo",
+    "reqLv": 20,
+    "origMpLv1": 6,
+    "origCdMs": 0,
+    "origDmgUnits": 1200,
+    "hits": 5,
+    "mp": 30,
+    "cd": 1200,
+    "dmg": [
+     32,
+     40
+    ],
+    "estimate": "原版为武器连击被动, 无主动数值; 按游戏大招定位在猛龙与幻影之间取值",
+    "key": "g",
+    "ul": 5
+   }
+  ],
+  "berserk": [
+   {
+    "name": "十字斩",
+    "skl": "gorecross",
+    "reqLv": 10,
+    "origMpLv1": 17,
+    "origCdMs": 3000,
+    "origDmgUnits": 156,
+    "hits": 1,
+    "mp": 5,
+    "cd": 180,
+    "dmg": [
+     21,
+     26
+    ],
+    "key": "z",
+    "ul": 1
+   },
+   {
+    "name": "崩山击",
+    "skl": "hopsmash",
+    "reqLv": 15,
+    "origMpLv1": 17,
+    "origCdMs": 4000,
+    "origDmgUnits": 336,
+    "hits": 5,
+    "mp": 3,
+    "cd": 240,
+    "dmg": [
+     9,
+     11
+    ],
+    "key": "a",
+    "ul": 2
+   },
+   {
+    "name": "嗜魂之手",
+    "skl": "grabblastblood",
+    "reqLv": 25,
+    "origMpLv1": 37,
+    "origCdMs": 6000,
+    "origDmgUnits": 445,
+    "hits": 1,
+    "mp": 5,
+    "cd": 360,
+    "dmg": [
+     60,
+     73
+    ],
+    "key": "s",
+    "ul": 3
+   },
+   {
+    "name": "怒气爆发",
+    "skl": "bloodblast",
+    "reqLv": 30,
+    "origMpLv1": 110,
+    "origCdMs": 16000,
+    "origDmgUnits": 315,
+    "hits": 1,
+    "mp": 13,
+    "cd": 960,
+    "dmg": [
+     43,
+     52
+    ],
+    "estimate": "本体+冲击波(中间列为常量参数)",
+    "key": "d",
+    "ul": 4
+   },
+   {
+    "name": "嗜魂封魔斩",
+    "skl": "bloodyrave",
+    "reqLv": 35,
+    "origMpLv1": 180,
+    "origCdMs": 30000,
+    "origDmgUnits": 850,
+    "hits": 1,
+    "mp": 18,
+    "cd": 1800,
+    "dmg": [
+     115,
+     140
+    ],
+    "key": "f",
+    "ul": 5
+   },
+   {
+    "name": "崩山裂地斩",
+    "skl": "outragebreak",
+    "reqLv": 45,
+    "origMpLv1": 0,
+    "origCdMs": 40000,
+    "origDmgUnits": 1828,
+    "hits": 1,
+    "mp": 0,
+    "cd": 2400,
+    "dmg": [
+     247,
+     302
+    ],
+    "hpCost": 19,
+    "key": "g",
+    "ul": 6
+   }
+  ],
+  "spectre": [
+   {
+    "name": "噬灵鬼斩",
+    "skl": "hardattackcharge",
+    "reqLv": 25,
+    "origMpLv1": 17,
+    "origCdMs": 6000,
+    "origDmgUnits": 220,
+    "hits": 1,
+    "mp": 18,
+    "cd": 360,
+    "dmg": [
+     30,
+     36
+    ],
+    "key": "z",
+    "ul": 2
+   },
+   {
+    "name": "满月斩",
+    "skl": "moonlightslashfull",
+    "reqLv": 20,
+    "origMpLv1": 17,
+    "origCdMs": 4000,
+    "origDmgUnits": 210,
+    "hits": 1,
+    "mp": 5,
+    "cd": 240,
+    "dmg": [
+     28,
+     35
+    ],
+    "estimate": "月形斩击+单手上斩",
+    "key": "a",
+    "ul": 1
+   },
+   {
+    "name": "冰霜之萨亚",
+    "skl": "saya",
+    "reqLv": 30,
+    "origMpLv1": 150,
+    "origCdMs": 20000,
+    "origDmgUnits": 270,
+    "hits": 1,
+    "mp": 26,
+    "cd": 1200,
+    "dmg": [
+     36,
+     45
+    ],
+    "estimate": "90%/秒×约3秒接触(原版为持续冰冻场)",
+    "key": "s",
+    "ul": 3
+   },
+   {
+    "name": "瘟疫之罗刹",
+    "skl": "epidemicrasa",
+    "reqLv": 35,
+    "origMpLv1": 80,
+    "origCdMs": 30000,
+    "origDmgUnits": 1077,
+    "hits": 1,
+    "mp": 12,
+    "cd": 1800,
+    "dmg": [
+     145,
+     178
+    ],
+    "estimate": "中毒总伤×50%(原版为持续20秒召唤物)",
+    "key": "d",
+    "ul": 4
+   },
+   {
+    "name": "鬼影闪",
+    "skl": "ghoststepslash",
+    "reqLv": 40,
+    "origMpLv1": 200,
+    "origCdMs": 20000,
+    "origDmgUnits": 1800,
+    "hits": 5,
+    "mp": 27,
+    "cd": 1200,
+    "dmg": [
+     49,
+     59
+    ],
+    "key": "f",
+    "ul": 6
+   },
+   {
+    "name": "死亡墓碑",
+    "skl": "tombstonerain",
+    "reqLv": 35,
+    "origMpLv1": 165,
+    "origCdMs": 20000,
+    "origDmgUnits": 1140,
+    "hits": 1,
+    "mp": 25,
+    "cd": 1200,
+    "dmg": [
+     154,
+     188
+    ],
+    "estimate": "单墓碑魔攻×约6次命中",
+    "key": "g",
+    "ul": 5
+   }
+  ],
+  "asura": [
+   {
+    "name": "地裂·波动剑",
+    "skl": "normalwave",
+    "reqLv": 5,
+    "origMpLv1": 10,
+    "origCdMs": 2000,
+    "origDmgUnits": 130,
+    "hits": 1,
+    "mp": 7,
+    "cd": 120,
+    "dmg": [
+     18,
+     21
+    ],
+    "estimate": "魔攻%+固定加成",
+    "key": "z",
+    "ul": 1
+   },
+   {
+    "name": "冰刃·波动剑",
+    "skl": "icewave",
+    "reqLv": 30,
+    "origMpLv1": 27,
+    "origCdMs": 7000,
+    "origDmgUnits": 200,
+    "hits": 1,
+    "mp": 5,
+    "cd": 420,
+    "dmg": [
+     27,
+     33
+    ],
+    "key": "a",
+    "ul": 4
+   },
+   {
+    "name": "爆炎·波动剑",
+    "skl": "firewave",
+    "reqLv": 35,
+    "origMpLv1": 130,
+    "origCdMs": 15000,
+    "origDmgUnits": 1188,
+    "hits": 1,
+    "mp": 23,
+    "cd": 900,
+    "dmg": [
+     160,
+     196
+    ],
+    "key": "s",
+    "ul": 5
+   },
+   {
+    "name": "邪光斩",
+    "skl": "grandwave",
+    "reqLv": 20,
+    "origMpLv1": 65,
+    "origCdMs": 10000,
+    "origDmgUnits": 658,
+    "hits": 1,
+    "mp": 18,
+    "cd": 600,
+    "dmg": [
+     89,
+     109
+    ],
+    "key": "d",
+    "ul": 2
+   },
+   {
+    "name": "波动爆发",
+    "skl": "releasewave",
+    "reqLv": 25,
+    "origMpLv1": 65,
+    "origCdMs": 15000,
+    "origDmgUnits": 774,
+    "hits": 1,
+    "mp": 15,
+    "cd": 900,
+    "dmg": [
+     104,
+     128
+    ],
+    "key": "f",
+    "ul": 3
+   },
+   {
+    "name": "不动明王阵",
+    "skl": "wavespinarea",
+    "reqLv": 45,
+    "origMpLv1": 400,
+    "origCdMs": 45000,
+    "origDmgUnits": 1760,
+    "hits": 1,
+    "mp": 56,
+    "cd": 2700,
+    "dmg": [
+     238,
+     290
+    ],
+    "estimate": "焰珠×8跳+爆炸",
+    "key": "g",
+    "ul": 6
+   }
+  ]
+ }
+}
