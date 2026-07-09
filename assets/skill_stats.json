@@ -58,13 +58,14 @@
     "origMpLv1": 70,
     "origCdMs": 10000,
     "origDmgUnits": 600,
-    "hits": 1,
+    "hits": 2,
     "mp": 11,
     "cd": 600,
     "dmg": [
-     81,
-     99
+     40,
+     50
     ],
+    "estimate": "冲撞+上斩两段(原版突进后上挑)",
     "key": "s",
     "ul": 2
    },
@@ -92,15 +93,15 @@
     "reqLv": 45,
     "origMpLv1": 360,
     "origCdMs": 45000,
-    "origDmgUnits": 1674,
-    "hits": 6,
+    "origDmgUnits": 2394,
+    "hits": 10,
     "mp": 41,
     "cd": 2700,
     "dmg": [
-     38,
-     46
+     32,
+     40
     ],
-    "estimate": "斩击%×6+剑气两段",
+    "estimate": "斩击%×10(原版lv1最小斩击次数10)+剑气两段",
     "key": "f",
     "ul": 6
    },
@@ -131,13 +132,14 @@
     "origMpLv1": 17,
     "origCdMs": 3000,
     "origDmgUnits": 156,
-    "hits": 1,
+    "hits": 2,
     "mp": 5,
     "cd": 180,
     "dmg": [
-     21,
-     26
+     11,
+     13
     ],
+    "estimate": "斩击+血十字两段(原版血十字为独立判定)",
     "key": "z",
     "ul": 1
    },
@@ -148,13 +150,14 @@
     "origMpLv1": 17,
     "origCdMs": 4000,
     "origDmgUnits": 336,
-    "hits": 5,
+    "hits": 2,
     "mp": 3,
     "cd": 240,
     "dmg": [
-     9,
-     11
+     23,
+     28
     ],
+    "estimate": "跃劈+冲击波(原版多段攻击2~3次取最小值)",
     "key": "a",
     "ul": 2
    },
@@ -182,14 +185,14 @@
     "origMpLv1": 110,
     "origCdMs": 16000,
     "origDmgUnits": 315,
-    "hits": 1,
+    "hits": 4,
     "mp": 13,
     "cd": 960,
     "dmg": [
-     43,
-     52
+     11,
+     13
     ],
-    "estimate": "本体+冲击波(中间列为常量参数)",
+    "estimate": "本体+冲击波; 原版对周围敌人攻击4次",
     "key": "d",
     "ul": 4
    },
@@ -216,15 +219,16 @@
     "reqLv": 45,
     "origMpLv1": 0,
     "origCdMs": 40000,
-    "origDmgUnits": 1828,
-    "hits": 1,
+    "origDmgUnits": 1548,
+    "hits": 7,
     "mp": 0,
     "cd": 2400,
     "dmg": [
-     247,
-     302
+     30,
+     36
     ],
-    "hpCost": 19,
+    "hpCost": 64,
+    "estimate": "挥斩+冲击波+龟裂; 原版龟裂多段6次→挥斩1+龟裂6共7段; HP消耗为 level info 第4列(原400)",
     "key": "g",
     "ul": 6
    }
@@ -254,14 +258,14 @@
     "origMpLv1": 17,
     "origCdMs": 4000,
     "origDmgUnits": 210,
-    "hits": 1,
+    "hits": 2,
     "mp": 5,
     "cd": 240,
     "dmg": [
-     28,
-     35
+     14,
+     17
     ],
-    "estimate": "月形斩击+单手上斩",
+    "estimate": "月形斩击+单手上斩两段(原版为近身弧月挑空斩, 非投射)",
     "key": "a",
     "ul": 1
    },
@@ -272,14 +276,14 @@
     "origMpLv1": 150,
     "origCdMs": 20000,
     "origDmgUnits": 270,
-    "hits": 1,
+    "hits": 6,
     "mp": 26,
     "cd": 1200,
     "dmg": [
-     36,
-     45
+     6,
+     7
     ],
-    "estimate": "90%/秒×约3秒接触(原版为持续冰冻场)",
+    "estimate": "90%/秒×约3秒接触; 原版4.5秒持续冰冻场→6跳",
     "key": "s",
     "ul": 3
    },
@@ -290,14 +294,14 @@
     "origMpLv1": 80,
     "origCdMs": 30000,
     "origDmgUnits": 1077,
-    "hits": 1,
+    "hits": 6,
     "mp": 12,
     "cd": 1800,
     "dmg": [
-     145,
-     178
+     24,
+     30
     ],
-    "estimate": "中毒总伤×50%(原版为持续20秒召唤物)",
+    "estimate": "中毒总伤×50%; 原版持续毒场→6跳",
     "key": "d",
     "ul": 4
    },
@@ -325,14 +329,14 @@
     "origMpLv1": 165,
     "origCdMs": 20000,
     "origDmgUnits": 1140,
-    "hits": 1,
+    "hits": 6,
     "mp": 25,
     "cd": 1200,
     "dmg": [
-     154,
-     188
+     26,
+     31
     ],
-    "estimate": "单墓碑魔攻×约6次命中",
+    "estimate": "单墓碑魔攻×约6次命中; 原版3秒墓碑雨→6跳",
     "key": "g",
     "ul": 5
    }
@@ -380,13 +384,14 @@
     "origMpLv1": 130,
     "origCdMs": 15000,
     "origDmgUnits": 1188,
-    "hits": 1,
+    "hits": 2,
     "mp": 23,
     "cd": 900,
     "dmg": [
-     160,
-     196
+     80,
+     98
     ],
+    "estimate": "火波+爆炸两段",
     "key": "s",
     "ul": 5
    },
@@ -431,14 +436,14 @@
     "origMpLv1": 400,
     "origCdMs": 45000,
     "origDmgUnits": 1760,
-    "hits": 1,
+    "hits": 9,
     "mp": 56,
     "cd": 2700,
     "dmg": [
-     238,
-     290
+     26,
+     32
     ],
-    "estimate": "焰珠×8跳+爆炸",
+    "estimate": "焰珠×8跳+爆炸; 原版4秒旋转阵→9跳均分",
     "key": "g",
     "ul": 6
    }

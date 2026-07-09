@@ -180,7 +180,7 @@ const Audio2 = {
 };
 
 /* ===================== 特效池 ===================== */
-const particles=[], floatTexts=[], effects=[], projectiles=[], enemyProjectiles=[], pickups=[], hazards=[], lootFly=[];
+const particles=[], floatTexts=[], effects=[], projectiles=[], enemyProjectiles=[], pickups=[], hazards=[], lootFly=[], fields=[];
 function spawnHit(x,y,color='#fff',n=8){ for(let i=0;i<n;i++) particles.push({x,y,vx:rand(-4,4),vy:rand(-5,-1),life:rand(15,30),max:30,color,r:rand(2,4)}); }
 function spawnText(x,y,txt,color,big){ floatTexts.push({x,y,txt,color,life:42,big:big||false}); }
 function addEffect(e){ effects.push(Object.assign({life:e.max,t:0},e)); }
@@ -206,44 +206,44 @@ const CLASSES = {
     skills:[
       // 数值(mp/cd/dmg/ul)由 tools/build_skill_stats.py 从 DOF 70 原版 Script.pvf 换算, 见 assets/skill_stats.json
       {key:'z',name:'三段斩',    mp:4, cd:360, type:'multi',hits:3,dmg:[16,19],reach:96, color:'#dff6ff', dur:30, ul:1, fx:'tripleslash',   fxScale:0.62,fxYo:64,fxAhead:70},
-      {key:'a',name:'拔刀斩',    mp:16,cd:900, type:'aoe',  dmg:[122,148],ox:60,radius:104,launch:6, color:'#cfefff', dur:26, ul:3, fx:'flashcut',      fxScale:0.72,fxYo:62,fxAhead:96},
-      {key:'s',name:'破军升龙击',mp:11,cd:600, type:'melee',dmg:[81,99],reach:74,launch:14, color:'#bfe6ff', dur:24, ul:2, fx:'dragonup',      fxScale:0.62,fxYo:98,fxAhead:32},
+      {key:'a',name:'拔刀斩',    mp:16,cd:900, type:'aoe',  dmg:[122,148],ox:60,radius:104,knock:18, color:'#cfefff', dur:26, ul:3, fx:'flashcut',      fxScale:0.72,fxYo:62,fxAhead:96}, // 原版横斩击飞, 不挑空
+      {key:'s',name:'破军升龙击',mp:11,cd:600, type:'melee',hits:2,dmg:[40,50],reach:74,launch:14, color:'#bfe6ff', dur:24, ul:2, fx:'dragonup',      fxScale:0.62,fxYo:98,fxAhead:32}, // 原版冲撞+上斩两段
       {key:'d',name:'猛龙断空斩',mp:6, cd:1200,type:'dash', dmg:[22,26],reach:90, color:'#aef', dur:24, dash:17, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
-      {key:'f',name:'幻影剑舞',  mp:41,cd:2700,type:'multi',hits:6,dmg:[38,46],reach:104, color:'#eaf6ff', dur:40, ul:6, fx:'illusionslash', fxScale:0.7, fxYo:64,fxAhead:72},
+      {key:'f',name:'幻影剑舞',  mp:41,cd:2700,type:'multi',hits:10,dmg:[32,40],reach:104, color:'#eaf6ff', dur:48, ul:6, fx:'illusionslash', fxScale:0.7, fxYo:64,fxAhead:72}, // 原版lv1最小斩击10次
       {key:'g',name:'里·鬼剑术',mp:30,cd:1200,type:'dash', dmg:[32,40],reach:100, color:'#ffffff', dur:34, dash:20, ul:5, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
     ]},
   berserk: { name:'狂战士', color:'#c0392b', dark:'#6e1f1f', elem:'#ff7a3c',
     hp:380, mp:100, speed:3.5, atkMul:1.15, lifesteal:0.12,
     desc:'高血近战狂徒,攻击吸血,可狂暴翻倍输出,越战越勇。',
     skills:[
-      {key:'z',name:'十字斩',    mp:5, cd:180, type:'melee',dmg:[21,26],reach:86,knock:14, color:'#ff7a5a', dur:22, ul:1, fx:'gorecross',     fxScale:0.62,fxYo:66,fxAhead:72},
-      {key:'a',name:'崩山击',    mp:3, cd:240, type:'dash', dmg:[9,11],reach:90, color:'#ff8c42', dur:24, dash:18, ul:2, fx:'mountaincrash',fxScale:0.6, fxYo:82,fxAhead:48},
+      {key:'z',name:'十字斩',    mp:5, cd:180, type:'melee',hits:2,dmg:[11,13],reach:86,knock:14, color:'#ff7a5a', dur:22, ul:1, fx:'gorecross',     fxScale:0.62,fxYo:66,fxAhead:72}, // 原版斩击+血十字两段
+      {key:'a',name:'崩山击',    mp:3, cd:240, type:'aoe',  hits:2,dmg:[23,28],ox:55,radius:105,knock:12,hitDelay:12, color:'#ff8c42', dur:24, ul:2, fx:'mountaincrash',fxScale:0.6, fxYo:82,fxAhead:48}, // 原版跃劈砸地+冲击波, 非直线突进
       {key:'s',name:'嗜魂之手',  mp:5, cd:360, type:'melee',dmg:[60,73],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'souldrain',     fxScale:0.6, fxYo:64,fxAhead:64},
-      {key:'d',name:'怒气爆发',  mp:13,cd:960, type:'aoe',  dmg:[43,52],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'frenzy',        fxScale:0.95,fxYo:58,fxAhead:0},
-      {key:'f',name:'嗜魂封魔斩',mp:18,cd:1800,type:'melee',dmg:[115,140],reach:92,lifesteal:0.25, color:'#ff5050', dur:26, ul:5, fx:'bloodseal',     fxScale:0.66,fxYo:64,fxAhead:64},
-      {key:'g',name:'崩山裂地斩',mp:0, hpCost:19,cd:2400,type:'aoe',  dmg:[247,302],ox:50,radius:150,knock:16, color:'#ff2a2a', dur:40, ul:6, fx:'chargecrash',  fxScale:1.0, fxYo:46,fxAhead:50},
+      {key:'d',name:'怒气爆发',  mp:13,cd:960, type:'aoe',  hits:4,dmg:[11,13],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'frenzy',        fxScale:0.95,fxYo:58,fxAhead:0}, // 原版对周围敌人攻击4次
+      {key:'f',name:'嗜魂封魔斩',mp:18,cd:1800,type:'melee',dmg:[115,140],reach:92,lifesteal:0.25,pull:150,hitDelay:14, color:'#ff5050', dur:26, ul:5, fx:'bloodseal',     fxScale:0.66,fxYo:64,fxAhead:64}, // 原版先吸附再斩
+      {key:'g',name:'崩山裂地斩',mp:0, hpCost:64,cd:2400,type:'aoe',  hits:7,dmg:[30,36],ox:50,radius:150,knock:16,hitDelay:10, color:'#ff2a2a', dur:40, ul:6, fx:'chargecrash',  fxScale:1.0, fxYo:46,fxAhead:50}, // 原版挥斩+龟裂6段; HP消耗为原版第4列400
     ]},
   spectre: { name:'鬼泣', color:'#7d3cc9', dark:'#3f1d6e', elem:'#b98cff',
     hp:250, mp:150, speed:3.6, atkMul:1.0, lifesteal:0,
     desc:'操纵鬼神之力,鬼影斩击、冰封减速,控场与爆发兼备。',
     skills:[
       {key:'z',name:'噬灵鬼斩',  mp:18,cd:360, type:'melee',dmg:[30,36],reach:96,launch:8, color:'#b98cff', dur:22, ul:2, fx:'darkslash',  fxScale:0.66,fxYo:62,fxAhead:74},
-      {key:'a',name:'满月斩',    mp:5, cd:240, type:'proj', dmg:[28,35],speed:10,pierce:3, color:'#caa6ff', dur:20, ul:1, fx:'liftslash',  fxScale:0.6, fxYo:56},
-      {key:'s',name:'冰霜之萨亚',mp:26,cd:1200,type:'aoe',  dmg:[36,45],ox:60,radius:110,slow:150, color:'#7fdfff', dur:26, ul:3, fx:'saya',       fxScale:0.72,fxYo:58,fxAhead:60},
-      {key:'d',name:'瘟疫之罗刹',mp:12,cd:1800,type:'aoe',  dmg:[145,178],ox:70,radius:120, color:'#9b6cff', dur:32, ul:4, fx:'epidemic',   fxScale:0.8, fxYo:78,fxAhead:74},
+      {key:'a',name:'满月斩',    mp:5, cd:240, type:'multi',hits:2,dmg:[14,17],reach:92,launch:10, color:'#caa6ff', dur:20, ul:1, fx:'liftslash',  fxScale:0.6, fxYo:56}, // 原版近身弧月挑空斩(月斩+上斩), 非投射
+      {key:'s',name:'冰霜之萨亚',mp:26,cd:1200,type:'field',hits:6,dmg:[6,7],ox:60,radius:110,fdur:270,interval:45,freeze:80, color:'#7fdfff', dur:26, ul:3, fx:'saya',       fxScale:0.72,fxYo:58,fxAhead:60}, // 原版4.5秒持续冰冻鬼阵
+      {key:'d',name:'瘟疫之罗刹',mp:12,cd:1800,type:'field',hits:6,dmg:[24,30],ox:70,radius:120,fdur:270,interval:45,slow:120, color:'#9b6cff', dur:32, ul:4, fx:'epidemic',   fxScale:0.8, fxYo:78,fxAhead:74}, // 原版持续毒场+鬼神附体减速
       {key:'f',name:'鬼影闪',    mp:27,cd:1200,type:'dash', dmg:[49,59],reach:84, color:'#a06cff', dur:22, dash:18, ul:6, fx:'ghoststep',  fxScale:0.72,fxYo:74,fxAhead:48},
-      {key:'g',name:'死亡墓碑',  mp:25,cd:1200,type:'aoe',  dmg:[154,188],ox:60,radius:150,launch:9, color:'#d0a6ff', dur:40, ul:5, fx:'tombstone',  fxScale:0.95,fxYo:72,fxAhead:60},
+      {key:'g',name:'死亡墓碑',  mp:25,cd:1200,type:'field',hits:6,dmg:[26,31],ox:60,radius:150,fdur:180,interval:30,launch:9, color:'#d0a6ff', dur:40, ul:5, fx:'tombstone',  fxScale:0.95,fxYo:72,fxAhead:60}, // 原版3秒墓碑雨逐个砸落挑空
     ]},
   asura: { name:'阿修罗', color:'#16a085', dark:'#0c5a4a', elem:'#7fe0ff',
     hp:230, mp:175, speed:3.4, atkMul:0.95, lifesteal:0,
     desc:'念气与元素的术士,波动剑、冰雹、爆炎,远程范围杀伤之王。',
     skills:[
       {key:'z',name:'地裂·波动剑',mp:7, cd:120, type:'proj',dmg:[18,21],speed:11,pierce:2, color:'#cfd8e6', dur:18, ul:1, fx:'normalwave', fxScale:0.55,fxYo:42},
-      {key:'a',name:'冰刃·波动剑',mp:5, cd:420, type:'proj',dmg:[27,33],speed:10,pierce:2,slow:150, color:'#7fe0ff', dur:18, ul:4, fx:'icewave',    fxScale:0.7, fxYo:44},
-      {key:'s',name:'爆炎·波动剑',mp:23,cd:900, type:'aoe', dmg:[160,196],ox:90,radius:118,fire:true, color:'#ff9a3c', dur:28, ul:5, fx:'firewave',   fxScale:0.8, fxYo:56,fxAhead:96},
+      {key:'a',name:'冰刃·波动剑',mp:5, cd:420, type:'proj',dmg:[27,33],speed:10,pierce:7,freeze:100, color:'#7fe0ff', dur:18, ul:4, fx:'icewave',    fxScale:0.7, fxYo:44}, // 原版7根冰柱一线冰冻(非减速)
+      {key:'s',name:'爆炎·波动剑',mp:23,cd:900, type:'aoe', hits:2,dmg:[80,98],ox:90,radius:118,fire:true, color:'#ff9a3c', dur:28, ul:5, fx:'firewave',   fxScale:0.8, fxYo:56,fxAhead:96}, // 原版火波+爆炸两段
       {key:'d',name:'邪光斩',    mp:18,cd:600, type:'proj',dmg:[89,109],speed:9,pierce:4,knock:10, color:'#ff5a6a', dur:22, ul:2, fx:'waveeye',    fxScale:0.72,fxYo:56},
-      {key:'f',name:'波动爆发',  mp:15,cd:900, type:'aoe', dmg:[104,128],ox:0,radius:130, color:'#8affe0', dur:28, ul:3, fx:'wavespin',   fxScale:0.9, fxYo:56,fxAhead:0},
-      {key:'g',name:'不动明王阵',mp:56,cd:2700,type:'aoe', dmg:[238,290],ox:40,radius:150,launch:6, color:'#ffd24d', dur:42, ul:6, fx:'vajra',      fxScale:0.8, fxYo:82,fxAhead:40},
+      {key:'f',name:'波动爆发',  mp:15,cd:900, type:'aoe', dmg:[104,128],ox:0,radius:130,knock:16, color:'#8affe0', dur:28, ul:3, fx:'wavespin',   fxScale:0.9, fxYo:56,fxAhead:0}, // 原版强僵直击退
+      {key:'g',name:'不动明王阵',mp:56,cd:2700,type:'field',hits:9,dmg:[26,32],ox:40,radius:150,fdur:240,interval:26,launch:6, color:'#ffd24d', dur:42, ul:6, fx:'vajra',      fxScale:0.8, fxYo:82,fxAhead:40}, // 原版4秒旋转焰珠阵8跳+爆炸
     ]},
 };
 const CLASS_KEYS = ['blade','berserk','spectre','asura'];
@@ -257,16 +257,16 @@ const SKILL_RUNTIME_PROFILE={
   uppercut:{move:{vx:1.2,t:8}, effect:null, pose:[199,200,201,202,203]},   // 原版上挑角色不离地, 只挑空敌人
   tripleslash:{move:{vx:3.2,t:'dur'}, effect:null, pose:[2,3,4,5,6,189,190,191,192,193,195,196,197,198]},
   flashcut:{move:{vx:8.0,t:10}, effect:null, pose:[21,22,23,24,25,26,27,28,29,30,31,32]},
-  dragonup:{move:{vx:2.5,t:9}, effect:null, pose:[199]},                   // 原版破军升龙击角色贴地前冲上斩, 不起跳
-  revolvingsword:{move:null, effect:null, pose:[194,195,196,199,200,201]},
+  dragonup:{move:{vx:5,t:12}, effect:null, pose:[199]},                    // 原版破军升龙击贴地突进(700px)后上斩, 不起跳
+  revolvingsword:{move:{vx:0,t:1,rise:5.5}, effect:null, pose:[194,195,196,199,200,201]}, // 原版猛龙断空斩带Y轴跃起(X位移由 dashTimer 承担)
   illusionslash:{move:{vx:4,t:'dur'}, effect:null, pose:[1,10,188,194,199]},
   hiddenblade:{move:null, effect:null, pose:[194,195,196,197,198,188,189,190,191,192,193,1,2,3,4,5,6,11,12,13,14,15,16]},
   gorecross:{move:{vx:2.2,t:'dur'}, effect:null, pose:[10,11,12,13,14,15,200,201,202,203]},
-  mountaincrash:{move:null, effect:null, pose:[125,126,127,204]},
+  mountaincrash:{move:{vx:4.5,t:12,rise:6.5}, effect:null, pose:[125,126,127,204]}, // 原版跃劈: 跳跃距离150px/高度120px后砸地
   souldrain:{move:{vx:2.2,t:10}, effect:null, pose:[159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175]},
   frenzy:{move:null, effect:null, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
-  bloodseal:{move:{vx:4.5,t:14}, effect:null, pose:[164,175]},
-  chargecrash:{move:{vx:9,t:18}, effect:null, pose:[124,125,126,127]},
+  bloodseal:{move:{vx:2,t:8}, effect:null, pose:[164,175]},                // 原版为吸附敌人到身前, 自身位移小
+  chargecrash:{move:{vx:5,t:14,rise:7}, effect:null, pose:[124,125,126,127]}, // 原版前进130px+跳跃150px后砸地裂地
   darkslash:{move:{vx:4,t:'dur'}, effect:null, pose:[139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156]},
   liftslash:{move:{vx:1.4,t:'dur'}, effect:null, pose:[194,201,202,203,203,203,33,34,35,36,37,38,39,40,41]},
   saya:{move:null, effect:null, pose:[75,76,77]},
@@ -286,6 +286,8 @@ const SKILL_MOVE={
   tripleslash:SKILL_RUNTIME_PROFILE.tripleslash.move,
   flashcut:SKILL_RUNTIME_PROFILE.flashcut.move,
   dragonup:SKILL_RUNTIME_PROFILE.dragonup.move,
+  revolvingsword:SKILL_RUNTIME_PROFILE.revolvingsword.move,
+  mountaincrash:SKILL_RUNTIME_PROFILE.mountaincrash.move,
   illusionslash:SKILL_RUNTIME_PROFILE.illusionslash.move,
   gorecross:SKILL_RUNTIME_PROFILE.gorecross.move,
   souldrain:SKILL_RUNTIME_PROFILE.souldrain.move,
@@ -363,7 +365,7 @@ class Fighter {
     this.dir=o.dir||1; this.hp=o.hp; this.maxhp=o.hp;
     this.speed=o.speed||3; this.color=o.color; this.dark=o.dark||'#333';
     this.dead=false; this.hurt=0; this.attackTimer=0; this.attackType=null;
-    this.knock={x:0,y:0}; this.state='idle'; this.flash=0; this.walkPhase=0; this.slow=0;
+    this.knock={x:0,y:0}; this.state='idle'; this.flash=0; this.walkPhase=0; this.slow=0; this.freeze=0;
   }
   get onGround(){ return this.z<=0.01; }
   applyKnock(){
@@ -403,6 +405,7 @@ class Projectile {
         let dmg=Math.round(rand(this.sk.dmg[0],this.sk.dmg[1])*player.dmgMul()*(crit?1.8:1));
         e.takeDamage(dmg,this.dir,9,crit); comboHit(dmg,crit);
         if(this.sk.slow) e.slow=this.sk.slow;
+        if(this.sk.freeze) e.freeze=Math.max(e.freeze,this.sk.freeze);
         if(this.sk.launch){ e.vz=this.sk.launch; e.launched=true; }
         shake=Math.max(shake,4);
         if(this.hit.size>=this.pierce){ this.life=0; break; }
@@ -440,6 +443,45 @@ class EnemyProjectile {
     ctx.save(); ctx.strokeStyle='#ffcf6a'; ctx.lineWidth=3; ctx.beginPath();
     ctx.moveTo(this.x,y-30); ctx.lineTo(this.x-Math.sign(this.vx)*14,y-30); ctx.stroke();
     ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(this.x,y-30,3,0,7); ctx.fill(); ctx.restore();
+  }
+}
+
+/* ===================== 技能持续场(原版持续型技能: 冰霜之萨亚/瘟疫之罗刹/死亡墓碑/不动明王阵) ===================== */
+class SkillField {
+  constructor(p,sk){
+    this.sk=sk; this.dir=p.dir;
+    this.x=p.x+p.dir*(sk.ox||0); this.y=p.y;
+    this.radius=sk.radius||120;
+    this.life=sk.fdur||180; this.interval=sk.interval||30;
+    this.tick=Math.min(this.interval,8);        // 首跳略延迟, 与施放动作衔接
+  }
+  update(){
+    this.life--;
+    if(--this.tick<=0){ this.tick=this.interval; this.pulse(); }
+    if(this.life%3===0) particles.push({x:this.x+rand(-0.8,0.8)*this.radius,y:this.y+rand(-14,14),
+      vx:0,vy:rand(-2.2,-0.8),life:rand(14,26),max:26,color:this.sk.color,r:rand(2,4)});
+  }
+  pulse(){ // 周期判定: 原版持续场按伤害间隔跳伤害, 附带冰冻/减速/浮空
+    const sk=this.sk; let hitAny=false;
+    for(const e of enemies){
+      if(e.dead)continue;
+      if(Math.abs(e.x-this.x)>this.radius||Math.abs(e.y-this.y)>this.radius*0.6||e.z>90)continue;
+      const crit=Math.random()<player.crit;
+      const dmg=Math.round(rand(sk.dmg[0],sk.dmg[1])*player.dmgMul()*(crit?1.8:1));
+      e.takeDamage(dmg,Math.sign(e.x-this.x)||this.dir,sk.knock||4,crit); comboHit(dmg,crit);
+      if(sk.launch){ e.vz=Math.max(e.vz,sk.launch); e.launched=true; }
+      if(sk.slow) e.slow=Math.max(e.slow,sk.slow);
+      if(sk.freeze) e.freeze=Math.max(e.freeze,sk.freeze);
+      spawnHit(e.x,e.screenY()-40,sk.color,6); hitAny=true;
+    }
+    if(hitAny) shake=Math.max(shake,3);
+  }
+  draw(){ // 地面阵法圈, 存续期间脉动
+    const a=Math.min(1,this.life/30)*(0.22+0.08*Math.sin(performance.now()/110));
+    ctx.save(); ctx.globalAlpha=a; ctx.fillStyle=this.sk.color;
+    ctx.beginPath(); ctx.ellipse(this.x,this.y,this.radius,this.radius*0.42,0,0,7); ctx.fill();
+    ctx.globalAlpha=Math.min(1,this.life/30)*0.55; ctx.strokeStyle=this.sk.color; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.ellipse(this.x,this.y,this.radius,this.radius*0.42,0,0,7); ctx.stroke(); ctx.restore();
   }
 }
 
@@ -727,15 +769,30 @@ class Player extends Fighter {
       if(mv.rise&&this.onGround) this.vz=mv.rise; }
     if(sk.type==='buff'){ this.buff={atk:sk.buff.atk,time:sk.buff.time,regen:sk.buff.regen||0}; return; }
     if(sk.type==='proj'){ this.pendingProj={sk,delay:8}; return; }
+    // 多段技原版形态: 中间段仅微击退锁住敌人连斩, 最后一段才吃 knock 击退
     if(sk.type==='dash'){ this.dashTimer=sk.dash; this.invuln=Math.max(sk.dur,18);
-      for(let i=0;i<5;i++) this.skillHits.push({delay:i*3+2,sk,reach:sk.reach||84,radius:0,ox:30}); return; }
+      for(let i=0;i<5;i++) this.skillHits.push({delay:i*3+2,sk,reach:sk.reach||84,radius:0,ox:30,kb:i<4?2:(sk.knock||12)}); return; }
+    if(sk.type==='field'){ fields.push(new SkillField(this,sk)); return; }   // 持续场: 原版持续型技能在施放点驻留跳伤害
+    if(sk.pull) this.skillHits.push({delay:3,sk,pull:true,radius:sk.pull,ox:sk.ox||50}); // 吸附(原版嗜魂封魔斩): 先拉近再斩
     const segs=sk.hits||1;
-    for(let i=0;i<segs;i++) this.skillHits.push({delay:6+i*4,sk,reach:sk.reach,radius:sk.radius,ox:sk.ox||0});
+    for(let i=0;i<segs;i++) this.skillHits.push({delay:(sk.hitDelay||6)+i*(sk.hitGap||4),sk,reach:sk.reach,radius:sk.radius,ox:sk.ox||0,
+      kb:i<segs-1?2:(sk.knock||12)});
     if(sk.fire){ const fx2=this.x+this.dir*(sk.ox||0);
       for(let i=0;i<16;i++) particles.push({x:fx2+rand(-50,50),y:this.y-rand(0,70),vx:rand(-2,2),vy:rand(-5,-1),life:rand(18,36),max:36,color:i%2?'#ff9a3c':'#ffcf4d',r:rand(3,7)}); }
   }
   resolveHit(hit){
     const sk=hit.sk; let box;
+    if(hit.pull){ // 吸附: 把范围内敌人拖到身前(原版嗜魂封魔斩吸附后发动斩击)
+      const cx=this.x+this.dir*(hit.ox||0);
+      for(const e of enemies){
+        if(e.dead)continue;
+        if(Math.abs(e.x-cx)<hit.radius && Math.abs(e.y-this.y)<hit.radius*0.6){
+          e.knock.x=(this.x+this.dir*46-e.x)*0.3; e.knock.y=(this.y-e.y)*0.25;
+          spawnHit(e.x,e.screenY()-40,sk.color,3);
+        }
+      }
+      return;
+    }
     if(hit.radius){ const cx=this.x+this.dir*(hit.ox||0); box={x:cx,y:this.y,w:hit.radius*2,depth:hit.radius}; }
     else { const reach=hit.reach||80; box={x:this.x+this.dir*(this.w/2+reach/2+(hit.ox||0)*0.4),y:this.y,w:reach,depth:this.depth+18}; }
     let healed=0; const ls=(sk.lifesteal||this.cls.lifesteal||0);
@@ -744,9 +801,10 @@ class Player extends Fighter {
       if(aabb(box,e)&&Math.abs(this.z-e.z)<72){
         const crit=Math.random()<this.crit;
         let dmg=Math.round(rand(sk.dmg[0],sk.dmg[1])*this.dmgMul()*(crit?1.8:1));
-        const real=e.takeDamage(dmg,this.dir,sk.knock||12,crit); comboHit(dmg,crit);
+        const real=e.takeDamage(dmg,this.dir,hit.kb!=null?hit.kb:(sk.knock||12),crit); comboHit(dmg,crit);
         if(sk.launch){ e.vz=Math.max(e.vz,sk.launch); e.launched=true; }
         if(sk.slow) e.slow=sk.slow;
+        if(sk.freeze) e.freeze=Math.max(e.freeze,sk.freeze);
         if(ls) healed+=real*ls;
         spawnHit(e.x,e.screenY()-40,sk.color,8); shake=Math.max(shake,sk.type==='ult'?10:6);
       }
@@ -818,6 +876,11 @@ class Enemy extends Fighter {
     if(this.slow>0)this.slow--;
     if(this.getupProtect>0)this.getupProtect--;
     if(this.juggle>0)this.juggle--;
+    if(this.freeze>0){ // 冰冻(原版冰霜之萨亚/冰刃波动剑): 完全定身, 不移动不攻击, 仍可被打
+      this.freeze--; this.applyKnock(); this.physics();
+      if(this.launched && this.onGround && this.vz<=0){ this.launched=false; this.juggle=0; this.airCombo=0; }
+      return;
+    }
     if(this.knockdown>0){
       this.knockdown--; this.applyKnock(); this.physics();
       if(this.knockdown<=0){ this.getupProtect=34; this.airCombo=0; spawnText(this.x,this.screenY()-this.h-8,'起身保护','#8ab4ff'); addEffect({type:'aura',x:this.x,y:this.y,color:'#8ab4ff',max:24,r0:10,r1:62}); }
@@ -913,6 +976,11 @@ class Enemy extends Fighter {
     }
     if(this.slow>0){ ctx.save(); ctx.globalAlpha=0.4; ctx.fillStyle='#7fdfff';
       ctx.beginPath(); ctx.ellipse(this.x,this.y,this.w*0.6,12,0,0,7); ctx.fill(); ctx.restore(); }
+    if(this.freeze>0){ // 冰封外壳
+      ctx.save(); ctx.globalAlpha=0.35; ctx.fillStyle='#bfeaff';
+      ctx.beginPath(); ctx.ellipse(this.x,this.screenY()-this.h*0.5,this.w*0.62,this.h*0.55,0,0,7); ctx.fill();
+      ctx.globalAlpha=0.55; ctx.strokeStyle='#7fdfff'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(this.x,this.screenY()-this.h*0.5,this.w*0.62,this.h*0.55,0,0,7); ctx.stroke(); ctx.restore(); }
     if(this.fuse>0){ ctx.save(); ctx.globalAlpha=0.6; ctx.fillStyle='#ffe14d';
       ctx.beginPath(); ctx.arc(this.x,this.screenY()-this.h-8,6+Math.sin(performance.now()/40)*2,0,7); ctx.fill(); ctx.restore(); }
     if((this.attackTimer>14)||(this.chargeState===1)){ ctx.save(); ctx.globalAlpha=0.5; ctx.fillStyle='#ff5050';
@@ -1588,12 +1656,12 @@ function getSkillPose(cls, sk, prog, legH, bodyH){
   const L=legH, B=BH, t=prog, sh=-(L+B*0.75);
   const P=o=>Object.assign({rax:14,ray:sh,lax:-12,lay:sh},o);
   let arch;
-  if(sk.launch && sk.type!=='aoe' && sk.type!=='proj') arch='slashUp';            // 上挑(挑空)
+  if(sk.launch && sk.type!=='aoe' && sk.type!=='proj' && sk.type!=='field') arch='slashUp'; // 上挑(挑空)
   else if(sk.type==='proj')  arch='cast';                                          // 投射:收手→推出
   else if(sk.type==='dash')  arch='thrust';                                        // 突进刺
   else if(sk.type==='buff')  arch='channel';                                       // 蓄力:双拳上举
   else if(sk.type==='ult')   arch='burst';                                         // 大招:蓄力→张开
-  else if(sk.type==='aoe')   arch = sk.ox>40 ? (sk.launch?'slashDown':'cast') : 'burst';
+  else if(sk.type==='aoe'||sk.type==='field') arch = sk.ox>40 ? (sk.launch?'slashDown':'cast') : 'burst';
   else if(sk.type==='multi') arch='slashWide';                                     // 连斩:大横扫
   else                       arch='slashWide';                                     // 普通近战
   switch(arch){
@@ -1878,14 +1946,16 @@ function spawnSkillFX(p, sk){
     const prof=SKILL_RUNTIME_PROFILE[sk.fx]?.effect;
     const scale=prof?.scale ?? SPR_SCALE;
     const aheadPx=prof?.ahead ?? 0, yo=prof?.yo ?? 0;
-    // follow=true: 特效锚定施法者当前身位(突进/起跳跟随, 含 SKILL_MOVE 位移技); 范围/大招落在施放点。
-    const follow=prof?.follow ?? (!!SKILL_MOVE[sk.fx] || !(sk.type==='aoe'||sk.type==='ult'));
+    // follow=true: 出招期间贴身(突进/起跳跟随, 含 SKILL_MOVE 位移技); 范围/大招/投射/持续场落在施放点。
+    const follow=prof?.follow ?? (!!SKILL_MOVE[sk.fx] || !(sk.type==='aoe'||sk.type==='ult'||sk.type==='field'||sk.type==='proj'));
     const durMs=fxClipInfo(sk.fx).dur;
+    const ticks=sk.type==='field' ? (sk.fdur||180)                      // 持续场: 特效循环播满驻留时长(原版持续型特效本为循环层)
+                                  : Math.max(12,Math.round(durMs/1000*LOGIC_HZ));
     addEffect({type:'spr', clip:sk.fx, x:x+dir*aheadPx, y, sy:p.screenY(), dir, scale, yo, ahead:aheadPx, follow,
-               max:Math.max(12,Math.round(durMs/1000*LOGIC_HZ)), alpha:1});
+               bindT:p.attackTimer, loop:sk.type==='field', max:ticks, alpha:1});
   }
   // 地面/范围技能补一道地面冲击波(矢量), 增强打击感
-  if(sk.type==='aoe'||sk.type==='ult')
+  if(sk.type==='aoe'||sk.type==='ult'||sk.type==='field')
     addEffect({type:'quake',x:x+dir*(sk.ox||0),y,r:sk.radius||120,n:8,max:24,color:sk.color,color2:'#fff'});
 }
 
@@ -1896,9 +1966,10 @@ function drawEffects(){
     const p=e.t/e.max; ctx.save();
     if(e.type==='spr'){ // 客户端真实技能特效精灵(多图层, 原版逐帧时序/坐标)
       const a=p>0.9?(1-p)/0.1:1;
-      let ex=e.x, ey=(e.sy!=null?e.sy:e.y)-(e.yo||0);
-      if(e.follow && player && !player.dead){ ex=player.x+e.dir*(e.ahead||0); ey=player.screenY()-(e.yo||0); } // 跟随施法者身位(含突进/起跳)
-      drawFXClipLayers(e.clip, e.t*(1000/LOGIC_HZ), ex, ey, e.scale, e.dir, (e.alpha||1)*a);
+      if(e.follow && player && !player.dead && e.t<=(e.bindT!=null?e.bindT:e.max)){
+        e.x=player.x+e.dir*(e.ahead||0); e.sy=player.screenY(); } // 仅出招期间跟身位; 出招结束锚定原地, 特效不再随人漂移
+      const ex=e.x, ey=(e.sy!=null?e.sy:e.y)-(e.yo||0);
+      drawFXClipLayers(e.clip, e.t*(1000/LOGIC_HZ), ex, ey, e.scale, e.dir, (e.alpha||1)*a, e.loop);
       ctx.restore(); continue; }
     if(e.type==='ring'){ const r=e.r0+(e.r1-e.r0)*p;
       ctx.globalAlpha=(1-p)*0.8; ctx.strokeStyle=e.color; ctx.lineWidth=8*(1-p)+2;
@@ -2472,7 +2543,7 @@ function wrapText(txt,cx,y,maxw,lh){ const chars=txt.split(''); let line='',yy=y
 let player, enemies=[], dungeon=1, dungeonId=0, mapIndex=0, room=1, gameState='menu';
 let door=null, transition=0, bossIntro=0, bossGate=false;
 const ROOMS_PER_DUNGEON=6; // 1~5 普通房, 6 = Boss 房
-function resetPools(){ particles.length=0;floatTexts.length=0;effects.length=0;projectiles.length=0;enemyProjectiles.length=0;pickups.length=0;hazards.length=0;lootFly.length=0; }
+function resetPools(){ particles.length=0;floatTexts.length=0;effects.length=0;projectiles.length=0;enemyProjectiles.length=0;pickups.length=0;hazards.length=0;lootFly.length=0;fields.length=0; }
 function startGame(clsKey){
   player=new Player(clsKey);
   enemies=[]; resetPools();
@@ -2727,6 +2798,7 @@ function update(){
   updateCam();
   for(const e of enemies)e.update();
   for(const p of projectiles)p.update();
+  for(const f of fields)f.update();
   for(const p of enemyProjectiles)p.update();
   for(const h of hazards)h.update();
   for(const pk of pickups)pk.update();
@@ -2734,6 +2806,7 @@ function update(){
   for(const e of enemies) if(e.dead&&!e._counted){ e._counted=true; dunStats.kills++; score+=Math.round(e.conf.exp*1.5*(e.elite?2:1)); player.gainExp(e.conf.exp*(e.elite?2:1)); dropLoot(e); Audio2.sfx('die'); spawnHit(e.x,e.screenY()-40,'#ffcf4d',12); }
   enemies=enemies.filter(e=>!(e.dead&&(e._t=(e._t||0)+1)>30));
   for(let i=projectiles.length-1;i>=0;i--) if(projectiles[i].life<=0)projectiles.splice(i,1);
+  for(let i=fields.length-1;i>=0;i--) if(fields[i].life<=0)fields.splice(i,1);
   for(let i=enemyProjectiles.length-1;i>=0;i--) if(enemyProjectiles[i].life<=0)enemyProjectiles.splice(i,1);
   for(let i=hazards.length-1;i>=0;i--) if(hazards[i].life<=0)hazards.splice(i,1);
   for(let i=pickups.length-1;i>=0;i--) if(pickups[i].life<=0)pickups.splice(i,1);
@@ -2798,6 +2871,7 @@ function render(){
   drawBackground();
   if(door) drawDoor();
   for(const h of hazards)h.draw();
+  for(const f of fields)f.draw();       // 持续场地面阵法(压在实体之下)
   for(const pk of pickups)pk.draw();
   const ents=[player,...enemies].sort((a,b)=>a.y-b.y);
   for(const e of ents){ if(e.dead&&e._t>2){ctx.save();ctx.globalAlpha=clamp(1-(e._t/30),0,1);e.draw();ctx.restore();} else e.draw(); }

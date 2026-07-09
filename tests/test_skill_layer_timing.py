@@ -35,7 +35,10 @@ class SkillLayerTimingTests(unittest.TestCase):
 
     def test_effect_lifetime_comes_from_original_clip_duration(self):
         self.assertIn('const durMs=fxClipInfo(sk.fx).dur;', HTML)
-        self.assertIn('max:Math.max(12,Math.round(durMs/1000*LOGIC_HZ))', HTML)
+        # 普通技能取原版剪辑时长; 持续场(field)循环播满驻留时长 fdur
+        self.assertIn('Math.max(12,Math.round(durMs/1000*LOGIC_HZ))', HTML)
+        self.assertIn("sk.type==='field' ? (sk.fdur||180)", HTML)
+        self.assertIn("loop:sk.type==='field'", HTML)
 
 
 if __name__ == '__main__':
