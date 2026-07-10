@@ -7,10 +7,10 @@
   'use strict';
 
   const availability = {
-    blade: { status: 'available' },
-    berserk: { status: 'available' },
-    spectre: { status: 'coming-soon', label: '暂未开放' },
-    asura: { status: 'coming-soon', label: '暂未开放' },
+    blade: Object.freeze({ status: 'available' }),
+    berserk: Object.freeze({ status: 'available' }),
+    spectre: Object.freeze({ status: 'coming-soon', label: '暂未开放' }),
+    asura: Object.freeze({ status: 'coming-soon', label: '暂未开放' }),
   };
 
   function classAvailability(key) {

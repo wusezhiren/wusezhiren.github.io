@@ -2500,7 +2500,7 @@ function drawSelect(){
   ctx.fillStyle='#9aa6b8'; ctx.font='13px sans-serif'; ctx.fillText('← → 选择    Enter/空格/数字键 确认    Esc 返回',W/2,84);
   const N=CLASS_KEYS.length, gap=24, ch=250;
   const cw=Math.min(200,(W-40-(N-1)*gap)/N), total=N*cw+(N-1)*gap, x0=(W-total)/2, y0=118;
-  CLASS_KEYS.forEach((ck,i)=>{ const c=CLASSES[ck], availability=classAvailability(ck), x=x0+i*(cw+gap), sel=i===selIndex;
+  CLASS_KEYS.forEach((ck,i)=>{ const c=CLASSES[ck], availability=classAvailability(ck)||{label:'暂未开放'}, x=x0+i*(cw+gap), sel=i===selIndex;
     ctx.save(); if(!canStartClass(ck)) ctx.globalAlpha=0.45;
     ctx.fillStyle=sel?'#1c2330':'#11151c'; ctx.fillRect(x,y0,cw,ch);
     ctx.strokeStyle=sel?c.color:'#333';ctx.lineWidth=sel?4:2;ctx.strokeRect(x,y0,cw,ch);
@@ -2718,7 +2718,7 @@ function update(){
     const N=CLASS_KEYS.length;
     if(pressed('arrowleft')){selIndex=(selIndex+N-1)%N;Audio2.sfx('ui');}
     if(pressed('arrowright')){selIndex=(selIndex+1)%N;Audio2.sfx('ui');}
-    if(pressed('escape')){gameState='menu';return;}
+    if(pressed('escape')){classSelectMessage='';gameState='menu';return;}
     for(let i=1;i<=Math.min(9,N);i++) if(pressed(''+i)){selIndex=i-1;startGame(CLASS_KEYS[selIndex]);return;}
     if(pressed('enter')||pressed(' ')){startGame(CLASS_KEYS[selIndex]);return;}
     return;
