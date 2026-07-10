@@ -31,8 +31,10 @@
 <script src="assets/monsters.meta.js"></script>
 <script src="assets/skillfx.meta.js"></script>
 <script src="assets/skill_actions.meta.js"></script>
+<script src="src/classes/availability.js"></script>
 <script>
 "use strict";
+const {classAvailability,canStartClass}=DOF70.classes;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
@@ -2441,7 +2443,7 @@ function drawShop(){
 }
 
 /* ===================== 主菜单 / 选职业 / 帮助 ===================== */
-let menuIndex=0, selIndex=0;
+let menuIndex=0, selIndex=0, classSelectMessage='';
 function getMenu(){
   const m=[];
   if(Save.data.run){
@@ -2498,7 +2500,8 @@ function drawSelect(){
   ctx.fillStyle='#9aa6b8'; ctx.font='13px sans-serif'; ctx.fillText('← → 选择    Enter/空格/数字键 确认    Esc 返回',W/2,84);
   const N=CLASS_KEYS.length, gap=24, ch=250;
   const cw=Math.min(200,(W-40-(N-1)*gap)/N), total=N*cw+(N-1)*gap, x0=(W-total)/2, y0=118;
-  CLASS_KEYS.forEach((ck,i)=>{ const c=CLASSES[ck], x=x0+i*(cw+gap), sel=i===selIndex;
+  CLASS_KEYS.forEach((ck,i)=>{ const c=CLASSES[ck], availability=classAvailability(ck), x=x0+i*(cw+gap), sel=i===selIndex;
+    ctx.save(); if(!canStartClass(ck)) ctx.globalAlpha=0.45;
     ctx.fillStyle=sel?'#1c2330':'#11151c'; ctx.fillRect(x,y0,cw,ch);
     ctx.strokeStyle=sel?c.color:'#333';ctx.lineWidth=sel?4:2;ctx.strokeRect(x,y0,cw,ch);
     drawShadow(x+cw/2,y0+162,30);
@@ -2506,7 +2509,10 @@ function drawSelect(){
     ctx.fillStyle=c.color;ctx.font='bold 22px sans-serif';ctx.fillText(c.name,x+cw/2,y0+182);
     ctx.fillStyle='#cfd8e6';ctx.font='12px sans-serif'; wrapText(c.desc,x+cw/2,y0+204,cw-24,16);
     ctx.fillStyle='#8a93a6';ctx.font='11px sans-serif';ctx.fillText('HP '+c.hp+'  MP '+c.mp,x+cw/2,y0+ch-12);
-    ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.fillText('['+(i+1)+']',x+cw/2,y0+22); });
+    ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.fillText('['+(i+1)+']',x+cw/2,y0+22);
+    if(availability.label){ ctx.fillStyle='#ffcf4d';ctx.font='bold 16px sans-serif';ctx.fillText(availability.label,x+cw/2,y0+ch-34); }
+    ctx.restore(); });
+  if(classSelectMessage){ ctx.fillStyle='#ff8c42';ctx.font='bold 16px sans-serif';ctx.fillText(classSelectMessage,W/2,H-60); }
   ctx.textAlign='left';
 }
 function drawHelp(){
@@ -2545,11 +2551,17 @@ let door=null, transition=0, bossIntro=0, bossGate=false;
 const ROOMS_PER_DUNGEON=6; // 1~5 普通房, 6 = Boss 房
 function resetPools(){ particles.length=0;floatTexts.length=0;effects.length=0;projectiles.length=0;enemyProjectiles.length=0;pickups.length=0;hazards.length=0;lootFly.length=0;fields.length=0; }
 function startGame(clsKey){
+  if(!canStartClass(clsKey)){
+    player=null; gameState='select'; classSelectMessage=classAvailability(clsKey)?.label||'无效职业，无法开始游戏';
+    return false;
+  }
+  classSelectMessage='';
   player=new Player(clsKey);
   enemies=[]; resetPools();
   dungeonId=0; dungeon=1; room=1; score=0; shake=0; hitstop=0; combo={count:0,dmg:0,timer:0};
   door=null; transition=0; mapIndex=Math.min(Save.data.unlocked||0,DUNGEONS.length-1);
   gameState='mapsel'; Audio2.ensure(); Audio2.stopBgm();
+  return true;
 }
 function beginDungeon(id){
   dungeonId=clamp(id,0,DUNGEONS.length-1); dungeon=dungeonId+1; room=1; clearInfo=null;
@@ -2570,6 +2582,11 @@ function serializeRun(){
 function clearRun(){ if(Save.data.run){ Save.data.run=null; Save.save(); } }
 function continueGame(){
   const r=Save.data.run; if(!r){ gameState='select'; return; }
+  if(!canStartClass(r.clsKey)){
+    player=null; gameState='select'; classSelectMessage=classAvailability(r.clsKey)?.label||'存档职业无效，无法继续游戏';
+    return false;
+  }
+  classSelectMessage='';
   player=new Player(r.clsKey); enemies=[]; resetPools();
   Object.assign(player,{ level:r.level, exp:r.exp, expNext:r.expNext, gold:r.gold,
     _crit:r.crit, shopAtk:r.shopAtk, buy:r.buy||{atk:0,hp:0,mp:0,crit:0},
@@ -2585,6 +2602,7 @@ function continueGame(){
   door=null; transition=0; bossIntro=0; bossGate=false;
   gameState='play'; Audio2.ensure(); Audio2.startBgm(); enterRoom();
   dunStats.gold0=player.gold;
+  return true;
 }
 function difficulty(){ return currentDungeonDef().recommendedLv + room + dungeonId*2; } // 地图推荐等级 + 房间推进
 function enterRoom(){
@@ -2935,11 +2953,11 @@ loop();
 // 调试: ?shot=blade&st=run 自动开局便于无头截图(正式使用无影响)
 (function(){const q=new URLSearchParams(location.search);
   if(q.has('cont')){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); continueGame(); }; g(); return; }
-  if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); startGame(q.get('shot')||'blade'); gameState='mapsel'; }; g(); return; }
+  if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); if(!startGame(q.get('shot')||'blade')) return; }; g(); return; }
   if(!q.has('shot'))return;
   const cls=q.get('shot')||'blade', st=q.get('st')||'idle';
   const go=()=>{ if(!SPR.ready) return setTimeout(go,50);
-    startGame(cls); beginDungeon(parseInt(q.get('map')||'0',10)||0); player.x=120; updateCam();
+    if(!startGame(cls)) return; beginDungeon(parseInt(q.get('map')||'0',10)||0); player.x=120; updateCam();
     if(q.get('mon')){ // 调试: 一字排开所有怪物种类
       enemies.length=0; const kinds=['gob','orc','archer','charger','bomber','boss'];
       kinds.forEach((kk,i)=>{ const e=new Enemy(260+i*120,(GROUND_TOP+GROUND_BOT)/2,kk,1); e.aggro=false; e.dir=-1;
