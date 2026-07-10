@@ -236,6 +236,28 @@ test('leaving class selection clears stale messages', () => {
   assert.equal(context.classSelectMessage, '');
 });
 
+test('global 0 key clears stale class messages when returning to menu', () => {
+  let keydown;
+  const context = runtimeContext({
+    gameState: 'select',
+    classSelectMessage: '暂未开放',
+    menuIndex: 2,
+    window: {
+      addEventListener(type, handler) {
+        if (type === 'keydown') keydown = handler;
+      },
+    },
+  });
+  const start = html.indexOf("window.addEventListener('keydown',e=>{", html.indexOf('/* ===================== 全局按键'));
+  const end = html.indexOf('\n});', start) + 4;
+  vm.runInContext(html.slice(start, end), context);
+
+  keydown({ key: '0' });
+  assert.equal(context.gameState, 'menu');
+  assert.equal(context.menuIndex, 0);
+  assert.equal(context.classSelectMessage, '');
+});
+
 test('keyboard, save, and URL entries route through guarded starters', () => {
   const selection = html.match(/if\(gameState==='select'\)\{(.*?)\n\s*return;\n\s*\}/s)[1];
   assert.match(selection, /pressed\(''\+i\).*startGame\(CLASS_KEYS\[selIndex\]\)/s);

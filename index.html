@@ -2937,7 +2937,7 @@ function loop(now){
 window.addEventListener('keydown',e=>{
   Audio2.ensure();
   const k=e.key.toLowerCase();
-  if(k==='0'){ if(gameState==='play'||gameState==='pause')Audio2.startBgm(); gameState='menu'; menuIndex=0; }
+  if(k==='0'){ if(gameState==='play'||gameState==='pause')Audio2.startBgm(); classSelectMessage=''; gameState='menu'; menuIndex=0; }
   if(k==='p'){ if(gameState==='play')gameState='pause'; else if(gameState==='pause')gameState='play'; }
   if(k==='m'){ Audio2.toggleMute(); }
   if(k==='i'&&player&&gameState==='play'){
