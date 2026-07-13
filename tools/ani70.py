@@ -16,7 +16,7 @@ KNOWN_KW = {0: 1, 1: 1, 7: 8, 8: 4, 9: 4, 10: 1, 11: 2, 12: 4, 16: 'str', 24: 2,
 _CAND = (4, 2, 8, 1, 0, 'str')
 
 
-def _parse(b, kw_sizes, unknown_out=None):
+def _parse(b, kw_sizes, unknown_out=None, strict=False):
     if not b or len(b) < 8:
         return None
     fc, ic = struct.unpack_from('<HH', b, 0)
@@ -109,7 +109,8 @@ def _parse(b, kw_sizes, unknown_out=None):
                     attrs.setdefault(kw, []).append(v)
             frames.append(dict(imgIdx=max(0, img_idx) if img_idx >= 0 else -1,
                                imgFrame=img_frame, x=px, y=py,
-                               delay=max(10, delay), attrs=attrs, boxes=boxes))
+                               delay=delay if strict else max(10, delay),
+                               attrs=attrs, boxes=boxes))
     except _EOF:
         return None
     if len(frames) != fc or pos[0] != n:
@@ -117,11 +118,19 @@ def _parse(b, kw_sizes, unknown_out=None):
     return dict(frames=frames, images=imgs, gattrs=dict(gattrs), fc=fc)
 
 
-def parse_ani70(b, extra_kw=None):
-    """结构化解析编译 70ani; 稀有属性宽度逐文件回溯裁决。失败返回 None。"""
+def parse_ani70(b, extra_kw=None, strict=False):
+    """解析编译 70ani；strict 模式拒绝猜测未知属性宽度。"""
     base = dict(KNOWN_KW)
     if extra_kw:
         base.update(extra_kw)
+    if strict:
+        unknown = []
+        result = _parse(b, base, unknown, strict=True)
+        if unknown:
+            raise ValueError("unknown ANI attribute keyword %d; width is ambiguous" % unknown[0])
+        if result is None:
+            raise ValueError("invalid or truncated ANI data")
+        return result
     budget = [0]
 
     def bt(sizes):
