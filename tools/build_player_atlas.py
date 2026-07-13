@@ -1,65 +1,143 @@
-# 导出鬼剑士【身体】与【各武器】为独立图集(共用同一脚底锚点), 运行时按职业/装备叠加武器层
-# 这样可换武器外观(剑魂光剑/太刀等)+狂战副手血刃(同一武器层二次绘制并染色)
-import sys,json,math,os; sys.path.insert(0,os.path.dirname(__file__))
-from dnf_img import read_npk, parse_img
+"""Build the DOF70 swordman body and weapon sprite atlases."""
+
+import argparse
+import json
+import shutil
+from pathlib import Path
+
 from PIL import Image
 
-BASE="地下城与勇士/ImagePacks2/"
-OUT="assets"
-os.makedirs(OUT,exist_ok=True)
+try:
+    from .dnf_img import parse_img, read_npk
+except ImportError:  # pragma: no cover - supports direct script execution
+    from dnf_img import parse_img, read_npk
 
-def load(npk,idx=0):
-    return parse_img(read_npk(BASE+npk)[idx][1])['frames']
 
-def resolve(F,i):
-    f=F[i]
-    if f['image'] is None and 0<=f.get('link',-1)<len(F): return F[f['link']]
-    return f
+DOF70_IMAGEPACKS2 = (Path("DOF（重生70版本）") / "DOF_src" / "DOF重生" /
+                     "客户端" / "ImagePacks2")
+WEAPON_NPKS = {
+    "lightsword": DOF70_IMAGEPACKS2 / "sprite_character_swordman_equipment_weapon_beamswd.NPK",
+    "katana": DOF70_IMAGEPACKS2 / "sprite_character_swordman_equipment_weapon_katana.NPK",
+    "greatsword": DOF70_IMAGEPACKS2 / "sprite_character_swordman_equipment_weapon_mswd.NPK",
+    "club": DOF70_IMAGEPACKS2 / "sprite_character_swordman_equipment_weapon_club.NPK",
+    "shortsword": DOF70_IMAGEPACKS2 / "sprite_character_swordman_equipment_weapon_gemswd.NPK",
+}
+# Historical names are accepted only as aliases; their canonical mapping is explicit.
+WEAPON_ALIASES = {"lswd": "katana", "beamswd": "lightsword"}
+SUPPORTED_FORMS = {0x0E, 0x0F, 0x10}
 
-def build_single(F, name, footX, footY, scale=1.0):
-    """单层逐帧紧致打包, ox/oy 相对传入的统一脚底锚点(像素)。返回 meta dict。"""
-    n=len(F)
-    cells=[]
-    for i in range(n):
-        f=resolve(F,i)
-        if f['image'] is None: cells.append(None); continue
-        im=f['image']
-        if scale!=1.0: im=im.resize((max(1,round(f['w']*scale)),max(1,round(f['h']*scale))))
-        ox=(f['x']-footX)*scale; oy=(f['y']-footY)*scale
-        cells.append((im,round(ox,1),round(oy,1)))
-    pad=1; maxw=2048
-    order=sorted([i for i,c in enumerate(cells) if c],key=lambda i:-cells[i][0].height)
-    x=y=rowh=0; rects={}
-    for i in order:
-        im=cells[i][0]; w,h=im.width+pad,im.height+pad
-        if x+w>maxw: x=0;y+=rowh;rowh=0
-        rects[i]=(x,y,im.width,im.height); x+=w; rowh=max(rowh,h)
-    H=y+rowh
-    atlas=Image.new('RGBA',(maxw,H),(0,0,0,0))
-    frames=[None]*n
-    for i in order:
-        ax,ay,w,h=rects[i]; atlas.alpha_composite(cells[i][0],(ax,ay))
-        frames[i]=[ax,ay,w,h,cells[i][1],cells[i][2]]
-    atlas.save(OUT+"/"+name+".png")
-    meta={'count':n,'scale':scale,'frames':frames}
-    json.dump(meta,open(OUT+"/"+name+".json",'w'),separators=(',',':'))
-    print("%s: %dx%d, %d帧(%d有效) %.0fKB"%(name,maxw,H,n,len(order),os.path.getsize(OUT+"/"+name+".png")/1024))
-    return meta
 
-if __name__=='__main__':
-    body=load("sprite_character_swordman_equipment_avatar_skin.NPK",0)
-    # 统一脚底锚点 = 身体 frame0 的 中心x + 底部y
-    f0=body[0]; footX=f0['x']+f0['w']/2.0; footY=f0['y']+f0['h']
-    bmeta=build_single(body,"swordman",footX,footY,1.0)
-    # 各武器层(共用同一锚点)
-    WEAPONS={
-      'lswd':   "sprite_character_swordman_equipment_weapon_lswd.NPK",   # 太刀(默认)
-      'beamswd':"sprite_character_swordman_equipment_weapon_beamswd.NPK",# 光剑(剑魂)
-    }
-    wmeta={}
-    for key,npk in WEAPONS.items():
-        wmeta[key]=build_single(load(npk,0),"weapon_"+key,footX,footY,1.0)
-    # 合并 meta.js (file:// 可用)
-    open(OUT+"/swordman.meta.js",'w').write("window.SWORDMAN_META="+json.dumps(bmeta,separators=(',',':'))+";")
-    open(OUT+"/weapons.meta.js",'w').write("window.WEAPON_META="+json.dumps(wmeta,separators=(',',':'))+";")
-    print("done. weapons:",list(wmeta.keys()))
+def load(npk, idx=0):
+    path = Path(npk)
+    if not path.is_file():
+        raise FileNotFoundError(f"missing NPK: {path}")
+    try:
+        entries = read_npk(str(path))
+        if not entries:
+            raise ValueError(f"empty NPK: {path}")
+        if not 0 <= idx < len(entries):
+            raise ValueError(f"NPK index out of range: {path} [{idx}]")
+        return parse_img(entries[idx][1])["frames"]
+    except (FileNotFoundError, ValueError):
+        raise
+    except Exception as exc:
+        raise RuntimeError(f"failed to decompress/decode {path}") from exc
+
+
+def resolve(frames, index):
+    if not 0 <= index < len(frames):
+        raise ValueError(f"frame link/index out of range: {index}")
+    frame = frames[index]
+    if frame["image"] is not None:
+        return frame
+    link = frame.get("link", -1)
+    if not 0 <= link < len(frames):
+        raise ValueError(f"frame {index} links out of range: {link}")
+    if link == index:
+        raise ValueError(f"frame {index} links to itself")
+    return resolve(frames, link)
+
+
+def validate_frames(frames):
+    if not frames:
+        raise ValueError("empty image atlas")
+    visible = False
+    for index, frame in enumerate(frames):
+        form = frame.get("form")
+        if frame["image"] is not None and form not in SUPPORTED_FORMS:
+            raise ValueError(f"unknown IMG format at frame {index}: {form!r}")
+        resolved = resolve(frames, index)
+        if resolved["image"] is not None and resolved["image"].getbbox() is not None:
+            visible = True
+    if not visible:
+        raise ValueError("image atlas contains no visible key frame")
+
+
+def build_single(frames, output_dir, name, foot_x=0, foot_y=0, scale=1.0):
+    validate_frames(frames)
+    cells = []
+    for index in range(len(frames)):
+        frame = resolve(frames, index)
+        image = frame["image"]
+        if scale != 1.0:
+            image = image.resize((max(1, round(frame["w"] * scale)), max(1, round(frame["h"] * scale))))
+        if image.getbbox() is not None:
+            cells.append((index, image, round((frame["x"] - foot_x) * scale, 1),
+                          round((frame["y"] - foot_y) * scale, 1)))
+
+    pad, max_width = 1, 2048
+    order = sorted(cells, key=lambda cell: -cell[1].height)
+    x = y = row_height = 0
+    rects = {}
+    for index, image, _, _ in order:
+        if x + image.width + pad > max_width and x:
+            x, y, row_height = 0, y + row_height, 0
+        rects[index] = (x, y, image.width, image.height)
+        x += image.width + pad
+        row_height = max(row_height, image.height + pad)
+    atlas = Image.new("RGBA", (max_width, y + row_height), (0, 0, 0, 0))
+    metadata_frames = [None] * len(frames)
+    for index, image, ox, oy in order:
+        ax, ay, width, height = rects[index]
+        atlas.alpha_composite(image, (ax, ay))
+        metadata_frames[index] = [ax, ay, width, height, ox, oy]
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    metadata = {"count": len(frames), "scale": scale, "frames": metadata_frames}
+    atlas.save(output_dir / f"weapon_{name}.png")
+    (output_dir / f"weapon_{name}.json").write_text(json.dumps(metadata, separators=(",", ":")))
+    return metadata
+
+
+def build_weapons(output_dir, names=None, source_dir=None):
+    source_dir = source_dir or Path(__file__).resolve().parents[3]
+    names = list(names or WEAPON_NPKS)
+    unknown = set(names) - set(WEAPON_NPKS)
+    if unknown:
+        raise ValueError(f"unknown weapon type: {sorted(unknown)}")
+    result = {}
+    for name in names:
+        frames = load(source_dir / WEAPON_NPKS[name])
+        result[name] = build_single(frames, output_dir, name)
+    for alias, canonical in WEAPON_ALIASES.items():
+        if canonical in result:
+            shutil.copyfile(output_dir / f"weapon_{canonical}.png", output_dir / f"weapon_{alias}.png")
+            shutil.copyfile(output_dir / f"weapon_{canonical}.json", output_dir / f"weapon_{alias}.json")
+            result[alias] = result[canonical]
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "weapons.meta.js").write_text(
+        "window.WEAPON_META=" + json.dumps(result, separators=(",", ":")) + ";"
+    )
+    return result
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", default="assets", type=Path)
+    parser.add_argument("--source-dir", default=None, type=Path)
+    args = parser.parse_args(argv)
+    build_weapons(args.output_dir, source_dir=args.source_dir)
+
+
+if __name__ == "__main__":
+    main()
