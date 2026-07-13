@@ -1,7 +1,8 @@
+import struct
 import unittest
 from pathlib import Path
 
-from tools.atk import AttackReader, index_sections, split_sections
+from tools.atk import AttackReader, analyze_tokens, parse_raw_tokens
 from tools.skillfx_config import resolve_source_paths
 
 
@@ -26,6 +27,24 @@ class AttackReaderTests(unittest.TestCase):
         self.assertEqual(dash["section_index"]["push aside"], [[("int", 200)]])
         self.assertEqual(upper["section_index"]["lift up"], [[("int", 400)]])
         self.assertNotEqual(dash["sections"], upper["sections"])
+        self.assertIn("[physic]", [token["value"] for token in dash["tokens"]])
+        self.assertIn("[blow]", [token["value"] for token in dash["tokens"]])
+        self.assertIn("[no blood]", [token["value"] for token in dash["tokens"]])
+
+    def test_raw_tokens_preserve_binary_type_value_offset_and_order(self):
+        path = "character/swordman/attackinfo/chargecrashdash.atk"
+        data = self.reader.pv.read(path)
+        tokens = parse_raw_tokens(data, self.reader.st)
+
+        self.assertEqual(tokens[0]["offset"], 2)
+        self.assertEqual(tokens[0]["raw_type"], 5)
+        self.assertEqual(tokens[0]["kind"], "str")
+        self.assertEqual(tokens[0]["value"], "[attack type]")
+        rebuilt = b"\xb0\xd0" + b"".join(
+            struct.pack("<Bi", token["raw_type"], token["raw_value"])
+            for token in tokens
+        )
+        self.assertEqual(rebuilt, data)
 
     def test_unknown_sections_are_not_dropped(self):
         attack = self.reader.read_attack(
@@ -39,29 +58,40 @@ class AttackReaderTests(unittest.TestCase):
             ("path", "CHASERP_HIT")
         ]])
 
-    def test_unknown_tag_starts_a_section_without_being_hardcoded(self):
-        sections = split_sections([
-            ("str", "[weapon damage apply]"), ("int", 1),
-            ("str", "[unresearched parameter]"), ("int", 17),
-            ("str", "[hit wav]"), ("path", "HIT"),
-        ])
+    def test_unknown_tag_after_tag_value_is_reported_as_ambiguous(self):
+        tokens = [
+            {"raw_type": 5, "raw_value": i, "kind": kind,
+             "value": value, "offset": 2 + i * 5}
+            for i, (kind, value) in enumerate([
+                ("str", "[attack type]"), ("str", "[physic]"),
+                ("str", "[unknown section]"), ("int", 17),
+            ])
+        ]
+        parsed = analyze_tokens(tokens, {"attack type": {"physic"}})
 
-        self.assertEqual(sections[1], {
-            "name": "unresearched parameter", "tokens": [("int", 17)]
-        })
+        self.assertEqual(parsed["confirmed_sections"], [{
+            "name": "attack type", "tokens": [tokens[1]]
+        }])
+        self.assertEqual(parsed["ambiguous_runs"], [{
+            "tokens": tokens[2:],
+            "candidate_boundaries": [tokens[2]["offset"]],
+            "reason": "bracketed token is not declared by the ATK schema",
+        }])
 
     def test_repeated_sections_are_preserved_in_order_and_indexed_as_multiple_values(self):
-        sections = split_sections([
-            ("str", "[unknown repeat]"), ("int", 1),
-            ("str", "[unknown repeat]"), ("int", 2),
-        ])
+        schema = {"known repeat": set()}
+        tokens = [
+            {"raw_type": 5, "raw_value": 0, "kind": "str", "value": "[known repeat]", "offset": 2},
+            {"raw_type": 2, "raw_value": 1, "kind": "int", "value": 1, "offset": 7},
+            {"raw_type": 5, "raw_value": 0, "kind": "str", "value": "[known repeat]", "offset": 12},
+            {"raw_type": 2, "raw_value": 2, "kind": "int", "value": 2, "offset": 17},
+        ]
+        parsed = analyze_tokens(tokens, schema)
 
-        self.assertEqual(sections, [
-            {"name": "unknown repeat", "tokens": [("int", 1)]},
-            {"name": "unknown repeat", "tokens": [("int", 2)]},
-        ])
-        self.assertEqual(index_sections(sections)["unknown repeat"], [
-            [("int", 1)], [("int", 2)]
+        self.assertEqual([section["name"] for section in parsed["confirmed_sections"]],
+                         ["known repeat", "known repeat"])
+        self.assertEqual(parsed["section_index"]["known repeat"], [
+            [tokens[1]], [tokens[3]]
         ])
 
 

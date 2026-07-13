@@ -1,83 +1,149 @@
+import struct
 from pathlib import Path
 
 from . import pvf
-from .skl import StringTable, parse_tokens
+from .skl import MAGIC, StringTable
 
 
-SECTION_TAGS = {
-    "attack type",
-    "weapon damage apply",
-    "attack enemy",
-    "elemental property",
-    "damage reaction",
-    "push aside",
-    "lift up",
-    "attack direction",
-    "knuck back",
-    "hit info",
-    "hit wav",
+DEFAULT_SCHEMA = {
+    "attack type": {"physic"},
+    "weapon damage apply": set(),
+    "attack enemy": set(),
+    "elemental property": {"no element"},
+    "damage reaction": {"damage", "down"},
+    "push aside": set(),
+    "lift up": set(),
+    "attack direction": {"hit lift up", "hit down"},
+    "knuck back": set(),
+    "hit info": {"blow", "no blood"},
+    "hit wav": set(),
 }
 
 
+def parse_raw_tokens(data, string_table):
+    if data[:2] != MAGIC:
+        raise ValueError("not a pvf script")
+    tokens = []
+    for offset in range(2, len(data) - 4, 5):
+        raw_type = data[offset]
+        raw_value = struct.unpack_from("<i", data, offset + 1)[0]
+        if raw_type == 2:
+            kind, value = "int", raw_value
+        elif raw_type == 4:
+            kind = "float"
+            value = struct.unpack("<f", struct.pack("<i", raw_value))[0]
+        elif raw_type in (5, 6, 8):
+            kind, value = "str", string_table.get(raw_value)
+        elif raw_type == 7:
+            kind, value = "path", string_table.get(raw_value)
+        elif raw_type == 9:
+            kind, value = "strfile", raw_value
+        elif raw_type == 10:
+            kind, value = "strkey", string_table.get(raw_value)
+        else:
+            kind, value = "unk%d" % raw_type, raw_value
+        tokens.append({
+            "raw_type": raw_type,
+            "raw_value": raw_value,
+            "kind": kind,
+            "value": value,
+            "offset": offset,
+        })
+    return tokens
+
+
 def _tag_name(token):
-    kind, value = token
-    if kind == "str" and value.startswith("[") and value.endswith("]"):
+    value = token["value"]
+    if token["kind"] == "str" and value.startswith("[") and value.endswith("]"):
         return value[1:-1]
     return None
 
 
-def split_sections(tokens):
+def analyze_tokens(tokens, schema):
     sections = []
+    ambiguous = []
     current = None
+    run = None
+
+    def ambiguity(token):
+        nonlocal run
+        if run is None:
+            run = {
+                "tokens": [],
+                "candidate_boundaries": [],
+                "reason": "bracketed token is not declared by the ATK schema",
+            }
+            ambiguous.append(run)
+        run["tokens"].append(token)
+        if _tag_name(token) is not None:
+            run["candidate_boundaries"].append(token["offset"])
+
     for token in tokens:
         name = _tag_name(token)
-        current_has_plain_value = current is not None and any(
-            _tag_name(value) is None for value in current["tokens"]
-        )
-        if name is not None and (
-                name in SECTION_TAGS or current is None or current_has_plain_value):
+        if name in schema:
+            run = None
             current = {"name": name, "tokens": []}
             sections.append(current)
-        elif current is None:
-            current = {"name": None, "tokens": [token]}
-            sections.append(current)
-        else:
+        elif current is not None and name in schema[current["name"]]:
             current["tokens"].append(token)
-    return sections
+        elif name is not None:
+            current = None
+            ambiguity(token)
+        elif run is not None:
+            ambiguity(token)
+        elif current is not None:
+            current["tokens"].append(token)
+        else:
+            ambiguity(token)
 
-
-def index_sections(sections):
     index = {}
     for section in sections:
-        if section["name"] is not None:
-            index.setdefault(section["name"], []).append(section["tokens"])
-    return index
+        index.setdefault(section["name"], []).append(section["tokens"])
+    return {
+        "confirmed_sections": sections,
+        "section_index": index,
+        "ambiguous_runs": ambiguous,
+    }
+
+
+def _pairs(tokens):
+    return [(token["kind"], token["value"]) for token in tokens]
 
 
 class AttackReader:
-    def __init__(self, pvf_path):
+    def __init__(self, pvf_path, schema=None):
         self.pvf_path = str(Path(pvf_path).resolve())
         self.pv = pvf.Pvf(self.pvf_path)
         self.st = StringTable(self.pv)
+        self.schema = schema if schema is not None else DEFAULT_SCHEMA
 
     def read_attack(self, path):
         data = self.pv.read(path)
         if data is None:
             raise FileNotFoundError(path)
-        tokens = parse_tokens(data, self.st)
-        sections = split_sections(tokens)
-        raw_sections = [section for section in sections if section["name"] is not None]
-        section_index = index_sections(raw_sections)
+        tokens = parse_raw_tokens(data, self.st)
+        analyzed = analyze_tokens(tokens, self.schema)
+        section_index = {
+            name: [_pairs(value) for value in values]
+            for name, values in analyzed["section_index"].items()
+        }
 
         def first(name):
             values = section_index.get(name, [])
             return values[0] if values else []
 
+        confirmed = [
+            {"name": section["name"], "tokens": _pairs(section["tokens"])}
+            for section in analyzed["confirmed_sections"]
+        ]
         return {
             "path": path,
-            "sections": sections,
-            "raw_sections": raw_sections,
+            "tokens": tokens,
+            "sections": confirmed,
+            "raw_sections": confirmed,
+            "confirmed_sections": confirmed,
             "section_index": section_index,
+            "ambiguous_runs": analyzed["ambiguous_runs"],
             "attack_type": first("attack type"),
             "weapon_damage_apply": first("weapon damage apply"),
             "attack_enemy": first("attack enemy"),
