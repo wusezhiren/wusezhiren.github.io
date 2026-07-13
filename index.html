@@ -34,15 +34,19 @@
 <script src="src/classes/availability.js"></script>
 <script src="src/equipment/weapons.js"></script>
 <script src="src/save/migrations.js"></script>
+<script src="src/combat/damage.js"></script>
+<script src="src/monsters/dof70.js"></script>
 <script>
 "use strict";
 const {classAvailability,canStartClass}=DOF70.classes;
 const {WEAPON_TYPES,DEFAULT_WEAPON,canUseWeapon,normalizeWeapon}=DOF70.equipment;
 const {migrateSave,SAVE_SCHEMA_VERSION}=DOF70.save;
+const {resolveDamage}=DOF70.combat;
+const {MONSTERS_DOF70}=DOF70.monsters;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
-const DEFAULT_PLAYER_LEVEL=6;        // 测试技能用: 默认满级解锁所有技能
+const DEFAULT_PLAYER_LEVEL=70;       // 测试技能用: 默认满级解锁所有技能
 const MAX_UNLOCKED_DUNGEON=3;        // 当前 4 张图, 索引 3 表示全开
 const GROUND_TOP = 300, GROUND_BOT = 510, GRAVITY = 0.8;
 const WORLD_W = 1800;        // 房间世界宽度(>屏幕, 横向卷轴)
@@ -408,7 +412,7 @@ class Projectile {
       if(Math.abs(this.x-e.x)<(this.w+e.w)/2 && Math.abs(this.y-e.y)<(this.depth+e.depth)/2 && Math.abs(this.z-e.z)<60){
         this.hit.add(e);
         const crit=Math.random()<player.crit;
-        let dmg=Math.round(rand(this.sk.dmg[0],this.sk.dmg[1])*player.dmgMul()*(crit?1.8:1));
+        const dmg=resolveDamage({channel:'percent',base:rand(this.sk.dmg[0],this.sk.dmg[1]),level:player.level,physicalPrimaryStat:player.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:player.damageMultiplier()});
         e.takeDamage(dmg,this.dir,9,crit); comboHit(dmg,crit);
         if(this.sk.slow) e.slow=this.sk.slow;
         if(this.sk.freeze) e.freeze=Math.max(e.freeze,this.sk.freeze);
@@ -473,7 +477,7 @@ class SkillField {
       if(e.dead)continue;
       if(Math.abs(e.x-this.x)>this.radius||Math.abs(e.y-this.y)>this.radius*0.6||e.z>90)continue;
       const crit=Math.random()<player.crit;
-      const dmg=Math.round(rand(sk.dmg[0],sk.dmg[1])*player.dmgMul()*(crit?1.8:1));
+      const dmg=resolveDamage({channel:'percent',base:rand(sk.dmg[0],sk.dmg[1]),level:player.level,physicalPrimaryStat:player.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:player.damageMultiplier()});
       e.takeDamage(dmg,Math.sign(e.x-this.x)||this.dir,sk.knock||4,crit); comboHit(dmg,crit);
       if(sk.launch){ e.vz=Math.max(e.vz,sk.launch); e.launched=true; }
       if(sk.slow) e.slow=Math.max(e.slow,sk.slow);
@@ -614,10 +618,8 @@ class Player extends Fighter {
   }
   speedStat(){ return clamp(this.equipStats().speed,0,0.55); }
   attackSpeedMul(){ return 1/(1+this.speedStat()); }
-  dmgMul(){
-    const es=this.equipStats();
-    return this.cls.atkMul * (1+(this.level-1)*0.06+this.shopAtk+es.atk) * (this.buff?this.buff.atk:1);
-  }
+  physicalPrimaryStat(){ return 250 + this.shopAtk * 250 + this.equipStats().atk * 250; }
+  damageMultiplier(){ return this.cls.atkMul * (this.buff?this.buff.atk:1); }
   takeDamage(dmg,fromDir,kb=8,crit=false){
     const def=clamp(this.equipStats().def,0,0.7);
     return super.takeDamage(Math.max(1,Math.round(dmg*(1-def))),fromDir,kb,crit);
@@ -658,14 +660,6 @@ class Player extends Fighter {
   }
   gainExp(n){
     this.exp+=n;
-    while(this.exp>=this.expNext){
-      this.exp-=this.expNext; this.level++; this.expNext=Math.round(this.expNext*1.35+30);
-      this.maxhp+=26; this.maxmp+=12; this._crit=Math.min(0.5,this._crit+0.005);
-      this.hp=this.maxhp; this.mp=this.maxmp;
-      Audio2.sfx('levelup'); spawnText(this.x,this.screenY()-this.h-30,'升级! Lv.'+this.level,'#ffcf4d',true);
-      addEffect({type:'aura',x:this.x,y:this.y,color:'#ffcf4d',max:36,r0:20,r1:110});
-      shake=Math.max(shake,6);
-    }
   }
   update(){
     if(this.dead) return;
@@ -749,7 +743,7 @@ class Player extends Fighter {
         if(aabb(box,e)&&Math.abs(this.z-e.z)<70){
           this.basicHit.add(e);
           const crit=Math.random()<this.crit;
-          let dmg=Math.round(rand(11,16)*this.dmgMul()*(crit?1.8:1));
+          const dmg=resolveDamage({channel:'percent',base:rand(11,16),level:this.level,physicalPrimaryStat:this.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:this.damageMultiplier()});
           e.takeDamage(dmg,this.dir,10,crit); comboHit(dmg,crit);
           this.mp=clamp(this.mp+3,0,this.maxmp); shake=Math.max(shake,4);
           spawnHit(e.x,e.screenY()-e.h*0.5,this.cls.elem,crit?4:2);                       // 元素命中火花
@@ -811,7 +805,7 @@ class Player extends Fighter {
       if(e.dead)continue;
       if(aabb(box,e)&&Math.abs(this.z-e.z)<72){
         const crit=Math.random()<this.crit;
-        let dmg=Math.round(rand(sk.dmg[0],sk.dmg[1])*this.dmgMul()*(crit?1.8:1));
+        const dmg=resolveDamage({channel:'percent',base:rand(sk.dmg[0],sk.dmg[1]),level:this.level,physicalPrimaryStat:this.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:this.damageMultiplier()});
         const real=e.takeDamage(dmg,this.dir,hit.kb!=null?hit.kb:(sk.knock||12),crit); comboHit(dmg,crit);
         if(sk.launch){ e.vz=Math.max(e.vz,sk.launch); e.launched=true; }
         if(sk.slow) e.slow=sk.slow;
@@ -854,18 +848,18 @@ function unlockNextDungeon(id){
 }
 
 const ENEMY_CONF = {
-  gob:    {w:40,depth:26,h:84, hp:75, speed:2.4,color:'#9a7b4f',dark:'#5f4a2c',exp:14,gold:[1,3]},
-  orc:    {w:50,depth:32,h:104,hp:150,speed:1.9,color:'#5a8f4a',dark:'#33602a',exp:26,gold:[3,6]},
-  archer: {w:42,depth:26,h:88, hp:90, speed:1.7,color:'#6a5f9a',dark:'#352b5e',exp:22,gold:[3,6]},
-  charger:{w:54,depth:32,h:102,hp:170,speed:2.0,color:'#a05a2a',dark:'#5e3216',exp:30,gold:[4,8]},
-  bomber: {w:42,depth:26,h:80, hp:55, speed:2.7,color:'#9a9a3a',dark:'#5e5e1e',exp:18,gold:[2,5]},
-  boss:   {w:62,depth:38,h:130,hp:560,speed:1.6,color:'#b23a3a',dark:'#6e1f1f',exp:140,gold:[30,55]},
+  gob:    {w:40,depth:26,h:84, hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:2.4,color:'#9a7b4f',dark:'#5f4a2c',exp:14,gold:[1,3]},
+  orc:    {w:50,depth:32,h:104,hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:1.9,color:'#5a8f4a',dark:'#33602a',exp:26,gold:[3,6]},
+  archer: {w:42,depth:26,h:88, hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:1.7,color:'#6a5f9a',dark:'#352b5e',exp:22,gold:[3,6]},
+  charger:{w:54,depth:32,h:102,hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:2.0,color:'#a05a2a',dark:'#5e3216',exp:30,gold:[4,8]},
+  bomber: {w:42,depth:26,h:80, hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:2.7,color:'#9a9a3a',dark:'#5e5e1e',exp:18,gold:[2,5]},
+  boss:   {w:62,depth:38,h:130,hp:12000, defense:520, level:70, staggerResistance:0.65,floatResistance:0.7,grabResistance:0.6, speed:1.6,color:'#b23a3a',dark:'#6e1f1f',exp:140,gold:[30,55]},
 };
 class Enemy extends Fighter {
   constructor(x,y,kind='gob',scale=1){
     const c=ENEMY_CONF[kind];
     super(x,y,{w:c.w,depth:c.depth,h:c.h,hp:Math.round(c.hp*scale),speed:c.speed,color:c.color,dark:c.dark,dir:-1});
-    this.kind=kind; this.conf=c; this.scale=scale;
+    this.kind=kind; this.conf={...c}; this.level=70; this.scale=scale;
     this.attackCd=rand(20,80); this.knockdown=0; this.getupProtect=0; this.launched=false; this.airCombo=0; this.juggle=0;
     this.bossCd=180; this.enraged=false; this.fuse=0; this.chargeState=0; this.chargeCd=rand(40,120);
     this.atkScale=scale;
@@ -2617,18 +2611,18 @@ function continueGame(){
   dunStats.gold0=player.gold;
   return true;
 }
-function difficulty(){ return currentDungeonDef().recommendedLv + room + dungeonId*2; } // 地图推荐等级 + 房间推进
+ function difficulty(){ return DEFAULT_PLAYER_LEVEL; } // 地图主题只决定房数与怪物池
 function enterRoom(){
   enemies=[]; resetPools();
   if(room===1) dunStats={t:0,kills:0,gold0:player?player.gold:0}; // 新一图开始, 重置统计
   const diff=difficulty();
-  const scale=1+(diff-1)*0.1;
+  const scale=1;
   const dun=currentDungeonDef();
   const isBoss=room===currentRooms();
   // 门常驻于世界右端, 进房即关闭, 清场后才激活
   door={x:WORLD_W-46, y:(GROUND_TOP+GROUND_BOT)/2, boss:isBoss, open:false, grace:0};
   if(isBoss){
-    enemies.push(new Enemy(WORLD_W-160,(GROUND_TOP+GROUND_BOT)/2,dun.boss,1+dungeonId*0.5));
+    enemies.push(new Enemy(WORLD_W-160,(GROUND_TOP+GROUND_BOT)/2,dun.boss,1));
     bossIntro=120; bossGate=true; Audio2.startBossBgm();
     showBanner('⚠ '+dun.name+' 首领 ⚠','#ff5a5a',true);
     showStageTitle(dun.name+' · 首领房','ROOM '+room+' / '+currentRooms(),'#ff5a5a',true);
@@ -2643,8 +2637,9 @@ function enterRoom(){
     if(diff>=2 && enemies.length && Math.random()<0.24){
       const e=enemies[Math.floor(Math.random()*enemies.length)];
       e.elite=true; e.eliteCol='#ffcf4d';
-      e.maxhp=Math.round(e.maxhp*2.4); e.hp=e.maxhp;
-      e.atkScale*=1.45; e.scale*=1.3; e.aggroRange+=80;
+       const elite=MONSTERS_DOF70.elite;
+       e.maxhp=elite.hp; e.hp=e.maxhp; Object.assign(e.conf,elite);
+       e.atkScale*=1.45; e.scale=1; e.aggroRange+=80;
     }
     showBanner(dun.name+' · 第'+room+'/'+currentRooms()+'房','#cfd8e6');
     showStageTitle(dun.name,'ROOM '+room+' / '+currentRooms(),dun.tint[1],false);
@@ -2693,18 +2688,18 @@ function dropLoot(e){
     // Boss 必掉 2~4 件装备(随稀有度)
     for(let i=0;i<5;i++) pickups.push(new Pickup(e.x+rand(-40,40),e.y,'gold',Math.round(rand(8,16))));
     const dropN=2+Math.floor(Math.random()*3);
-    for(let i=0;i<dropN;i++) pickups.push(new Pickup(e.x+rand(-70,70),e.y,'equip',genEquip(difficulty()),{bossDrop:true}));
+    for(let i=0;i<dropN;i++) pickups.push(new Pickup(e.x+rand(-70,70),e.y,'equip',genEquip(DEFAULT_PLAYER_LEVEL),{bossDrop:true}));
     // 并有机会掉消耗品
     if(Math.random()<0.6) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'consumable','hp_m'));
     if(Math.random()<0.4) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'consumable','mp_m'));
   } else if(e.elite){
     // 精英怪: 必掉 1 件装备 + 额外金币, 较高概率掉消耗品
     for(let i=0;i<3;i++) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'gold',Math.round(rand(6,12))));
-    pickups.push(new Pickup(e.x+rand(-30,30),e.y,'equip',genEquip(difficulty()+4)));
+    pickups.push(new Pickup(e.x+rand(-30,30),e.y,'equip',genEquip(DEFAULT_PLAYER_LEVEL)));
     if(Math.random()<0.5){ const types=['hp_m','mp_s','atk_p']; pickups.push(new Pickup(e.x,e.y,'consumable',types[Math.floor(Math.random()*types.length)])); }
   } else {
     // 普通怪 5% 概率掉装备、10% 掉消耗品
-    if(Math.random()<0.05) pickups.push(new Pickup(e.x,e.y,'equip',genEquip(difficulty())));
+    if(Math.random()<0.05) pickups.push(new Pickup(e.x,e.y,'equip',genEquip(DEFAULT_PLAYER_LEVEL)));
     else if(Math.random()<0.10){
       const types=['hp_s','mp_s','hp_s','atk_p'];
       pickups.push(new Pickup(e.x,e.y,'consumable',types[Math.floor(Math.random()*types.length)]));
