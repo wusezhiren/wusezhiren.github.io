@@ -42,6 +42,9 @@
 <script src="src/combat/skills/blade/triple-slash.js"></script>
 <script src="src/combat/skills/blade/charge-crash.js"></script>
 <script src="src/combat/skills/blade/momentary-slash.js"></script>
+<script src="src/combat/skills/blade/rapid-move-slash.js"></script>
+<script src="src/combat/skills/blade/weapon-combo.js"></script>
+<script src="src/combat/skills/blade/illusion-slash.js"></script>
 <script src="src/combat/skills/index.js"></script>
 <script src="src/monsters/dof70.js"></script>
 <script>
@@ -229,9 +232,9 @@ const CLASSES = {
       {key:'z',name:'三段斩',    mp:4, cd:360, type:'multi',hits:3,dmg:[16,19],reach:96, color:'#dff6ff', dur:30, ul:1, fx:'tripleslash',   fxScale:0.62,fxYo:64,fxAhead:70},
       {key:'a',name:'拔刀斩',    mp:16,cd:900, type:'aoe',  dmg:[122,148],ox:60,radius:104,knock:18, color:'#cfefff', dur:26, ul:3, fx:'flashcut',      fxScale:0.72,fxYo:62,fxAhead:96}, // 原版横斩击飞, 不挑空
       {key:'s',name:'破军升龙击',mp:11,cd:600, type:'melee',hits:2,dmg:[40,50],reach:74,launch:14, color:'#bfe6ff', dur:24, ul:2, fx:'dragonup',      fxScale:0.62,fxYo:98,fxAhead:32}, // 原版冲撞+上斩两段
-      {key:'d',name:'猛龙断空斩',mp:6, cd:1200,type:'dash', dmg:[22,26],reach:90, color:'#aef', dur:24, dash:17, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
+      {key:'d',name:'猛龙断空斩',mp:6, cd:1200,type:'multi',hits:5,dmg:[22,26],reach:90, color:'#aef', dur:24, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
       {key:'f',name:'幻影剑舞',  mp:41,cd:2700,type:'multi',hits:10,dmg:[32,40],reach:104, color:'#eaf6ff', dur:48, ul:6, fx:'illusionslash', fxScale:0.7, fxYo:64,fxAhead:72}, // 原版lv1最小斩击10次
-      {key:'g',name:'里·鬼剑术',mp:30,cd:1200,type:'dash', dmg:[32,40],reach:100, color:'#ffffff', dur:34, dash:20, ul:5, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
+      {key:'g',name:'里·鬼剑术',mp:30,cd:1200,type:'multi',hits:5,dmg:[32,40],reach:100, color:'#ffffff', dur:15, ul:5, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
     ]},
   berserk: { name:'狂战士', color:'#c0392b', dark:'#6e1f1f', elem:'#ff7a3c',
     hp:380, mp:100, speed:3.5, atkMul:1.15, lifesteal:0.12,
@@ -792,7 +795,7 @@ class Player extends Fighter {
     for(const kk in keys) if(kk.startsWith('__dash_')&&!down(kk.replace('__dash_','')))keys[kk]=false;
   }
   cast(sk){
-    const dedicated=sk.fx==='uppercut'||(this.clsKey==='blade'&&['tripleslash','dragonup','flashcut'].includes(sk.fx));
+    const dedicated=sk.fx==='uppercut'||(this.clsKey==='blade'&&['tripleslash','dragonup','flashcut','revolvingsword','hiddenblade','illusionslash'].includes(sk.fx));
     if(!dedicated) this.mp-=sk.mp;
     if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost);  // 血气技能按原版消耗HP
     if(!dedicated) sk._cd=sk.cd;
@@ -822,6 +825,18 @@ class Player extends Fighter {
     }
     if(this.clsKey==='blade'&&sk.fx==='flashcut'){
       this.bladeAction=SKILL_HANDLERS.momentarySlash.createMomentarySlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { charge:8, slash:2, recovery:8 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='revolvingsword'){
+      this.bladeAction=SKILL_HANDLERS.rapidMoveSlash.createRapidMoveSlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { dash1:2, dash2:2, dash3:2, dash4:2, dash5:3 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='hiddenblade'){
+      this.bladeAction=SKILL_HANDLERS.weaponCombo.createWeaponCombo(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { weapon1:3, weapon2:3, weapon3:3, weapon4:3, weapon5:3 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='illusionslash'){
+      this.bladeAction=SKILL_HANDLERS.illusionSlash.createIllusionSlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), speedMultiplier:1/this.attackSpeedMul()}, { preparation:6, slashes:20, swordWave:3, recovery:8 });
       return;
     }
     const mv=SKILL_MOVE[sk.fx];                      // 技能位移: 角色跟随前冲/上升
