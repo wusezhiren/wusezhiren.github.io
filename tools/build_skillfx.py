@@ -105,7 +105,7 @@ def ani_layer(rel, prefer_npk):
     raw = pv.read(pvf_name)
     if raw is None:
         return None
-    ani = parse_ani70(raw)
+    ani = parse_ani70(raw, strict=False)
     if not ani or not ani["frames"]:
         return None
     imgs = []

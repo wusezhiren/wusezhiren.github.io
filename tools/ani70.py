@@ -118,7 +118,7 @@ def _parse(b, kw_sizes, unknown_out=None, strict=False):
     return dict(frames=frames, images=imgs, gattrs=dict(gattrs), fc=fc)
 
 
-def parse_ani70(b, extra_kw=None, strict=False):
+def parse_ani70(b, extra_kw=None, strict=True):
     """解析编译 70ani；strict 模式拒绝猜测未知属性宽度。"""
     base = dict(KNOWN_KW)
     if extra_kw:

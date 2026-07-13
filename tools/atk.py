@@ -26,6 +26,34 @@ def _tag_name(token):
     return None
 
 
+def split_sections(tokens):
+    sections = []
+    current = None
+    for token in tokens:
+        name = _tag_name(token)
+        current_has_plain_value = current is not None and any(
+            _tag_name(value) is None for value in current["tokens"]
+        )
+        if name is not None and (
+                name in SECTION_TAGS or current is None or current_has_plain_value):
+            current = {"name": name, "tokens": []}
+            sections.append(current)
+        elif current is None:
+            current = {"name": None, "tokens": [token]}
+            sections.append(current)
+        else:
+            current["tokens"].append(token)
+    return sections
+
+
+def index_sections(sections):
+    index = {}
+    for section in sections:
+        if section["name"] is not None:
+            index.setdefault(section["name"], []).append(section["tokens"])
+    return index
+
+
 class AttackReader:
     def __init__(self, pvf_path):
         self.pvf_path = str(Path(pvf_path).resolve())
@@ -37,31 +65,23 @@ class AttackReader:
         if data is None:
             raise FileNotFoundError(path)
         tokens = parse_tokens(data, self.st)
-        sections = []
-        current = None
-        for token in tokens:
-            name = _tag_name(token)
-            if name in SECTION_TAGS:
-                current = {"name": name, "tokens": []}
-                sections.append(current)
-            elif current is None:
-                sections.append({"name": None, "tokens": [token]})
-                current = sections[-1]
-            else:
-                current["tokens"].append(token)
+        sections = split_sections(tokens)
+        raw_sections = [section for section in sections if section["name"] is not None]
+        section_index = index_sections(raw_sections)
 
-        raw_sections = {
-            section["name"]: section["tokens"]
-            for section in sections if section["name"] is not None
-        }
+        def first(name):
+            values = section_index.get(name, [])
+            return values[0] if values else []
+
         return {
             "path": path,
             "sections": sections,
             "raw_sections": raw_sections,
-            "attack_type": raw_sections.get("attack type", []),
-            "weapon_damage_apply": raw_sections.get("weapon damage apply", []),
-            "attack_enemy": raw_sections.get("attack enemy", []),
-            "elemental_property": raw_sections.get("elemental property", []),
-            "damage_reaction": raw_sections.get("damage reaction", []),
-            "attack_direction": raw_sections.get("attack direction", []),
+            "section_index": section_index,
+            "attack_type": first("attack type"),
+            "weapon_damage_apply": first("weapon damage apply"),
+            "attack_enemy": first("attack enemy"),
+            "elemental_property": first("elemental property"),
+            "damage_reaction": first("damage reaction"),
+            "attack_direction": first("attack direction"),
         }

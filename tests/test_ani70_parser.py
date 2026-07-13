@@ -30,8 +30,12 @@ class Ani70StrictParserTests(unittest.TestCase):
         self.assertEqual(frame["delay"], 0)
         self.assertEqual(frame["boxes"], [(15, [1, 2, 3, 4, 5, 6])])
 
-    def test_default_mode_keeps_generator_delay_floor(self):
-        self.assertEqual(parse_ani70(minimal_empty_frame())["frames"][0]["delay"], 10)
+    def test_default_mode_is_strict_and_preserves_raw_delay(self):
+        self.assertEqual(parse_ani70(minimal_empty_frame())["frames"][0]["delay"], 0)
+
+    def test_legacy_mode_keeps_generator_delay_floor(self):
+        parsed = parse_ani70(minimal_empty_frame(), strict=False)
+        self.assertEqual(parsed["frames"][0]["delay"], 10)
 
     def test_real_body_ani_preserves_box_keyword_and_six_values(self):
         raw = self.pvf.read("character/swordman/animation/triplestab.ani")
@@ -45,6 +49,12 @@ class Ani70StrictParserTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, r"unknown ANI attribute keyword 23"):
             parse_ani70(raw, strict=True)
+
+    def test_default_mode_rejects_unknown_attribute_width(self):
+        raw = self.pvf.read("character/swordman/animation/triplestab.ani")
+
+        with self.assertRaisesRegex(ValueError, r"unknown ANI attribute keyword 23"):
+            parse_ani70(raw)
 
 
 if __name__ == "__main__":
