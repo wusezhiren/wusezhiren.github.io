@@ -31,10 +31,13 @@
 <script src="assets/monsters.meta.js"></script>
 <script src="assets/skillfx.meta.js"></script>
 <script src="assets/skill_actions.meta.js"></script>
+<script src="assets/dof70/swordman-timelines.meta.js"></script>
 <script src="src/classes/availability.js"></script>
 <script src="src/equipment/weapons.js"></script>
 <script src="src/save/migrations.js"></script>
 <script src="src/combat/damage.js"></script>
+<script src="src/combat/status.js"></script>
+<script src="src/combat/action-player.js"></script>
 <script src="src/monsters/dof70.js"></script>
 <script>
 "use strict";
@@ -202,9 +205,11 @@ function spawnLootFly(x,y,item){
 /* ===================== 战斗状态 ===================== */
 let combo={count:0,dmg:0,timer:0};
 let hitstop=0, score=0, shake=0;
+const combatClock=DOF70.combat.status.createClock();
 function comboHit(dmg,crit){
   combo.count++; combo.dmg+=dmg; combo.timer=100;
   hitstop=Math.max(hitstop, crit?6:3);
+  DOF70.combat.status.freeze(combatClock, crit?6:3);
   Audio2.sfx(crit?'crit':'hit');
 }
 
@@ -376,7 +381,11 @@ class Fighter {
     this.speed=o.speed||3; this.color=o.color; this.dark=o.dark||'#333';
     this.dead=false; this.hurt=0; this.attackTimer=0; this.attackType=null;
     this.knock={x:0,y:0}; this.state='idle'; this.flash=0; this.walkPhase=0; this.slow=0; this.freeze=0;
+    this.combatStatus=DOF70.combat.status.createStatus();
+    this.actionPlayer=new DOF70.combat.action.ActionPlayer({clock:combatClock});
+    this.actionName='stand';
   }
+  selectAction(name){ if(this.actionName===name)return; this.actionName=name; const source=DOF70.combat.action.resolveAction(name,globalThis.DOF70_TIMELINES); this.actionPlayer.play(source); }
   get onGround(){ return this.z<=0.01; }
   applyKnock(){
     this.x+=this.knock.x; this.y+=this.knock.y;
@@ -663,6 +672,8 @@ class Player extends Fighter {
   }
   update(){
     if(this.dead) return;
+    DOF70.combat.status.tick(this.combatStatus, 1);
+    this.actionPlayer.update(1000/60, this.attackSpeedMul ? 1 / this.attackSpeedMul() : 1);
     if(this.comboTimer>0)this.comboTimer--; else this.combo=0;
     if(this.invuln>0)this.invuln--;
     if(this.flash>0)this.flash--;
@@ -698,7 +709,7 @@ class Player extends Fighter {
       this.state = runOn ? 'run' : ((mvx||mvy)?'walk':'idle');
       if(runOn && this.onGround && Math.random()<0.4) spawnHit(this.x-this.dir*16,this.screenY()-4,'#cfd8e6',1); // 奔跑扬尘
     }
-    if(down('c')&&this.onGround&&!acting){ this.vz=13; Audio2.sfx('ui'); }
+    if(down('c')&&this.onGround&&!acting){ this.vz=13; this.selectAction('jump_start'); Audio2.sfx('ui'); }
     this.physics();
 
     // 职业元素氛围: 平时微量飘逸, 奔跑/冲刺时更明显(在已有的每技能专属特效之外, 给角色本体加元素感)
@@ -753,6 +764,14 @@ class Player extends Fighter {
       }
     }
     if(this.attackTimer>0)this.attackTimer--;
+    if(this.attackTimer>0) {
+      const weapon=this.equipped?.weapon?.weaponType || classWeaponKey(this.clsKey);
+      this.selectAction(this.attackType?.basic ? `basic_${weapon}` : 'hit_front');
+    }
+    else if(!this.onGround) this.selectAction(this.vz>0?'airborne':'landing');
+    else if(this.state==='run') this.selectAction('run');
+    else if(this.state==='walk') this.selectAction('walk');
+    else this.selectAction('stand');
 
     for(let i=this.skillHits.length-1;i>=0;i--){ const hit=this.skillHits[i]; if(--hit.delay<=0){ this.resolveHit(hit); this.skillHits.splice(i,1); } }
     if(this.pendingProj){ if(--this.pendingProj.delay<=0){ const sk=this.pendingProj.sk; projectiles.push(new Projectile(this.x+this.dir*40,this.y,this.z+50,this.dir,sk)); this.pendingProj=null; } }
@@ -877,6 +896,8 @@ class Enemy extends Fighter {
   }
   update(){
     if(this.dead)return;
+    DOF70.combat.status.tick(this.combatStatus, 1);
+    this.actionPlayer.update(1000/60);
     if(this.flash>0)this.flash--;
     if(this.slow>0)this.slow--;
     if(this.getupProtect>0)this.getupProtect--;
@@ -2817,7 +2838,7 @@ function update(){
     for(let i=0;i<6;i++) if(pressed(''+(i+1))) player.useHotbar(i);
   }
 
-  if(hitstop>0){ hitstop--; return; } // 命中冻帧
+  if(hitstop>0){ hitstop--; DOF70.combat.status.tickClock(combatClock, 1); return; } // 命中冻帧: 所有战斗时钟同时冻结
   dunStats.t++;                        // 本图用时(帧)
 
   player.update();
