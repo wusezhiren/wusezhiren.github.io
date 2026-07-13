@@ -32,9 +32,13 @@
 <script src="assets/skillfx.meta.js"></script>
 <script src="assets/skill_actions.meta.js"></script>
 <script src="src/classes/availability.js"></script>
+<script src="src/equipment/weapons.js"></script>
+<script src="src/save/migrations.js"></script>
 <script>
 "use strict";
 const {classAvailability,canStartClass}=DOF70.classes;
+const {WEAPON_TYPES,DEFAULT_WEAPON,canUseWeapon,normalizeWeapon}=DOF70.equipment;
+const {migrateSave,SAVE_SCHEMA_VERSION}=DOF70.save;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
@@ -110,7 +114,7 @@ const aabb = (a,b) => Math.abs(a.x-b.x) < (a.w+b.w)/2 && Math.abs(a.y-b.y) < (a.
 /* ===================== 存档 ===================== */
 const Save = {
   data:{ high:0, vol:0.5, muted:false, unlocked:MAX_UNLOCKED_DUNGEON },
-  load(){ try{ const s=JSON.parse(localStorage.getItem('dnf_save')); if(s) Object.assign(this.data,s); }catch(e){} },
+  load(){ try{ const s=JSON.parse(localStorage.getItem('dnf_save')); if(s) this.data=Object.assign(this.data,migrateSave(s).save); }catch(e){} },
   save(){ try{ localStorage.setItem('dnf_save', JSON.stringify(this.data)); }catch(e){} }
 };
 Save.load();
@@ -318,16 +322,16 @@ function genEquip(level){
   const mul=RARITY_MUL[rar], base=Math.max(1,level)*0.028;
   const stats={};
   if(type==='weapon'){
-    stats.atk=+((base*(0.8+Math.random()*0.4)*mul)).toFixed(3);
-    if(Math.random()<0.45) stats.crit=+(rand(0.02,0.05)*mul).toFixed(3);
-    if(Math.random()<0.35) stats.speed=+(rand(0.03,0.08)*mul).toFixed(3);
+    const weaponType=Object.keys(WEAPON_TYPES)[Math.floor(Math.random()*Object.keys(WEAPON_TYPES).length)];
+    const w=WEAPON_TYPES[weaponType];
+    return normalizeWeapon({id:Date.now()+Math.random(), name:w.name, type, rarity:rar, stats:{atk:0, speed:(w.attackSpeed-1)*0.1}, kind:'equip'}, player?.clsKey||'blade');
   } else {
     stats.hp=Math.round(16*(0.8+Math.random()*0.4)*mul*Math.max(1,level));
     if(Math.random()<0.35) stats.def=+(rand(0.03,0.07)*mul).toFixed(3);
     if(Math.random()<0.18) stats.speed=+(rand(0.01,0.035)*mul).toFixed(3);
   }
   if(Math.random()<0.25) stats.mp=Math.round(8*(0.8+Math.random()*0.4)*mul);
-  return {id:Date.now()+Math.random(), name:ITEM_NAMES[type][rar], type, rarity:rar, stats, kind:'equip'};
+  return {id:Date.now()+Math.random(), name:ITEM_NAMES[type][rar], type, rarity:rar, stats, kind:'equip', level:Math.max(1,level)};
 }
 const CONSUMABLE_DB = {
   hp_s:{name:'小血瓶', color:'#ff4d6a', hp:80,  icon:'♥', cd:120},
@@ -343,15 +347,15 @@ let clearPending=false, clearInfo=null, dunStats={t:0,kills:0,gold0:0};
 
 function sellPrice(item){
   const base={white:44,blue:115,purple:290,orange:820};
-  const sv=Object.values(item.stats).reduce((s,v)=>s+Math.abs(v)*140,0);
+  const sv=Object.entries(item.stats).reduce((s,[k,v])=>s+Math.abs(v)*(k==='atk'&&item.weaponType?0.08:140),0);
   return Math.round((base[item.rarity]+sv)*0.6);
 }
 function generateShopItems(){
   shopItems=[]; shopTab=0; shopCursor=0; shopSellMode=false;
-  const lv=difficulty();
+  const lv=70;
   const n=5+Math.floor(Math.random()*2);
   for(let i=0;i<n;i++){
-    const eq=genEquip(lv);
+     const eq=genEquip(lv);
     const rb={white:90,blue:250,purple:620,orange:1900};
     const sv=Object.values(eq.stats).reduce((s,v)=>s+Math.abs(v),0);
     eq.price=Math.round(rb[eq.rarity]*(1+sv*8)*(0.88+Math.random()*0.24));
@@ -603,7 +607,7 @@ class Player extends Fighter {
   equipStats(){
     return Object.values(this.equipped).reduce((s,e)=>{
       if(!e) return s;
-      s.atk+=(e.stats.atk||0); s.hp+=(e.stats.hp||0);
+       s.atk+=(e.weaponType ? e.physicalAttack/1000 : (e.stats.atk||0)); s.hp+=(e.stats.hp||0);
       s.mp+=(e.stats.mp||0); s.def+=(e.stats.def||0); s.speed+=(e.stats.speed||0);
       return s;
     },{atk:0,hp:0,mp:0,def:0,speed:0});
@@ -619,6 +623,10 @@ class Player extends Fighter {
     return super.takeDamage(Math.max(1,Math.round(dmg*(1-def))),fromDir,kb,crit);
   }
   equipItem(item){
+    if(item.type==='weapon'){
+      item=normalizeWeapon(item,this.clsKey);
+      if(!canUseWeapon(this.clsKey,item.weaponType)){ spawnText(this.x,this.screenY()-this.h-24,'职业无法使用该武器','#ff5a5a'); return false; }
+    }
     const old=this.equipped[item.type];
     if(old){ this.maxhp-=(old.stats.hp||0); this.maxmp-=(old.stats.mp||0); this.inventory.push(old); }
     this.equipped[item.type]=item;
@@ -626,6 +634,7 @@ class Player extends Fighter {
     this.hp=clamp(this.hp,0,this.maxhp); this.mp=clamp(this.mp,0,this.maxmp);
     this.inventory.splice(this.inventory.indexOf(item),1);
     Audio2.sfx('ui'); spawnText(this.x,this.screenY()-this.h-24,'装备:'+item.name,RARITY_COL[item.rarity]);
+    return true;
   }
   addItem(item){
     if(item.kind==='consumable'){
@@ -1040,13 +1049,13 @@ function pickSwordActionFrame(at, prog){
 
 /* ===================== 武器层(独立图集, 按职业/装备叠加) ===================== */
 const WEAPONS={};
-['lswd','beamswd'].forEach(key=>{ const o={img:new Image(),meta:null,ready:false};
-  o.img.onload=()=>{ if(o.meta)o.ready=true; }; o.img.src='assets/weapon_'+key+'.png'; WEAPONS[key]=o;
-  if(window.WEAPON_META&&window.WEAPON_META[key]){ o.meta=window.WEAPON_META[key]; if(o.img.complete&&o.img.naturalWidth)o.ready=true; }
-  else fetch('assets/weapon_'+key+'.json').then(r=>r.json()).then(m=>{o.meta=m; if(o.img.complete&&o.img.naturalWidth)o.ready=true;}).catch(()=>{});
+const WEAPON_ATLAS={lightsword:'beamswd',katana:'katana',greatsword:'greatsword',club:'club',shortsword:'shortsword'};
+Object.entries(WEAPON_ATLAS).forEach(([key,atlas])=>{ const o={img:new Image(),meta:null,ready:false};
+  o.img.onload=()=>{ if(o.meta)o.ready=true; }; o.img.src='assets/weapon_'+atlas+'.png'; WEAPONS[key]=o;
+  if(window.WEAPON_META&&window.WEAPON_META[atlas]){ o.meta=window.WEAPON_META[atlas]; if(o.img.complete&&o.img.naturalWidth)o.ready=true; }
+  else fetch('assets/weapon_'+atlas+'.json').then(r=>r.json()).then(m=>{o.meta=m; if(o.img.complete&&o.img.naturalWidth)o.ready=true;}).catch(()=>{});
 });
-// 职业默认武器外观: 剑魂=光剑, 其余=太刀
-function classWeaponKey(clsKey){ return clsKey==='blade'?'beamswd':'lswd'; }
+function classWeaponKey(clsKey){ return DEFAULT_WEAPON[clsKey] || 'katana'; }
 // 血刃染色帧缓存(离屏, 按需生成, 正确隔离不误染身体)
 const _tintCache={};
 function tintedWeaponFrame(key, fi, tint){
@@ -1207,7 +1216,7 @@ function drawSwordmanSprite(p){
   const dim=(p.invuln>0&&Math.floor(p.invuln/3)%2===0)?0.55:1;
   ctx.globalAlpha=dim;
   ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s);          // 身体层
-  const wkey=classWeaponKey(p.clsKey);
+   const wkey=(p.equipped.weapon&&p.equipped.weapon.weaponType)||classWeaponKey(p.clsKey);
   ctx.globalAlpha=dim; drawWeaponLayer(wkey, fi, s);                     // 武器层(剑魂光剑/其余太刀)
   const at=p.attackType;
   if(p.clsKey==='berserk' && p.attackTimer>0 && at && at.basic){        // 狂战副手血刃(仅普攻显示)
@@ -2182,7 +2191,9 @@ function drawInventoryPanel(){
     ctx.fillStyle='#0a0d16'; ctx.fillRect(eqX,sy2,esw,esh);
     ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.strokeRect(eqX,sy2,esw,esh);
     ctx.fillStyle='#556'; ctx.font='10px sans-serif'; ctx.fillText(SLOT_LABEL[slot],eqX+4,sy2+12);
-    if(item){ ctx.fillStyle=col; ctx.font='bold 11px sans-serif'; ctx.fillText(item.name,eqX+4,sy2+28); }
+     if(item){ ctx.fillStyle=col; ctx.font='bold 11px sans-serif'; ctx.fillText(item.name,eqX+4,sy2+28);
+       if(item.type==='weapon'){ ctx.fillStyle='#9aa6b8'; ctx.font='9px sans-serif'; ctx.fillText('Lv'+item.level+' '+item.physicalAttack+'攻 '+item.attackSpeed+'速',eqX+4,sy2+40); }
+     }
   });
   // 属性面板(装备栏下)
   const es=p.equipStats();
@@ -2214,7 +2225,7 @@ function drawInventoryPanel(){
   if(cur<p.inventory.length){
     const it=p.inventory[cur], dx=gx+INV_COLS*(ss+gg)+10, dy=gy;
     ctx.fillStyle=RARITY_COL[it.rarity]; ctx.font='bold 13px sans-serif'; ctx.fillText(it.name,dx,dy+18);
-    ctx.fillStyle='#9aa6b8'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[it.type]+']',dx,dy+32);
+     ctx.fillStyle='#9aa6b8'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[it.type]+']'+(it.weaponType?' '+it.weaponType+' Lv'+it.level+' 物攻'+it.physicalAttack+' 攻速'+it.attackSpeed:''),dx,dy+32);
     let yy=dy+50;
     const labs={atk:'攻击',hp:'最大HP',mp:'最大MP',crit:'暴击率',def:'减伤',speed:'攻速'};
     for(const [k,v] of Object.entries(it.stats)){
@@ -2371,7 +2382,7 @@ function drawShop(){
       ctx.strokeStyle=sel?'#ffcf4d':col; ctx.lineWidth=sel?2:1.5; ctx.strokeRect(lx,y,lw,ih-3);
       ctx.fillStyle=col; ctx.beginPath(); ctx.arc(lx+13,y+ih/2-2,6,0,7); ctx.fill();
       ctx.fillStyle=col; ctx.font='bold 13px sans-serif'; ctx.fillText(eq.name,lx+28,y+18);
-      ctx.fillStyle='#666'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[eq.type]+']',lx+28,y+ih-10);
+       ctx.fillStyle='#666'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[eq.type]+']'+(eq.weaponType?' '+eq.weaponType+' Lv'+eq.level+' 物攻'+eq.physicalAttack+' 攻速'+eq.attackSpeed:''),lx+28,y+ih-10);
       ctx.fillStyle='#7CFC00'; ctx.font='11px sans-serif';
       const sv=Object.entries(eq.stats).map(([k,v])=>{const l={atk:'攻',hp:'血',mp:'蓝',crit:'暴',def:'防',speed:'速'}[k]||k;return l+(k==='atk'||k==='crit'||k==='def'||k==='speed'?'+'+(v*100).toFixed(0)+'%':'+'+v);}).join(' ');
       ctx.fillText(sv,lx+120,y+18);
@@ -2384,7 +2395,7 @@ function drawShop(){
     if(sel){
       const col=RARITY_COL[sel.rarity]; let dy=ly+14;
       ctx.fillStyle=col; ctx.font='bold 14px sans-serif'; ctx.fillText(sel.name,detX+10,dy); dy+=18;
-      ctx.fillStyle='#8a93a6'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[sel.type]+']',detX+10,dy); dy+=20;
+       ctx.fillStyle='#8a93a6'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[sel.type]+']'+(sel.weaponType?' '+sel.weaponType+' Lv'+sel.level+' 物攻'+sel.physicalAttack+' 攻速'+sel.attackSpeed:''),detX+10,dy); dy+=20;
       const labs={atk:'攻击力',hp:'最大HP',mp:'最大MP',crit:'暴击率',def:'减伤%',speed:'攻速'};
       const PCT=k=>k==='atk'||k==='crit'||k==='def'||k==='speed';
       for(const [k,v] of Object.entries(sel.stats)){
@@ -2573,6 +2584,7 @@ function beginDungeon(id){
 function serializeRun(){
   if(!player||player.dead) return;
   const p=player;
+  Save.data.schemaVersion=SAVE_SCHEMA_VERSION;
   Save.data.run={ clsKey:p.clsKey, level:p.level, exp:p.exp, expNext:p.expNext, gold:p.gold,
     crit:p._crit, shopAtk:p.shopAtk, buy:p.buy, maxhp:p.maxhp, maxmp:p.maxmp, hp:p.hp, mp:p.mp,
     equipped:p.equipped, inventory:p.inventory, hotbar:p.hotbar, dungeonId, dungeon:dungeonId+1, room,
@@ -2581,6 +2593,7 @@ function serializeRun(){
 }
 function clearRun(){ if(Save.data.run){ Save.data.run=null; Save.save(); } }
 function continueGame(){
+  if(typeof migrateSave==='function'){ const migrated=migrateSave(Save.data); Save.data=migrated.save; }
   const r=Save.data.run; if(!r){ gameState='select'; return; }
   if(!canStartClass(r.clsKey)){
     player=null; gameState='select'; classSelectMessage=classAvailability(r.clsKey)?.label||'存档职业无效，无法继续游戏';
@@ -2591,7 +2604,7 @@ function continueGame(){
   Object.assign(player,{ level:r.level, exp:r.exp, expNext:r.expNext, gold:r.gold,
     _crit:r.crit, shopAtk:r.shopAtk, buy:r.buy||{atk:0,hp:0,mp:0,crit:0},
     maxhp:r.maxhp, maxmp:r.maxmp, hp:r.hp, mp:r.mp,
-    equipped:r.equipped||{weapon:null,head:null,chest:null,legs:null,shoes:null},
+     equipped:{...(r.equipped||{}), weapon:r.equipped?.weapon ? normalizeWeapon(r.equipped.weapon,r.clsKey) : null},
     inventory:r.inventory||[], hotbar:r.hotbar||new Array(6).fill(null) });
   if(r.skillOrder){ const head=player.skills[0], rest=player.skills.slice(1);   // 恢复技能槽自定义顺序
     const ordered=r.skillOrder.map(nm=>rest.find(s=>s.name===nm)).filter(Boolean);
