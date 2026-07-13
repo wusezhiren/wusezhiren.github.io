@@ -12,6 +12,23 @@ class AttackReaderTests(unittest.TestCase):
         pvf_path, _ = resolve_source_paths(Path.cwd())
         cls.reader = AttackReader(pvf_path)
 
+    def test_rejects_missing_or_invalid_script_header(self):
+        for data in (b"", b"\xb0", b"xx"):
+            with self.subTest(data=data), self.assertRaisesRegex(
+                    ValueError, r"ATK.*header"):
+                parse_raw_tokens(data, self.reader.st)
+
+    def test_rejects_empty_atk_without_format_evidence(self):
+        with self.assertRaisesRegex(ValueError, r"ATK.*no tokens"):
+            parse_raw_tokens(b"\xb0\xd0", self.reader.st)
+
+    def test_rejects_one_to_four_trailing_bytes(self):
+        complete = b"\xb0\xd0" + struct.pack("<Bi", 2, 7)
+        for count in range(1, 5):
+            with self.subTest(count=count), self.assertRaisesRegex(
+                    ValueError, r"ATK.*trailing.*%d" % count):
+                parse_raw_tokens(complete + b"x" * count, self.reader.st)
+
     def test_charge_crash_variants_keep_raw_sections_and_confirmed_fields(self):
         dash_path = "character/swordman/attackinfo/chargecrashdash.atk"
         upper_path = "character/swordman/attackinfo/chargecrashupper.atk"
@@ -30,6 +47,14 @@ class AttackReaderTests(unittest.TestCase):
         self.assertIn("[physic]", [token["value"] for token in dash["tokens"]])
         self.assertIn("[blow]", [token["value"] for token in dash["tokens"]])
         self.assertIn("[no blood]", [token["value"] for token in dash["tokens"]])
+        self.assertEqual(dash["raw_sections"][0]["header"]["value"], "[attack type]")
+        self.assertEqual(dash["raw_sections"][0]["tokens"][0]["raw_type"], 5)
+        rebuilt_section = b"".join(
+            struct.pack("<Bi", token["raw_type"], token["raw_value"])
+            for token in [dash["raw_sections"][0]["header"]]
+            + dash["raw_sections"][0]["tokens"]
+        )
+        self.assertEqual(rebuilt_section, dash["raw_section_bytes"][0])
 
     def test_raw_tokens_preserve_binary_type_value_offset_and_order(self):
         path = "character/swordman/attackinfo/chargecrashdash.atk"
@@ -70,7 +95,7 @@ class AttackReaderTests(unittest.TestCase):
         parsed = analyze_tokens(tokens, {"attack type": {"physic"}})
 
         self.assertEqual(parsed["confirmed_sections"], [{
-            "name": "attack type", "tokens": [tokens[1]]
+            "name": "attack type", "header": tokens[0], "tokens": [tokens[1]]
         }])
         self.assertEqual(parsed["ambiguous_runs"], [{
             "tokens": tokens[2:],

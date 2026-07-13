@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from tools.skl import SkillReader
+from tools.skl import SkillReader, parse_pre_required_skills
 from tools.skillfx_config import resolve_source_paths
 
 
@@ -10,6 +10,23 @@ class SkillReaderTests(unittest.TestCase):
     def setUpClass(cls):
         cls.pvf_path, _ = resolve_source_paths(Path.cwd())
         cls.reader = SkillReader(cls.pvf_path)
+
+    def test_pre_required_skill_parser_accepts_one_or_multiple_pairs(self):
+        self.assertEqual(parse_pre_required_skills([("int", 64), ("int", 5)]), [
+            {"skill_index": 64, "required_level": 5}
+        ])
+        self.assertEqual(parse_pre_required_skills([
+            ("int", 64), ("int", 5), ("int", 12), ("int", 3)
+        ]), [
+            {"skill_index": 64, "required_level": 5},
+            {"skill_index": 12, "required_level": 3},
+        ])
+
+    def test_pre_required_skill_parser_rejects_odd_or_non_integer_tokens(self):
+        with self.assertRaisesRegex(ValueError, r"pre required skill.*odd"):
+            parse_pre_required_skills([("int", 64)])
+        with self.assertRaisesRegex(ValueError, r"pre required skill.*non-integer.*path"):
+            parse_pre_required_skills([("int", 64), ("path", "skill.skl")])
 
     def test_tripleslash_preserves_learning_metadata(self):
         skill = self.reader.read_skill("skill/swordman/tripleslash.skl")
@@ -45,6 +62,14 @@ class SkillReaderTests(unittest.TestCase):
                 KeyError,
                 r"tripleslash.*pre_required_skills.*Script\.pvf"):
             self.reader.read_required(path, "tripleslash", "pre_required_skills")
+
+    def test_read_required_identifies_missing_path_with_full_context(self):
+        path = "skill/swordman/does-not-exist.skl"
+
+        with self.assertRaisesRegex(
+                FileNotFoundError,
+                r"missing-skill.*required_level.*Script\.pvf.*does-not-exist\.skl"):
+            self.reader.read_required(path, "missing-skill", "required_level")
 
 
 if __name__ == "__main__":

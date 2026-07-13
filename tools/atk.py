@@ -21,8 +21,13 @@ DEFAULT_SCHEMA = {
 
 
 def parse_raw_tokens(data, string_table):
-    if data[:2] != MAGIC:
-        raise ValueError("not a pvf script")
+    if len(data) < 2 or data[:2] != MAGIC:
+        raise ValueError("invalid ATK script header")
+    trailing = (len(data) - 2) % 5
+    if trailing:
+        raise ValueError("invalid ATK data: trailing byte count %d" % trailing)
+    if len(data) == 2:
+        raise ValueError("invalid ATK data: no tokens")
     tokens = []
     for offset in range(2, len(data) - 4, 5):
         raw_type = data[offset]
@@ -82,7 +87,7 @@ def analyze_tokens(tokens, schema):
         name = _tag_name(token)
         if name in schema:
             run = None
-            current = {"name": name, "tokens": []}
+            current = {"name": name, "header": token, "tokens": []}
             sections.append(current)
         elif current is not None and name in schema[current["name"]]:
             current["tokens"].append(token)
@@ -132,15 +137,18 @@ class AttackReader:
             values = section_index.get(name, [])
             return values[0] if values else []
 
-        confirmed = [
-            {"name": section["name"], "tokens": _pairs(section["tokens"])}
-            for section in analyzed["confirmed_sections"]
+        confirmed = analyzed["confirmed_sections"]
+        raw_section_bytes = [
+            b"".join(struct.pack("<Bi", token["raw_type"], token["raw_value"])
+                     for token in [section["header"]] + section["tokens"])
+            for section in confirmed
         ]
         return {
             "path": path,
             "tokens": tokens,
             "sections": confirmed,
             "raw_sections": confirmed,
+            "raw_section_bytes": raw_section_bytes,
             "confirmed_sections": confirmed,
             "section_index": section_index,
             "ambiguous_runs": analyzed["ambiguous_runs"],

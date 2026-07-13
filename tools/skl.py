@@ -82,6 +82,21 @@ def ints(toks):
     return [v for k, v in toks if k == "int"]
 
 
+def parse_pre_required_skills(toks):
+    non_integer = [kind for kind, _ in toks if kind != "int"]
+    if non_integer:
+        raise ValueError(
+            "pre required skill contains non-integer token: %s" % non_integer[0]
+        )
+    values = [value for _, value in toks]
+    if len(values) % 2:
+        raise ValueError("pre required skill has odd integer count: %d" % len(values))
+    return [
+        {"skill_index": values[i], "required_level": values[i + 1]}
+        for i in range(0, len(values), 2)
+    ]
+
+
 class SkillReader:
     def __init__(self, pvf_path):
         # Keep the source path so strict-field errors can identify the exact PVF.
@@ -145,7 +160,9 @@ class SkillReader:
             # 部分技能(冰刃/爆炎波动剑等)把 MP/冷却写在顶层而非 [dungeon] 段
             return ints(section_body(dungeon, tag)) or ints(section_body(toks, tag))
 
-        pre_required = ints(section_body(toks, "pre required skill"))
+        pre_required = parse_pre_required_skills(
+            section_body(toks, "pre required skill")
+        )
 
         info = {
             "path": path,
@@ -154,10 +171,7 @@ class SkillReader:
             "required_level": (ints(section_body(toks, "required level")) or [None])[0],
             "required_level_range": (ints(section_body(toks, "required level range")) or [None])[0],
             "growtype_maximum_level": ints(section_body(toks, "growtype maximum level")),
-            "pre_required_skills": [
-                {"skill_index": pre_required[i], "required_level": pre_required[i + 1]}
-                for i in range(0, len(pre_required) - 1, 2)
-            ],
+            "pre_required_skills": pre_required,
             "skill_type": section_body(toks, "type"),
             "skill_class": section_body(toks, "skill class"),
             "level_property": section_body(toks, "level property"),
@@ -178,7 +192,13 @@ class SkillReader:
         return info
 
     def read_required(self, path, skill_key, field):
-        value = self.read_skill(path).get(field)
+        try:
+            value = self.read_skill(path).get(field)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                "skill %s missing required field %s in %s (%s): path not found"
+                % (skill_key, field, self.pvf_path, path)
+            ) from exc
         if value is None or value == []:
             raise KeyError(
                 "skill %s missing required field %s in %s (%s)"
