@@ -39,6 +39,9 @@
 <script src="src/combat/status.js"></script>
 <script src="src/combat/action-player.js"></script>
 <script src="src/combat/skills/common/uppercut.js"></script>
+<script src="src/combat/skills/blade/triple-slash.js"></script>
+<script src="src/combat/skills/blade/charge-crash.js"></script>
+<script src="src/combat/skills/blade/momentary-slash.js"></script>
 <script src="src/combat/skills/index.js"></script>
 <script src="src/monsters/dof70.js"></script>
 <script>
@@ -678,6 +681,7 @@ class Player extends Fighter {
     DOF70.combat.status.tick(this.combatStatus, 1);
     this.actionPlayer.update(1000/60, this.attackSpeedMul ? 1 / this.attackSpeedMul() : 1);
     if(this.uppercutAction) this.uppercutAction.update(1);
+    if(this.bladeAction) this.bladeAction.update(1);
     if(this.comboTimer>0)this.comboTimer--; else this.combo=0;
     if(this.invuln>0)this.invuln--;
     if(this.flash>0)this.flash--;
@@ -788,7 +792,7 @@ class Player extends Fighter {
     for(const kk in keys) if(kk.startsWith('__dash_')&&!down(kk.replace('__dash_','')))keys[kk]=false;
   }
   cast(sk){
-    const dedicated=sk.fx==='uppercut';
+    const dedicated=sk.fx==='uppercut'||(this.clsKey==='blade'&&['tripleslash','dragonup','flashcut'].includes(sk.fx));
     if(!dedicated) this.mp-=sk.mp;
     if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost);  // 血气技能按原版消耗HP
     if(!dedicated) sk._cd=sk.cd;
@@ -808,6 +812,18 @@ class Player extends Fighter {
       }, {mp:sk.mp, cooldown:sk.cd, launch:sk.launch, hitstun:18, superArmor:8}, {startup:3, active:2, recovery:Math.max(1,self.attackTimer-5)});
       return;
     }
+    if(this.clsKey==='blade'&&sk.fx==='tripleslash'){
+      this.bladeAction=SKILL_HANDLERS.tripleSlash.createTripleSlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { slash1:4, slash2:4, slash3:4 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='dragonup'){
+      this.bladeAction=SKILL_HANDLERS.chargeCrash.createChargeCrash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { charge:8, impact:2, uppercut:3, recovery:6 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='flashcut'){
+      this.bladeAction=SKILL_HANDLERS.momentarySlash.createMomentarySlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { charge:8, slash:2, recovery:8 });
+      return;
+    }
     const mv=SKILL_MOVE[sk.fx];                      // 技能位移: 角色跟随前冲/上升
     if(mv){ const ticks=mv.t==='dur'?this.attackTimer:mv.t;
       this.castMove={vx:this.dir*(mv.vx||0), ticks, decay:0.9};
@@ -824,6 +840,19 @@ class Player extends Fighter {
       kb:i<segs-1?2:(sk.knock||12)});
     if(sk.fire){ const fx2=this.x+this.dir*(sk.ox||0);
       for(let i=0;i<16;i++) particles.push({x:fx2+rand(-50,50),y:this.y-rand(0,70),vx:rand(-2,2),vy:rand(-5,-1),life:rand(18,36),max:36,color:i%2?'#ff9a3c':'#ffcf4d',r:rand(3,7)}); }
+  }
+  bladeSkillContext(){
+    const self=this;
+    return { direction:this.dir, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), clock:combatClock,
+      resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get cooldown(){return self.attackType?self.attackType._cd:0;},set cooldown(v){if(self.attackType)self.attackType._cd=v;}},
+      status:{setTimer:(name,value)=>DOF70.combat.status.setTimer(self.combatStatus,name,value)},
+      freeze:duration=>DOF70.combat.status.freeze(combatClock,duration), emit:event=>self.handleBladeEvent(event) };
+  }
+  handleBladeEvent(event){
+    if(event.type==='body') this.selectAction(event.skill==='triple-slash'?'hit_front':event.skill==='charge-crash'?'hit_front':'hit_front');
+    else if(event.type==='fx') spawnSkillFX(this,this.attackType);
+    else if(event.type==='move'){ this.x+=event.distance||0; }
+    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun,uppercut:event.stage==='uppercut'});
   }
   handleUppercutEvent(event){
     if(event.type==='body') this.selectAction('uppercut');
