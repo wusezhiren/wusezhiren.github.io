@@ -38,6 +38,8 @@
 <script src="src/combat/damage.js"></script>
 <script src="src/combat/status.js"></script>
 <script src="src/combat/action-player.js"></script>
+<script src="src/combat/skills/common/uppercut.js"></script>
+<script src="src/combat/skills/index.js"></script>
 <script src="src/monsters/dof70.js"></script>
 <script>
 "use strict";
@@ -46,6 +48,7 @@ const {WEAPON_TYPES,DEFAULT_WEAPON,canUseWeapon,normalizeWeapon}=DOF70.equipment
 const {migrateSave,SAVE_SCHEMA_VERSION}=DOF70.save;
 const {resolveDamage}=DOF70.combat;
 const {MONSTERS_DOF70}=DOF70.monsters;
+const SKILL_HANDLERS=DOF70.combat.skills;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
@@ -674,6 +677,7 @@ class Player extends Fighter {
     if(this.dead) return;
     DOF70.combat.status.tick(this.combatStatus, 1);
     this.actionPlayer.update(1000/60, this.attackSpeedMul ? 1 / this.attackSpeedMul() : 1);
+    if(this.uppercutAction) this.uppercutAction.update(1);
     if(this.comboTimer>0)this.comboTimer--; else this.combo=0;
     if(this.invuln>0)this.invuln--;
     if(this.flash>0)this.flash--;
@@ -764,7 +768,10 @@ class Player extends Fighter {
       }
     }
     if(this.attackTimer>0)this.attackTimer--;
-    if(this.attackTimer>0) {
+    if(this.attackTimer>0 && this.attackType?.fx==='uppercut') {
+      this.selectAction('uppercut');
+    }
+    else if(this.attackTimer>0) {
       const weapon=this.equipped?.weapon?.weaponType || classWeaponKey(this.clsKey);
       this.selectAction(this.attackType?.basic ? `basic_${weapon}` : 'hit_front');
     }
@@ -781,12 +788,26 @@ class Player extends Fighter {
     for(const kk in keys) if(kk.startsWith('__dash_')&&!down(kk.replace('__dash_','')))keys[kk]=false;
   }
   cast(sk){
-    this.mp-=sk.mp; if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost);  // 血气技能按原版消耗HP
-    sk._cd=sk.cd; const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
+    const dedicated=sk.fx==='uppercut';
+    if(!dedicated) this.mp-=sk.mp;
+    if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost);  // 血气技能按原版消耗HP
+    if(!dedicated) sk._cd=sk.cd;
+    const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
     this.attackTimer=Math.max(8,Math.round(actionDur*this.attackSpeedMul())); sk._castDur=this.attackTimer; this.attackType=sk;
     spawnText(this.x,this.screenY()-this.h-30,sk.name+'!',sk.color);
     Audio2.sfx(sk.type==='ult'?'ult':'skill');
-    spawnSkillFX(this, sk);                         // 每个技能的专属大型特效
+    if(sk.fx!=='uppercut') spawnSkillFX(this, sk);   // 上挑由专用时间轴事件派发
+    if(sk.fx==='uppercut'){
+      const self=this;
+      this.uppercutAction=SKILL_HANDLERS.uppercut.createUppercut({
+        clock:combatClock,
+        resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get cooldown(){return sk._cd;},set cooldown(v){sk._cd=v;}},
+        status:{setTimer:(name,value)=>DOF70.combat.status.setTimer(self.combatStatus,name,value)},
+        freeze:duration=>DOF70.combat.status.freeze(combatClock,duration),
+        emit:event=>self.handleUppercutEvent(event),
+      }, {mp:sk.mp, cooldown:sk.cd, launch:sk.launch, hitstun:18, superArmor:8}, {startup:3, active:2, recovery:Math.max(1,self.attackTimer-5)});
+      return;
+    }
     const mv=SKILL_MOVE[sk.fx];                      // 技能位移: 角色跟随前冲/上升
     if(mv){ const ticks=mv.t==='dur'?this.attackTimer:mv.t;
       this.castMove={vx:this.dir*(mv.vx||0), ticks, decay:0.9};
@@ -803,6 +824,11 @@ class Player extends Fighter {
       kb:i<segs-1?2:(sk.knock||12)});
     if(sk.fire){ const fx2=this.x+this.dir*(sk.ox||0);
       for(let i=0;i<16;i++) particles.push({x:fx2+rand(-50,50),y:this.y-rand(0,70),vx:rand(-2,2),vy:rand(-5,-1),life:rand(18,36),max:36,color:i%2?'#ff9a3c':'#ffcf4d',r:rand(3,7)}); }
+  }
+  handleUppercutEvent(event){
+    if(event.type==='body') this.selectAction('uppercut');
+    else if(event.type==='fx') spawnSkillFX(this, this.attackType);
+    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,reach:event.radius,kb:2,launch:event.launch,hitstun:event.hitstun,uppercut:true});
   }
   resolveHit(hit){
     const sk=hit.sk; let box;
@@ -826,7 +852,7 @@ class Player extends Fighter {
         const crit=Math.random()<this.crit;
         const dmg=resolveDamage({channel:'percent',base:rand(sk.dmg[0],sk.dmg[1]),level:this.level,physicalPrimaryStat:this.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:this.damageMultiplier()});
         const real=e.takeDamage(dmg,this.dir,hit.kb!=null?hit.kb:(sk.knock||12),crit); comboHit(dmg,crit);
-        if(sk.launch){ e.vz=Math.max(e.vz,sk.launch); e.launched=true; }
+        if(sk.launch || hit.uppercut){ e.vz=Math.max(e.vz,hit.launch||sk.launch); e.launched=true; }
         if(sk.slow) e.slow=sk.slow;
         if(sk.freeze) e.freeze=Math.max(e.freeze,sk.freeze);
         if(ls) healed+=real*ls;
