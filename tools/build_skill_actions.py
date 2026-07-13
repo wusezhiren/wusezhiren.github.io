@@ -53,7 +53,7 @@ def _read_action(pvf, name):
     raw = pvf.read(path)
     if raw is None:
         raise KeyError(f"missing body action {path}")
-    parsed = parse_ani70(raw, strict=False)
+    parsed = parse_ani70(raw, strict=False)  # legacy export intentionally remains permissive
     if not parsed or not parsed["frames"]:
         raise ValueError(f"could not parse body action {path}")
     return [dict(img=f["imgFrame"], x=f["x"], y=f["y"], delay=f["delay"])
