@@ -45,6 +45,9 @@
 <script src="src/combat/skills/blade/rapid-move-slash.js"></script>
 <script src="src/combat/skills/blade/weapon-combo.js"></script>
 <script src="src/combat/skills/blade/illusion-slash.js"></script>
+<script src="src/combat/skills/berserk/gore-cross.js"></script>
+<script src="src/combat/skills/berserk/hop-smash.js"></script>
+<script src="src/combat/skills/berserk/blood-blast.js"></script>
 <script src="src/combat/skills/index.js"></script>
 <script src="src/monsters/dof70.js"></script>
 <script>
@@ -795,7 +798,7 @@ class Player extends Fighter {
     for(const kk in keys) if(kk.startsWith('__dash_')&&!down(kk.replace('__dash_','')))keys[kk]=false;
   }
   cast(sk){
-    const dedicated=sk.fx==='uppercut'||(this.clsKey==='blade'&&['tripleslash','dragonup','flashcut','revolvingsword','hiddenblade','illusionslash'].includes(sk.fx));
+    const dedicated=sk.fx==='uppercut'||(this.clsKey==='blade'&&['tripleslash','dragonup','flashcut','revolvingsword','hiddenblade','illusionslash'].includes(sk.fx))||(this.clsKey==='berserk'&&['gorecross','hopsmash','bloodblast'].includes(sk.fx));
     if(!dedicated) this.mp-=sk.mp;
     if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost);  // 血气技能按原版消耗HP
     if(!dedicated) sk._cd=sk.cd;
@@ -837,6 +840,18 @@ class Player extends Fighter {
     }
     if(this.clsKey==='blade'&&sk.fx==='illusionslash'){
       this.bladeAction=SKILL_HANDLERS.illusionSlash.createIllusionSlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), speedMultiplier:1/this.attackSpeedMul()}, { preparation:6, slashes:20, swordWave:3, recovery:8 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='gorecross'){
+      this.bladeAction=SKILL_HANDLERS.goreCross.createGoreCross(this.bladeSkillContext(), {...sk}, { horizontal:3, vertical:3, bloodCross:5, recovery:8 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='hopsmash'){
+      this.bladeAction=SKILL_HANDLERS.hopSmash.createHopSmash(this.bladeSkillContext(), {...sk}, { leap:5, forward:5, downward:2, landing:2, shockwave:3, recovery:7 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='bloodblast'){
+      this.bladeAction=SKILL_HANDLERS.bloodBlast.createBloodBlast(this.bladeSkillContext(), {...sk}, { startup:4, spray:3, final:3, recovery:7 });
       return;
     }
     const mv=SKILL_MOVE[sk.fx];                      // 技能位移: 角色跟随前冲/上升
