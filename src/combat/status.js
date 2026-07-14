@@ -12,6 +12,7 @@
     return { state: 'idle', timers, held: null, suction: { target: null, time: 0 }, hits: new Map() };
   }
   function setTimer(s, name, value) { if (!(name in s.timers)) throw new Error(`Unknown status timer: ${name}`); s.timers[name] = Math.max(s.timers[name], value || 0); return s; }
+  function clearTimer(s, name) { if (!(name in s.timers)) throw new Error(`Unknown status timer: ${name}`); s.timers[name] = 0; return s; }
   function tick(s, amount = 1) {
     amount = Math.max(0, amount);
     for (const name of TIMER_NAMES) s.timers[name] = Math.max(0, s.timers[name] - amount);
@@ -41,5 +42,5 @@
   function freeze(clock, duration) { clock.hitstop = Math.max(clock.hitstop || 0, Math.max(0, duration || 0)); return clock; }
   function tickClock(clock, amount = 1) { clock.hitstop = Math.max(0, (clock.hitstop || 0) - amount); return clock; }
   function advanceClock(clock, amount) { return clock.hitstop > 0 ? 0 : amount; }
-  return { createStatus, setTimer, tick, canHit, hasSuperArmor, applyHitstun, launch, land, grab, isHolding, isUngrabbable, suction, canHitTarget, recordHit, tickHits, isGetupProtected, createClock, freeze, tickClock, advanceClock };
+  return { createStatus, setTimer, clearTimer, tick, canHit, hasSuperArmor, applyHitstun, launch, land, grab, isHolding, isUngrabbable, suction, canHitTarget, recordHit, tickHits, isGetupProtected, createClock, freeze, tickClock, advanceClock };
 });
