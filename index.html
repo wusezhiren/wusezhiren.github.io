@@ -875,27 +875,27 @@ class Player extends Fighter {
       return;
     }
     if(this.clsKey==='berserk'&&sk.fx==='gorecross'){
-      this.bladeAction=SKILL_HANDLERS.goreCross.createGoreCross(this.bladeSkillContext(), {...sk}, { horizontal:3, vertical:3, bloodCross:5, recovery:8 });
+      this.bladeAction=SKILL_HANDLERS.goreCross.createGoreCross(this.berserkSkillContext(), {...sk}, { horizontal:3, vertical:3, bloodCross:5, recovery:8 });
       return;
     }
     if(this.clsKey==='berserk'&&sk.fx==='hopsmash'){
-      this.bladeAction=SKILL_HANDLERS.hopSmash.createHopSmash(this.bladeSkillContext(), {...sk}, { leap:5, forward:5, downward:2, landing:2, shockwave:3, recovery:7 });
+      this.bladeAction=SKILL_HANDLERS.hopSmash.createHopSmash(this.berserkSkillContext(), {...sk}, { leap:5, forward:5, downward:2, landing:2, shockwave:3, recovery:7 });
       return;
     }
     if(this.clsKey==='berserk'&&sk.fx==='bloodblast'){
-      this.bladeAction=SKILL_HANDLERS.bloodBlast.createBloodBlast(this.bladeSkillContext(), {...sk}, { startup:4, spray:3, final:3, recovery:7 });
+      this.bladeAction=SKILL_HANDLERS.bloodBlast.createBloodBlast(this.berserkSkillContext(), {...sk}, { startup:4, spray:3, final:3, recovery:7 });
       return;
     }
     if(this.clsKey==='berserk'&&sk.fx==='grabblastblood'){
-      this.bladeAction=SKILL_HANDLERS.grabBlastBlood.createGrabBlastBlood(this.bladeSkillContext(), {...sk}, { startup:3, grab:2, blood:4, recovery:7 });
+      this.bladeAction=SKILL_HANDLERS.grabBlastBlood.createGrabBlastBlood(this.berserkSkillContext(), {...sk}, { startup:3, grab:2, blood:4, recovery:7 });
       return;
     }
     if(this.clsKey==='berserk'&&sk.fx==='bloodyrave'){
-      this.bladeAction=SKILL_HANDLERS.bloodyRave.createBloodyRave(this.bladeSkillContext(), {...sk}, { startup:3, suction:12, release:3, final:3, recovery:7 });
+      this.bladeAction=SKILL_HANDLERS.bloodyRave.createBloodyRave(this.berserkSkillContext(), {...sk}, { startup:3, suction:12, release:3, final:3, recovery:7 });
       return;
     }
     if(this.clsKey==='berserk'&&sk.fx==='outragebreak'){
-      this.bladeAction=SKILL_HANDLERS.outrageBreak.createOutrageBreak(this.bladeSkillContext(), {...sk}, { leap:5, descent:5, impact:2, eruption:2, recovery:7 });
+      this.bladeAction=SKILL_HANDLERS.outrageBreak.createOutrageBreak(this.berserkSkillContext(), {...sk}, { leap:5, descent:5, impact:2, eruption:2, recovery:7 });
       return;
     }
     const mv=SKILL_MOVE[sk.fx];                      // 技能位移: 角色跟随前冲/上升
@@ -917,17 +917,27 @@ class Player extends Fighter {
   }
   bladeSkillContext(){
     const self=this;
-    return { direction:this.dir, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), clock:combatClock,
+    const target=this.skillTarget();
+    return { direction:this.dir, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), clock:combatClock, owner:self, target, targetStatus:target?.combatStatus,
       resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get hp(){return self.hp;},set hp(v){self.hp=Math.max(1,v);},get maxhp(){return self.maxhp;},get cooldown(){return self.attackType?self.attackType._cd:0;},set cooldown(v){if(self.attackType)self.attackType._cd=v;}},
-      statusState:self.combatStatus,
+       statusState:self.combatStatus,
+       release:target=>{ if(target?.combatStatus) target.combatStatus.held=null; },
+       clearSuction:target=>{ if(target?.combatStatus?.suction?.target===self) target.combatStatus.suction={target:null,time:0}; },
       status:{setTimer:(name,value)=>DOF70.combat.status.setTimer(self.combatStatus,name,value),clearTimer:name=>DOF70.combat.status.clearTimer(self.combatStatus,name)},
-      freeze:duration=>DOF70.combat.status.freeze(combatClock,duration), emit:event=>self.handleBladeEvent(event) };
+       freeze:duration=>DOF70.combat.status.freeze(combatClock,duration), emit:event=>self.handleBladeEvent(event) };
   }
+  skillTarget(){ return enemies.filter(e=>!e.dead&&e.x*this.dir>=this.x*this.dir).sort((a,b)=>Math.abs(a.x-this.x)-Math.abs(b.x-this.x))[0]||null; }
+  berserkSkillContext(){ const context=this.bladeSkillContext(); context.emit=event=>this.handleBerserkEvent(event); return context; }
   handleBladeEvent(event){
     if(event.type==='body') this.selectAction(event.skill==='triple-slash'?'hit_front':event.skill==='charge-crash'?'hit_front':'hit_front');
-    else if(event.type==='fx') spawnSkillFX(this,this.attackType);
+    else if(event.type==='fx'||event.type==='phase') spawnSkillFX(this,this.attackType);
     else if(event.type==='move'){ this.x+=event.distance||0; }
-    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun,uppercut:event.stage==='uppercut'});
+    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,damage:event.damage,damageType:event.damageType,weapon:event.weapon,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun,uppercut:event.stage==='uppercut'});
+  }
+  handleBerserkEvent(event){
+    if(event.type==='body') this.selectAction('hit_front');
+    else if(event.type==='fx'||event.type==='phase') spawnSkillFX(this,this.attackType);
+    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,damage:event.damage,damageType:event.damageType,weapon:event.weapon,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun});
   }
   handleUppercutEvent(event){
     if(event.type==='body') this.selectAction('uppercut');
@@ -954,7 +964,8 @@ class Player extends Fighter {
       if(e.dead)continue;
       if(aabb(box,e)&&Math.abs(this.z-e.z)<72){
         const crit=Math.random()<this.crit;
-        const dmg=resolveDamage({channel:'percent',base:rand(sk.dmg[0],sk.dmg[1]),level:this.level,physicalPrimaryStat:this.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:this.damageMultiplier()});
+         const range=hit.damage||sk.dmg, base=Array.isArray(range)?rand(range[0],range[1]):range;
+         const dmg=resolveDamage({channel:hit.damageType||sk.damageType||'percent',base,level:this.level,physicalPrimaryStat:this.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:this.damageMultiplier(),weapon:hit.weapon||sk.weapon});
         const real=e.takeDamage(dmg,this.dir,hit.kb!=null?hit.kb:(sk.knock||12),crit); comboHit(dmg,crit);
         if(sk.launch || hit.uppercut){ e.vz=Math.max(e.vz,hit.launch||sk.launch); e.launched=true; }
         if(sk.slow) e.slow=sk.slow;
@@ -2750,7 +2761,8 @@ function continueGame(){
     _crit:r.crit, shopAtk:r.shopAtk, buy:r.buy||{atk:0,hp:0,mp:0,crit:0},
     maxhp:r.maxhp, maxmp:r.maxmp, hp:r.hp, mp:r.mp,
      equipped:{...(r.equipped||{}), weapon:r.equipped?.weapon ? normalizeWeapon(r.equipped.weapon,r.clsKey) : null},
-    inventory:r.inventory||[], hotbar:r.hotbar||new Array(6).fill(null) });
+     inventory:(r.inventory||[]).map(item=>item?.type==='weapon'?normalizeWeapon(item,r.clsKey):item).filter(item=>!item?.weaponType||canUseWeapon(r.clsKey,item.weaponType)), hotbar:r.hotbar||new Array(6).fill(null) });
+   if(player.equipped.weapon&&!canUseWeapon(r.clsKey,player.equipped.weapon.weaponType)){ player.equipped.weapon=null; spawnText(player.x,player.screenY()-player.h-24,'武器不符合当前职业限制，已卸下','#ff5a5a'); }
   if(r.skillOrder){ const head=player.skills[0], rest=player.skills.slice(1);   // 恢复技能槽自定义顺序
     const ordered=r.skillOrder.map(nm=>rest.find(s=>s.name===nm)).filter(Boolean);
     rest.forEach(s=>{ if(!ordered.includes(s)) ordered.push(s); });

@@ -79,8 +79,10 @@ def evidence(path):
             errors.append(f"missing evidence artifact {item.get('path')}")
         elif item.get("sha256") != hashlib.sha256(target.read_bytes()).hexdigest():
             errors.append(f"evidence hash mismatch {item.get('path')}")
-    if data.get("status") == "BLOCKED" and not data.get("errors"):
-        errors.append("BLOCKED evidence must explain errors")
+    if data.get("status") == "BLOCKED":
+        errors.append("evidence is BLOCKED")
+    if data.get("errors"):
+        errors.append("evidence manifest contains errors")
     return fail(errors)
 
 def main(argv=None):

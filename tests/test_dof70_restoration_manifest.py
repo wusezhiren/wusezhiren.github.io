@@ -24,6 +24,12 @@ class Dof70RestorationManifestTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(VERIFY)], cwd=ROOT, text=True, capture_output=True)
         self.assertNotEqual(result.returncode, 0)
 
+    def test_blocked_evidence_is_never_a_success(self):
+        result = subprocess.run([sys.executable, str(VERIFY), "--evidence", "manifest"], cwd=ROOT, text=True, capture_output=True)
+        evidence = json.loads((ROOT / "assets/dof70/evidence/manifest.json").read_text())
+        if evidence["status"] == "BLOCKED" or evidence.get("errors"):
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

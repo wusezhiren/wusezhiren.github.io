@@ -26,3 +26,11 @@ test('does not auto-change a class when an equipped weapon is forbidden', () => 
   assert.equal(result.save.run.equipped.weapon, null);
   assert.ok(result.notices.some(n => /职业限制/.test(n)));
 });
+
+test('normalizes schema v2 equipment and removes forbidden inventory weapons', () => {
+  const result = migrateSave({ schemaVersion: 2, run: { clsKey: 'berserk', equipped: { weapon: { weaponType: 'lightsword' } }, inventory: [{ type: 'weapon', weaponType: 'lightsword' }, { type: 'weapon', weaponType: 'katana' }] } });
+  assert.equal(result.save.run.equipped.weapon, null);
+  assert.equal(result.save.run.inventory.length, 1);
+  assert.equal(result.save.run.inventory[0].weaponType, 'katana');
+  assert.ok(result.notices.some(n => /职业限制/.test(n)));
+});

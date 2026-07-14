@@ -11,7 +11,6 @@
   function migrateSave(input) {
     const save = JSON.parse(JSON.stringify(input || {}));
     const notices = [];
-    if ((save.schemaVersion || 0) >= SAVE_SCHEMA_VERSION) return { save, notices };
     const run = save.run;
     if (run) {
       const normalize = item => item ? equipment.normalizeWeapon(item, run.clsKey, text => notices.push(text)) : null;
@@ -22,9 +21,10 @@
           notices.push('武器不符合当前职业限制，已卸下');
         }
       }
-      if (Array.isArray(run.inventory)) run.inventory = run.inventory.map(item => item?.type === 'weapon' ? normalize(item) : item);
+      if (Array.isArray(run.inventory)) run.inventory = run.inventory.map(item => item?.type === 'weapon' ? normalize(item) : item)
+        .filter(item => !item?.weaponType || equipment.canUseWeapon(run.clsKey, item.weaponType) || (notices.push('武器不符合当前职业限制，已移出背包'), false));
     }
-    save.schemaVersion = SAVE_SCHEMA_VERSION;
+    save.schemaVersion = Math.max(save.schemaVersion || 0, SAVE_SCHEMA_VERSION);
     return { save, notices };
   }
   return { SAVE_SCHEMA_VERSION, migrateSave };
