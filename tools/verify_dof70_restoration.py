@@ -22,11 +22,16 @@ def fail(errors):
 def structural():
     errors = []
     try:
-        scenarios = json.loads(MANIFEST.read_text(encoding="utf-8"))["scenarios"]
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        scenarios = manifest["scenarios"]
     except (OSError, json.JSONDecodeError, KeyError) as exc:
         return fail([f"invalid browser scenario manifest: {exc}"])
     index = (ROOT / "index.html").read_text(encoding="utf-8")
     config = (ROOT / "tools/dof70_skill_audit_config.py").read_text(encoding="utf-8")
+    if manifest.get("skills") != SKILLS or manifest.get("passives") != PASSIVES or manifest.get("weapons") != WEAPONS:
+        errors.append("manifest item lists do not match the DOF70 contract")
+    if set(manifest.get("skill_hit_matrix", {})) != set(SKILLS) or any(manifest["skill_hit_matrix"].get(s) != ["hit", "miss"] for s in SKILLS):
+        errors.append("manifest must provide hit and miss coverage for every skill")
     for name in SKILLS + PASSIVES:
         if f'"{name}"' not in config:
             errors.append(f"missing configured item {name}")

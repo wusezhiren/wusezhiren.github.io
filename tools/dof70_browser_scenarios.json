@@ -1,5 +1,9 @@
 {
   "version": 1,
+  "skills": ["uppercut", "tripleSlash", "momentarySlash", "chargeCrash", "rapidMoveSlash", "illusionSlash", "weaponCombo", "goreCross", "hopSmash", "grabBlastBlood", "bloodBlast", "bloodyRave", "outrageBreak"],
+  "passives": ["weaponMastery", "lightSwordMastery", "katanaMastery", "greatSwordMastery", "bluntMastery", "shortSwordMastery", "bloodAwakening", "bloodRage", "reckless"],
+  "weapons": ["short_sword", "katana", "great_sword", "blunt", "light_sword"],
+  "skill_hit_matrix": {"uppercut": ["hit", "miss"], "tripleSlash": ["hit", "miss"], "momentarySlash": ["hit", "miss"], "chargeCrash": ["hit", "miss"], "rapidMoveSlash": ["hit", "miss"], "illusionSlash": ["hit", "miss"], "weaponCombo": ["hit", "miss"], "goreCross": ["hit", "miss"], "hopSmash": ["hit", "miss"], "grabBlastBlood": ["hit", "miss"], "bloodBlast": ["hit", "miss"], "bloodyRave": ["hit", "miss"], "outrageBreak": ["hit", "miss"]},
   "scenarios": [
     {"id": "blade-normal-hit", "query": "?shot=blade&st=idle", "class": "blade", "encounter": "normal", "out": "blade-normal-hit.png"},
     {"id": "blade-miss", "query": "?shot=blade&st=idle", "class": "blade", "encounter": "miss", "out": "blade-miss.png"},

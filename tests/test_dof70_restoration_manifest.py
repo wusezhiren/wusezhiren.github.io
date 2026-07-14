@@ -13,6 +13,10 @@ class Dof70RestorationManifestTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(VERIFY), "--structural"], cwd=ROOT, text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         manifest = json.loads((ROOT / "tools/dof70_browser_scenarios.json").read_text())
+        self.assertEqual(len(manifest["skills"]), 13)
+        self.assertEqual(len(manifest["passives"]), 9)
+        self.assertEqual(len(manifest["weapons"]), 5)
+        self.assertTrue(all(value == ["hit", "miss"] for value in manifest["skill_hit_matrix"].values()))
         self.assertEqual(len(manifest["scenarios"]), 6)
         self.assertEqual({s["encounter"] for s in manifest["scenarios"]}, {"normal", "elite", "boss", "miss", "disabled", "migration"})
 
