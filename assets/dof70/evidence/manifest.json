@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "status": "BLOCKED",
+  "generated_at": "2026-07-14T04:19:57Z",
+  "checks": [
+    "http.server",
+    "dump-dom",
+    "screenshots",
+    "ffmpeg movie"
+  ],
+  "scenarios": [
+    "blade-normal-hit",
+    "blade-miss",
+    "berserker-elite",
+    "berserker-boss",
+    "disabled-class",
+    "save-migration"
+  ],
+  "artifacts": [],
+  "errors": [
+    "blade-normal-hit: dump-dom timed out",
+    "blade-miss: dump-dom timed out",
+    "berserker-elite: dump-dom timed out",
+    "berserker-boss: dump-dom timed out",
+    "disabled-class: dump-dom timed out",
+    "save-migration: dump-dom timed out"
+  ]
+}

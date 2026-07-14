@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "scenarios": [
+    {"id": "blade-normal-hit", "query": "?shot=blade&st=idle", "class": "blade", "encounter": "normal", "out": "blade-normal-hit.png"},
+    {"id": "blade-miss", "query": "?shot=blade&st=idle", "class": "blade", "encounter": "miss", "out": "blade-miss.png"},
+    {"id": "berserker-elite", "query": "?shot=berserk&st=idle", "class": "berserk", "encounter": "elite", "out": "berserker-elite.png"},
+    {"id": "berserker-boss", "query": "?shot=berserk&st=idle", "class": "berserk", "encounter": "boss", "out": "berserker-boss.png"},
+    {"id": "disabled-class", "query": "?shot=spectre", "class": "spectre", "encounter": "disabled", "out": "disabled-class.png"},
+    {"id": "save-migration", "query": "?shot=blade&st=idle", "class": "blade", "encounter": "migration", "out": "save-migration.png"}
+  ]
+}
