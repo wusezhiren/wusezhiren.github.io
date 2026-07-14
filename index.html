@@ -38,6 +38,7 @@
 <script src="src/combat/damage.js"></script>
 <script src="src/combat/status.js"></script>
 <script src="src/combat/action-player.js"></script>
+<script src="src/combat/passives.js"></script>
 <script src="src/combat/skills/common/uppercut.js"></script>
 <script src="src/combat/skills/blade/triple-slash.js"></script>
 <script src="src/combat/skills/blade/charge-crash.js"></script>
@@ -398,6 +399,7 @@ class Fighter {
     this.knock={x:0,y:0}; this.state='idle'; this.flash=0; this.walkPhase=0; this.slow=0; this.freeze=0;
     this.combatStatus=DOF70.combat.status.createStatus();
     this.actionPlayer=new DOF70.combat.action.ActionPlayer({clock:combatClock});
+    this.autoBuffActionPlayer=new DOF70.combat.action.ActionPlayer({clock:combatClock});
     this.actionName='stand';
   }
   selectAction(name){ if(this.actionName===name)return; this.actionName=name; const source=DOF70.combat.action.resolveAction(name,globalThis.DOF70_TIMELINES); this.actionPlayer.play(source); }
@@ -629,6 +631,16 @@ class Player extends Fighter {
     // 装备 & 背包
     this.inventory=[]; this.equipped={weapon:null,head:null,chest:null,legs:null,shoes:null};
     this.hotbar=new Array(6).fill(null); // {type,count,_cd} 或 null
+    const thisPlayer=this;
+    this.passiveEffects=DOF70.combat.passives.getPassiveEffects({classKey:clsKey, level:this.level, hp:this.hp, maxhp:this.maxhp});
+    this.autoBuffs=DOF70.combat.passives.createAutoBuffController({
+      actionPlayer:this.autoBuffActionPlayer,
+      resources:{get mp(){return thisPlayer.mp;},set mp(v){thisPlayer.mp=v;}},
+      status:this.combatStatus,
+      enabled:clsKey==='berserk' ? ['bloodRage','berserk'] : [],
+      canAct:()=>thisPlayer.attackTimer<=0 && !thisPlayer.dead,
+      emit:event=>{ if(event.type==='auto-buff') spawnText(thisPlayer.x,thisPlayer.screenY()-thisPlayer.h-20,event.name==='bloodRage'?'血之狂暴':'暴走','#ff5a5a'); },
+    });
     this.invOpen=false; this.invCursor=0;
   }
   get crit(){ return Math.min(0.7, this._crit + (this.equipped.weapon?.stats.crit||0) + (this.equipped.head?.stats.crit||0)); }
@@ -643,7 +655,12 @@ class Player extends Fighter {
   speedStat(){ return clamp(this.equipStats().speed,0,0.55); }
   attackSpeedMul(){ return 1/(1+this.speedStat()); }
   physicalPrimaryStat(){ return 250 + this.shopAtk * 250 + this.equipStats().atk * 250; }
-  damageMultiplier(){ return this.cls.atkMul * (this.buff?this.buff.atk:1); }
+   damageMultiplier(){
+     const passive=this.passiveEffects||{};
+     const rage=this.autoBuffs?.buffs?.bloodRage?1.2:1;
+     const berserk=this.autoBuffs?.buffs?.berserk?1.35:1;
+     return this.cls.atkMul * (1+(passive.mastery?.attack||0)+(passive.bloodAwakening?.attack||0)) * rage * berserk * (this.buff?this.buff.atk:1);
+   }
   takeDamage(dmg,fromDir,kb=8,crit=false){
     const def=clamp(this.equipStats().def,0,0.7);
     return super.takeDamage(Math.max(1,Math.round(dmg*(1-def))),fromDir,kb,crit);
@@ -689,6 +706,9 @@ class Player extends Fighter {
     if(this.dead) return;
     DOF70.combat.status.tick(this.combatStatus, 1);
     this.actionPlayer.update(1000/60, this.attackSpeedMul ? 1 / this.attackSpeedMul() : 1);
+    this.autoBuffActionPlayer.update(1);
+    this.autoBuffs.update(1);
+    this.passiveEffects=DOF70.combat.passives.getPassiveEffects({classKey:this.clsKey, weaponType:this.equipped.weapon?.weaponType, level:this.level, hp:this.hp, maxhp:this.maxhp});
     if(this.uppercutAction) this.uppercutAction.update(1);
     if(this.bladeAction) this.bladeAction.update(1);
     if(this.comboTimer>0)this.comboTimer--; else this.combo=0;
@@ -2735,7 +2755,8 @@ function continueGame(){
 }
  function difficulty(){ return DEFAULT_PLAYER_LEVEL; } // 地图主题只决定房数与怪物池
 function enterRoom(){
-  enemies=[]; resetPools();
+   enemies=[]; resetPools();
+   if(player?.autoBuffs) player.autoBuffs.enterRoom();
   if(room===1) dunStats={t:0,kills:0,gold0:player?player.gold:0}; // 新一图开始, 重置统计
   const diff=difficulty();
   const scale=1;
