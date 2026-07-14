@@ -1,0 +1,44 @@
+<h2>验证、错误处理与交付标准</h2>
+<p class="subtitle">每项还原都必须能追溯到 DOF 70 来源，并通过数据、运行时和画面三层验证。</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">自动验证</div>
+    <div class="mockup-body">
+      <p><strong>来源审计</strong>：13 个技能逐项记录 `.skl/.ani/.img` 路径、技能等级、字段含义和解析结果。</p>
+      <p><strong>数据测试</strong>：锁定满级冷却、消耗、系数、段数、武器分支、持续时间及状态参数。</p>
+      <p><strong>状态测试</strong>：逐阶段推进虚拟时间，核对位移、判定帧、抓取、霸体、无敌、取消和冷却。</p>
+      <p><strong>回归测试</strong>：鬼泣/阿修罗不可选择；旧存档迁移；五类武器装备限制；基础动作时间轴完整。</p>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">画面与手感验证</div>
+    <div class="mockup-body">
+      <p>每个技能按武器分支生成关键帧截图和完整录制；身体、武器、特效使用同一脚底坐标。</p>
+      <p>测试桩覆盖普通、霸体、不可抓取、浮空、倒地和 Boss，确认每段攻击时点与控制结果。</p>
+      <p>基础动作覆盖左右朝向、不同武器、起跳/落地、三段普攻、受击到起身全链路。</p>
+      <p>交付一份技能矩阵：权威值、网页值、差异、修复状态、自动测试和截图/录制证据。</p>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:18px">
+  <div class="mockup-header">错误处理原则</div>
+  <div class="mockup-body">
+    <p>解析器遇到缺文件、未知字段、异常帧或无法证明的数值时，构建直接失败并指出技能与来源，不静默采用通用默认值。</p>
+    <p>确实只能通过客户端实测确认的项目标记为 <strong>待实测</strong>，与已验证数据隔离；不得以当前网页表现反推“原版值”。运行时若资源加载失败，显示明确调试错误，测试环境中视为失败。</p>
+  </div>
+</div>
+
+<div class="section" style="margin-top:18px">
+  <h3>完成定义</h3>
+  <p>剑魂、狂战及上挑的技能矩阵无未解释差异；五类武器分支可用；基础战斗动作通过；伤害结算和 70 级怪物基准一致；鬼泣、阿修罗显示“暂未开放”且无法进入；全部自动检查通过并完成人工画面对照。</p>
+</div>
+
+<div class="option" data-choice="final-design-approved" onclick="toggleSelect(this)" style="margin-top:20px">
+  <div class="letter">✓</div>
+  <div class="content">
+    <h3>批准完整设计</h3>
+    <p>据此编写正式设计文档并进入审查。</p>
+  </div>
+</div>

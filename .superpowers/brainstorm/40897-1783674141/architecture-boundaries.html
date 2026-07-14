@@ -1,0 +1,52 @@
+<h2>剑魂 / 狂战严格复刻：实现边界</h2>
+<p class="subtitle">方案 2：逐技能专用逻辑，共享少量战斗原语</p>
+
+<div class="mockup">
+  <div class="mockup-header">权威数据与运行时关系</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:1fr 64px 1.2fr 64px 1.1fr;gap:12px;align-items:center;text-align:center">
+      <div style="padding:22px 12px;border:1px solid #4f6b7a;background:#13242b">
+        <div class="label">DOF 70 原始资料</div>
+        <h3>.skl / .ani / .img</h3>
+        <p>满级数值、动作帧、特效层、武器分支</p>
+      </div>
+      <div style="font-size:30px;color:#d49b52">→</div>
+      <div style="padding:22px 12px;border:1px solid #8f6635;background:#2b2217">
+        <div class="label">审计与生成工具</div>
+        <h3>13 个技能规格</h3>
+        <p>每技能阶段表、判定点、持续时间、取消窗口</p>
+      </div>
+      <div style="font-size:30px;color:#d49b52">→</div>
+      <div style="padding:22px 12px;border:1px solid #775040;background:#291c18">
+        <div class="label">网页运行时</div>
+        <h3>专用技能处理器</h3>
+        <p>剑魂 6 + 狂战 6 + 上挑</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="split" style="margin-top:18px">
+  <div class="mockup">
+    <div class="mockup-header">共享底层能力</div>
+    <div class="mockup-body">
+      <p>抓取与不可抓取、霸体/无敌、吸附、浮空/倒地、命中停顿、武器类型、固定/百分比伤害、防御结算。</p>
+      <p>这些能力不规定技能流程，只供专用处理器调用。</p>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">明确不做</div>
+    <div class="mockup-body">
+      <p>不为鬼泣、阿修罗实现技能；职业卡置灰为“暂未开放”。</p>
+      <p>不还原原版复杂按键指令；保留现有快捷键。</p>
+    </div>
+  </div>
+</div>
+
+<div class="option" data-choice="architecture-approved" onclick="toggleSelect(this)" style="margin-top:20px">
+  <div class="letter">✓</div>
+  <div class="content">
+    <h3>认可该结构</h3>
+    <p>继续设计逐技能行为与数值结算。</p>
+  </div>
+</div>
