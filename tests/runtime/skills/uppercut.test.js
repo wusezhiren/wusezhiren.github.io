@@ -15,7 +15,9 @@ test('uppercut emits preparation, hit and recovery events without lifting the ac
   assert.equal(action.phases.some(phase => phase.move?.z || phase.move?.vz), false);
   action.update(3);
   action.update(2);
-  assert.deepEqual(events.map(event => event.type), ['body', 'weapon', 'fx', 'phase', 'phase', 'hitbox', 'hitstop', 'phase']);
+  assert.deepEqual(events.map(event => event.type), ['body', 'weapon', 'fxOnce', 'phase', 'phase', 'hitbox', 'hitstop', 'phase']);
+  assert.equal(events.filter(event => event.type === 'fxOnce').length, 1);
+  assert.equal(events.filter(event => event.type === 'fx').length, 0);
   assert.equal(action.cancel(), true);
 });
 

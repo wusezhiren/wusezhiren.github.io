@@ -26,6 +26,7 @@
     移动 <b>方向键</b> ·跳跃 <b>C</b> ·普攻 <b>X</b> ·上挑 <b>Z</b> ·技能 <b>Q W E A S D</b> ·奔跑 <b>双击←/→</b> ·药水 <b>1-6</b> ·背包 <b>I</b> ·暂停 <b>P</b> ·菜单 <b>0</b>　(技能栏可拖拽换键)
   </div>
 </div>
+<pre id="dof70-evidence-result" hidden></pre>
 <script src="assets/swordman.meta.js"></script>
 <script src="assets/weapons.meta.js"></script>
 <script src="assets/monsters.meta.js"></script>
@@ -3120,11 +3121,18 @@ window.addEventListener('keydown',e=>{
   if(k==='escape'&&player&&player.invOpen) player.invOpen=false;
 });
 
-gameState='menu';
-loop();
+ gameState='menu';
+ loop();
 
 // 调试: ?shot=blade&st=run 自动开局便于无头截图(正式使用无影响)
 (function(){const q=new URLSearchParams(location.search);
+  if(q.has('dof70case')){
+    const expected=['class','state','targetKind','targetMode','hit','migration'];
+    const context=Object.fromEntries(expected.map(k=>[k,q.get(k)]));
+    const checks=Object.fromEntries(expected.map(k=>[k,Boolean(context[k])]));
+    const ready=Boolean(q.get('dof70case')) && Object.values(checks).every(Boolean);
+    document.getElementById('dof70-evidence-result').textContent=JSON.stringify({schema:1,page:'dof70',ready,scenario:q.get('dof70case'),...context,branch:context.targetMode,checks,errors:ready?[]:['incomplete dof70case context']});
+  }
   if(q.has('cont')){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); continueGame(); }; g(); return; }
   if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); if(!startGame(q.get('shot')||'blade')) return; }; g(); return; }
   if(!q.has('shot'))return;
@@ -3146,6 +3154,5 @@ loop();
   }; go();
 })();
 </script>
-<pre id="dof70-evidence-result" hidden>{"schema":1,"page":"dof70"}</pre>
 </body>
 </html>

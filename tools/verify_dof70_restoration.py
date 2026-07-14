@@ -53,6 +53,15 @@ def structural():
     for skill in SKILLS:
         if skill[0].lower() not in tests and skill not in tests:
             errors.append(f"no runtime test reference for {skill}")
+    required_context = ("id", "query", "class", "state", "targetKind", "targetMode", "hit", "migration", "out")
+    ids = set()
+    queries = set()
+    for scenario in scenarios:
+        if any(key not in scenario or not scenario[key] for key in required_context):
+            errors.append(f"scenario lacks explicit context: {scenario.get('id', '<unknown>')}")
+        if scenario.get("id") in ids: errors.append(f"duplicate scenario id: {scenario.get('id')}")
+        if scenario.get("query") in queries: errors.append(f"duplicate scenario query: {scenario.get('id')}")
+        ids.add(scenario.get("id")); queries.add(scenario.get("query"))
     for encounter in ("normal", "elite", "boss", "miss", "disabled", "migration"):
         if not any(s["encounter"] == encounter for s in scenarios):
             errors.append(f"browser scenarios omit {encounter}")
@@ -73,12 +82,29 @@ def evidence(path):
         errors.append("unsupported evidence manifest version")
     if not isinstance(data.get("checks"), list) or not data["checks"]:
         errors.append("evidence checks are missing")
-    for item in data.get("artifacts", []):
+    scenarios = {item.get("id"): item for item in json.loads(MANIFEST.read_text(encoding="utf-8")).get("scenarios", [])}
+    manifest_scenarios = data.get("scenarios")
+    if not isinstance(manifest_scenarios, list) or any(not isinstance(item, dict) for item in manifest_scenarios) or {item.get("id") for item in manifest_scenarios} != set(scenarios):
+        errors.append("evidence scenarios do not match browser scenario manifest")
+    artifacts = data.get("artifacts")
+    if not isinstance(artifacts, list) or not artifacts:
+        errors.append("evidence artifacts must not be empty")
+    artifact_scenarios = set()
+    for item in artifacts or []:
+        scenario = scenarios.get(item.get("scenario"))
+        if scenario is None:
+            errors.append(f"artifact has unknown scenario {item.get('scenario')}")
+        else:
+            artifact_scenarios.add(item.get("scenario"))
+            if item.get("query") != scenario.get("query"):
+                errors.append(f"artifact query mismatch {item.get('scenario')}")
         target = ROOT / item.get("path", "")
         if not target.is_file():
             errors.append(f"missing evidence artifact {item.get('path')}")
         elif item.get("sha256") != hashlib.sha256(target.read_bytes()).hexdigest():
             errors.append(f"evidence hash mismatch {item.get('path')}")
+    if data.get("status") == "PASS" and artifact_scenarios != set(scenarios):
+        errors.append("PASS evidence must have an artifact for every scenario")
     if data.get("status") == "BLOCKED":
         errors.append("evidence is BLOCKED")
     if data.get("errors"):
@@ -88,11 +114,11 @@ def evidence(path):
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--structural", action="store_true")
-    parser.add_argument("--evidence", choices=["manifest"])
+    parser.add_argument("--evidence", metavar="PATH")
     args = parser.parse_args(argv)
     if not args.structural and not args.evidence:
         parser.error("no mode selected; use --structural or --evidence manifest")
-    return structural() if args.structural else evidence(ROOT / "assets/dof70/evidence/manifest.json")
+    return structural() if args.structural else evidence(ROOT / args.evidence)
 
 if __name__ == "__main__":
     raise SystemExit(main())
