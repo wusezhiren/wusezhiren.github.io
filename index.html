@@ -248,11 +248,11 @@ const CLASSES = {
     desc:'高血近战狂徒,攻击吸血,可狂暴翻倍输出,越战越勇。',
     skills:[
       {key:'z',name:'十字斩',    mp:5, cd:180, type:'melee',hits:2,dmg:[11,13],reach:86,knock:14, color:'#ff7a5a', dur:22, ul:1, fx:'gorecross',     fxScale:0.62,fxYo:66,fxAhead:72}, // 原版斩击+血十字两段
-      {key:'a',name:'崩山击',    mp:3, cd:240, type:'aoe',  hits:2,dmg:[23,28],ox:55,radius:105,knock:12,hitDelay:12, color:'#ff8c42', dur:24, ul:2, fx:'mountaincrash',fxScale:0.6, fxYo:82,fxAhead:48}, // 原版跃劈砸地+冲击波, 非直线突进
-      {key:'s',name:'嗜魂之手',  mp:5, cd:360, type:'melee',dmg:[60,73],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'souldrain',     fxScale:0.6, fxYo:64,fxAhead:64},
-      {key:'d',name:'怒气爆发',  mp:13,cd:960, type:'aoe',  hits:4,dmg:[11,13],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'frenzy',        fxScale:0.95,fxYo:58,fxAhead:0}, // 原版对周围敌人攻击4次
-      {key:'f',name:'嗜魂封魔斩',mp:18,cd:1800,type:'melee',dmg:[115,140],reach:92,lifesteal:0.25,pull:150,hitDelay:14, color:'#ff5050', dur:26, ul:5, fx:'bloodseal',     fxScale:0.66,fxYo:64,fxAhead:64}, // 原版先吸附再斩
-      {key:'g',name:'崩山裂地斩',mp:0, hpCost:64,cd:2400,type:'aoe',  hits:7,dmg:[30,36],ox:50,radius:150,knock:16,hitDelay:10, color:'#ff2a2a', dur:40, ul:6, fx:'chargecrash',  fxScale:1.0, fxYo:46,fxAhead:50}, // 原版挥斩+龟裂6段; HP消耗为原版第4列400
+      {key:'a',name:'崩山击',    mp:3, cd:240, type:'aoe',  hits:2,dmg:[23,28],ox:55,radius:105,knock:12,hitDelay:12, color:'#ff8c42', dur:24, ul:2, fx:'hopsmash',fxScale:0.6, fxYo:82,fxAhead:48}, // 原版跃劈砸地+冲击波, 非直线突进
+      {key:'s',name:'嗜魂之手',  mp:5, cd:360, type:'melee',dmg:[60,73],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'grabblastblood',fxScale:0.6, fxYo:64,fxAhead:64},
+      {key:'d',name:'怒气爆发',  mp:13,cd:960, type:'aoe',  hits:4,dmg:[11,13],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'bloodblast',fxScale:0.95,fxYo:58,fxAhead:0}, // 原版对周围敌人攻击4次
+      {key:'f',name:'嗜魂封魔斩',mp:18,cd:1800,type:'melee',dmg:[115,140],reach:92,lifesteal:0.25,pull:150,hitDelay:14, color:'#ff5050', dur:26, ul:5, fx:'bloodyrave',fxScale:0.66,fxYo:64,fxAhead:64}, // 原版先吸附再斩
+      {key:'g',name:'崩山裂地斩',mp:0, hpCost:64,cd:2400,type:'aoe',  hits:7,dmg:[30,36],ox:50,radius:150,knock:16,hitDelay:10, color:'#ff2a2a', dur:40, ul:6, fx:'outragebreak',fxScale:1.0, fxYo:46,fxAhead:50}, // 原版挥斩+龟裂6段; HP消耗为原版第4列400
     ]},
   spectre: { name:'鬼泣', color:'#7d3cc9', dark:'#3f1d6e', elem:'#b98cff',
     hp:250, mp:150, speed:3.6, atkMul:1.0, lifesteal:0,
@@ -293,6 +293,11 @@ const SKILL_RUNTIME_PROFILE={
   illusionslash:{move:{vx:4,t:'dur'}, effect:null, pose:[1,10,188,194,199]},
   hiddenblade:{move:null, effect:null, pose:[194,195,196,197,198,188,189,190,191,192,193,1,2,3,4,5,6,11,12,13,14,15,16]},
   gorecross:{move:{vx:2.2,t:'dur'}, effect:null, pose:[10,11,12,13,14,15,200,201,202,203]},
+  hopsmash:{move:{vx:4.5,t:12,rise:6.5}, effect:null, pose:[125,126,127,204]},
+  bloodblast:{move:null, effect:null, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
+  grabblastblood:{move:{vx:2.2,t:10}, effect:null, pose:[159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175]},
+  bloodyrave:{move:{vx:2,t:8}, effect:null, pose:[164,175]},
+  outragebreak:{move:{vx:5,t:14,rise:7}, effect:null, pose:[124,125,126,127]},
   mountaincrash:{move:{vx:4.5,t:12,rise:6.5}, effect:null, pose:[125,126,127,204]}, // 原版跃劈: 跳跃距离150px/高度120px后砸地
   souldrain:{move:{vx:2.2,t:10}, effect:null, pose:[159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175]},
   frenzy:{move:null, effect:null, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
@@ -321,6 +326,10 @@ const SKILL_MOVE={
   mountaincrash:SKILL_RUNTIME_PROFILE.mountaincrash.move,
   illusionslash:SKILL_RUNTIME_PROFILE.illusionslash.move,
   gorecross:SKILL_RUNTIME_PROFILE.gorecross.move,
+  hopsmash:SKILL_RUNTIME_PROFILE.hopsmash.move,
+  grabblastblood:SKILL_RUNTIME_PROFILE.grabblastblood.move,
+  bloodyrave:SKILL_RUNTIME_PROFILE.bloodyrave.move,
+  outragebreak:SKILL_RUNTIME_PROFILE.outragebreak.move,
   souldrain:SKILL_RUNTIME_PROFILE.souldrain.move,
   bloodseal:SKILL_RUNTIME_PROFILE.bloodseal.move,
   chargecrash:SKILL_RUNTIME_PROFILE.chargecrash.move,
@@ -829,7 +838,7 @@ class Player extends Fighter {
     this.attackTimer=Math.max(8,Math.round(actionDur*this.attackSpeedMul())); sk._castDur=this.attackTimer; this.attackType=sk;
     spawnText(this.x,this.screenY()-this.h-30,sk.name+'!',sk.color);
     Audio2.sfx(sk.type==='ult'?'ult':'skill');
-    if(sk.fx!=='uppercut') spawnSkillFX(this, sk);   // 上挑由专用时间轴事件派发
+    if(!dedicated) spawnSkillFX(this, sk);   // 目标技能由专用阶段事件派发
     if(sk.fx==='uppercut'){
       const self=this;
       this.uppercutAction=SKILL_HANDLERS.uppercut.createUppercut({
