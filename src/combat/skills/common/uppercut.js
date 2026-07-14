@@ -41,7 +41,7 @@
     }
     event('body', { action: 'uppercut', airborne: false });
     event('weapon', { action: 'uppercut' });
-    event('fx', { effect: 'uppercut' });
+    event('fxOnce', { effect: 'uppercut', fxId: 'uppercut' });
     event('phase', { name: phases[0].name });
     if (resources) {
       resources.mp -= auditData.mp || 0;

@@ -28,7 +28,7 @@
         else if (context.clock) context.clock.hitstop = Math.max(context.clock.hitstop || 0, data.hitstop ?? 2);
       }
     }
-    event('body', { action: action.skill, direction: dir }); event('weapon', { action: action.skill }); enter(phases[0], 0);
+    event('body', { action: action.skill, direction: dir }); event('weapon', { action: action.skill }); event('fxOnce', { fxId: action.skill }); enter(phases[0], 0);
     if (context.resources) { context.resources.mp -= data.mp || 0; context.resources.cooldown = data.cooldown || 0; action.spent = true; }
     action.update = function (delta = 1) {
       if (action.done || delta <= 0) return action;

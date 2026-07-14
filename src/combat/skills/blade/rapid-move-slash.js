@@ -35,7 +35,7 @@
       if (context.freeze) context.freeze(data.hitstop ?? 2);
       else if (context.clock) context.clock.hitstop = Math.max(context.clock.hitstop || 0, data.hitstop ?? 2);
     }
-    event('body', { action: 'rapid-move-slash', direction: context.direction < 0 ? -1 : 1 });
+    event('body', { action: 'rapid-move-slash', direction: context.direction < 0 ? -1 : 1 }); event('fxOnce', { fxId: action.skill });
     event('weapon', { action: 'rapid-move-slash' });
     enter(phases[0], 1);
     action.update = function (delta = 1) {

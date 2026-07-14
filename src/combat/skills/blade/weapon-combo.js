@@ -29,7 +29,7 @@
       if (context.freeze) context.freeze(data.hitstop ?? 2);
       else if (context.clock) context.clock.hitstop = Math.max(context.clock.hitstop || 0, data.hitstop ?? 2);
     }
-    event('body', { action: 'weapon-combo', direction: context.direction < 0 ? -1 : 1 }); event('weapon', { action: `weapon-combo-${weapon}` }); enter(phases[0], 1);
+    event('body', { action: 'weapon-combo', direction: context.direction < 0 ? -1 : 1 }); event('weapon', { action: `weapon-combo-${weapon}` }); event('fxOnce', { fxId: action.skill }); enter(phases[0], 1);
     action.update = function (delta = 1) { if (action.done || delta <= 0) return action; const before = action.time; action.time += delta; let boundary = phases[0].duration; for (let i = 1; i < phases.length; i++) { if (before < boundary && action.time >= boundary) enter(phases[i], i + 1); boundary += phases[i].duration; } if (action.time >= phases.reduce((n, p) => n + p.duration, 0)) action.done = true; return action; };
     action.cancel = () => action.phase.cancelable && (action.done = true);
     return action;

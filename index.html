@@ -838,7 +838,7 @@ class Player extends Fighter {
     this.attackTimer=Math.max(8,Math.round(actionDur*this.attackSpeedMul())); sk._castDur=this.attackTimer; this.attackType=sk;
     spawnText(this.x,this.screenY()-this.h-30,sk.name+'!',sk.color);
     Audio2.sfx(sk.type==='ult'?'ult':'skill');
-    if(!dedicated) spawnSkillFX(this, sk);   // 目标技能由专用阶段事件派发
+    spawnSkillFX(this, sk);                  // 专用动作保留阶段事件, 但施法只创建一次特效层
     if(sk.fx==='uppercut'){
       const self=this;
       this.uppercutAction=SKILL_HANDLERS.uppercut.createUppercut({
@@ -930,18 +930,18 @@ class Player extends Fighter {
   berserkSkillContext(){ const context=this.bladeSkillContext(); context.emit=event=>this.handleBerserkEvent(event); return context; }
   handleBladeEvent(event){
     if(event.type==='body') this.selectAction(event.skill==='triple-slash'?'hit_front':event.skill==='charge-crash'?'hit_front':'hit_front');
-    else if(event.type==='fx'||event.type==='phase') spawnSkillFX(this,this.attackType);
+    else if(event.type==='fx'||event.type==='fxOnce') { /* 专用技能特效已在 cast() 创建 */ }
     else if(event.type==='move'){ this.x+=event.distance||0; }
     else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,damage:event.damage,damageType:event.damageType,weapon:event.weapon,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun,uppercut:event.stage==='uppercut'});
   }
   handleBerserkEvent(event){
     if(event.type==='body') this.selectAction('hit_front');
-    else if(event.type==='fx'||event.type==='phase') spawnSkillFX(this,this.attackType);
+    else if(event.type==='fx'||event.type==='fxOnce') { /* 专用技能特效已在 cast() 创建 */ }
     else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,damage:event.damage,damageType:event.damageType,weapon:event.weapon,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun});
   }
   handleUppercutEvent(event){
     if(event.type==='body') this.selectAction('uppercut');
-    else if(event.type==='fx') spawnSkillFX(this, this.attackType);
+    else if(event.type==='fx'||event.type==='fxOnce') { /* 专用技能特效已在 cast() 创建 */ }
     else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,reach:event.radius,kb:2,launch:event.launch,hitstun:event.hitstun,uppercut:true});
   }
   resolveHit(hit){
@@ -2104,6 +2104,7 @@ function drawHumanoid(x,feetY,dir,color,dark,ent,flash,invuln,big=false){
 }
 /* ===================== 技能专属特效派发 ===================== */
 function spawnSkillFX(p, sk){
+  window.__dof70SkillFXSpawnCount=(window.__dof70SkillFXSpawnCount||0)+1;
   const x=p.x, y=p.y, dir=p.dir;
   shake=Math.max(shake, sk.type==='ult'?12:7);
   // 施放特效: 原版特效与身体同坐标系(脚底原点)同缩放, 逐帧时序/坐标由 skillfx v3 数据驱动。

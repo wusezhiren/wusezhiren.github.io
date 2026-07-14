@@ -21,7 +21,7 @@
       if (phase.name === 'sword-wave') { action.hits.push('wave'); event('hitbox', { stage: 'sword-wave', index: 'wave', damage: data.waveDamage || [Math.round(80 * mul), Math.round(100 * mul)], reach: data.waveReach || 150, direction: action.direction, knock: data.knock ?? 18 }); event('hitstop', { duration: data.waveHitstop ?? 3 }); }
       if (phase.name === 'recovery') event('status', { invincible: 0, superArmor: 0 });
     }
-    event('body', { action: 'illusion-slash', direction: action.direction }); event('weapon', { action: 'illusion-slash' }); enter(phases[0]);
+     event('body', { action: 'illusion-slash', direction: action.direction }); event('weapon', { action: 'illusion-slash' }); event('fxOnce', { fxId: action.skill }); enter(phases[0]);
     action.update = function (delta = 1) { if (action.done || delta <= 0) return action; const before = action.time; action.time += delta; let boundary = 0; for (const phase of phases) { if (before < boundary + phase.duration && action.time >= boundary + phase.duration && phase !== action.phase) enter(phase); boundary += phase.duration; } if (action.time >= boundary) action.done = true; return action; };
     action.cancel = () => false;
     return action;

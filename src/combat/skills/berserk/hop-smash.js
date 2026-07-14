@@ -22,7 +22,7 @@
       if (phase.name === 'landing') event('land', { recover: true });
       if (phase.name === 'shockwave') { action.hits.push('shockwave'); event('hitbox', { stage: 'shockwave', shape: 'ground-wave', damage: [Math.round(base[0]), Math.round(base[1])], radius: data.radius ?? 105, direction: dir, knock: data.knock ?? 12 }); event('hitstop', { duration: data.hitstop ?? 3 }); if (context.freeze) context.freeze(data.hitstop ?? 3); else if (context.clock) context.clock.hitstop = Math.max(context.clock.hitstop || 0, data.hitstop ?? 3); }
     }
-    event('body', { action: action.skill, direction: dir }); enter(phases[0]);
+    event('body', { action: action.skill, direction: dir }); event('fxOnce', { fxId: action.skill }); enter(phases[0]);
     if (context.resources) { context.resources.mp -= data.mp || 0; context.resources.cooldown = data.cooldown || 0; action.spent = true; }
     action.update = function (delta = 1) { if (action.done || delta <= 0) return action; const before = action.time; action.time += delta; let boundary = phases[0].duration; for (let i = 1; i < phases.length; i++) { if (before < boundary && action.time >= boundary) enter(phases[i]); boundary += phases[i].duration; } if (action.time >= phases.reduce((n, p) => n + p.duration, 0)) action.done = true; return action; };
     action.cancel = () => !action.done && action.phase.cancelable ? (action.done = true, true) : false;
