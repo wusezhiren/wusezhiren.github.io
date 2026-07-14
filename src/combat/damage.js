@@ -20,7 +20,8 @@
     }
     if (options.critical) value *= Number(options.criticalMultiplier) || 1.5;
     value *= Number(options.multiplier) || 1;
-    return value < 0 ? Math.ceil(value) : Math.floor(value);
+    const result = value < 0 ? Math.ceil(value) : Math.floor(value);
+    return channel === 'percent' ? Math.max(1, result) : result;
   }
 
   return { resolveDamage };

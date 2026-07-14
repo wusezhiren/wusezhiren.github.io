@@ -14,7 +14,8 @@
   };
   function createTripleSlash(context = {}, data = {}, timeline = {}) {
     const emit = context.emit || (() => {}), weapon = WEAPONS[data.weapon || context.weapon] || WEAPONS.lightsword;
-    const base = data.dmg || [16, 19], dir = context.direction < 0 ? -1 : 1;
+    // Snapshot cast values so later skill-template changes cannot alter an active action.
+    const base = Array.isArray(data.dmg) ? [...data.dmg] : (data.dmg || [16, 19]), dir = context.direction < 0 ? -1 : 1;
     const phases = [{ name: 'slash1', duration: timeline.slash1 ?? 4, move: weapon.move }, { name: 'slash2', duration: timeline.slash2 ?? 4, move: weapon.move }, { name: 'slash3', duration: timeline.slash3 ?? 4, move: weapon.move }].map(p => ({ ...p, cancelable: false }));
     const action = { skill: 'triple-slash', weapon: data.weapon || context.weapon || 'lightsword', phases, phase: phases[0], time: 0, done: false, hits: [] };
     const event = (type, value) => emit({ type, skill: action.skill, weapon: action.weapon, ...value });

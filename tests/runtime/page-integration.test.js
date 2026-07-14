@@ -43,13 +43,16 @@ test('real page cast/update chain resolves weapon-specific hits for all five wea
       enemies.push(enemy);
       const skill = p.skills.find(s => s.fx === 'tripleslash');
       let resolved = 0;
+      const hitboxes = [];
       const resolveHit = p.resolveHit;
       p.resolveHit = hit => { resolved++; return resolveHit.call(p, hit); };
+      const emit = p.handleBladeEvent;
+      p.handleBladeEvent = event => { if (event.type === 'hitbox' && event.skill === 'triple-slash') hitboxes.push({ reach: event.reach, damage: event.damage }); return emit.call(p, event); };
       p.cast(skill);
       const originalDamage = skill.dmg;
       skill.dmg = [-999, -999];
       for (let i = 0; i < 30; i++) p.update();
-      const triple = { resolved, damage: enemy.maxhp - enemy.hp };
+      const triple = { resolved, damage: enemy.maxhp - enemy.hp, hitboxes, playerX: p.x, enemyX: enemy.x };
       enemies.length = 0;
       const enemy2 = new Enemy(220, 430, 'gob');
       enemies.push(enemy2);
@@ -61,7 +64,9 @@ test('real page cast/update chain resolves weapon-specific hits for all five wea
       return { triple, hidden: { damage: enemy2.maxhp - enemy2.hp }, fx: window.__dof70SkillFXSpawnCount };
     })()`, page);
     assert.ok(result.triple.resolved > 0, `${weapon}: triple slash did not resolve a hit`);
-    assert.ok(result.triple.damage > 0, `${weapon}: triple slash did not damage enemy`);
+    assert.equal(result.triple.hitboxes.length, 3, `${weapon}: triple slash hitbox phases ${JSON.stringify(result.triple)}`);
+    assert.ok(result.triple.hitboxes.every(hit => hit.damage[0] > 0), `${weapon}: triple slash consumed mutated damage ${JSON.stringify(result.triple)}`);
+    assert.ok(result.triple.damage > 0, `${weapon}: triple slash did not damage enemy ${JSON.stringify(result.triple)}`);
     assert.ok(result.hidden.damage > 0, `${weapon}: hidden blade did not damage enemy`);
     assert.equal(result.fx, 2, `${weapon}: dedicated FX spawn count`);
   }
