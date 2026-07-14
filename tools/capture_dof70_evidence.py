@@ -82,7 +82,7 @@ def main():
                     errors.append(f"{scenario['id']}: screenshot timed out")
                     continue
                 if shot.returncode: errors.append(f"{scenario['id']}: screenshot exit {shot.returncode}")
-                elif image.is_file(): artifacts.append({"scenario": scenario, "path": image})
+                elif image.is_file(): artifacts.append({"type": "screenshot", "scenario": scenario, "path": image})
         if ffmpeg and not errors:
             # A deterministic numbered sequence makes the movie reproducible from captured frames.
             frames = []

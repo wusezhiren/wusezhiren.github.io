@@ -9,12 +9,12 @@
     "ffmpeg movie"
   ],
   "scenarios": [
-    "blade-normal-hit",
-    "blade-miss",
-    "berserker-elite",
-    "berserker-boss",
-    "disabled-class",
-    "save-migration"
+    {"id": "blade-normal-hit", "query": "?dof70case=blade-normal-hit&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=none", "class": "blade", "state": "idle", "targetKind": "normal", "targetMode": "front", "hit": "hit", "migration": "none", "encounter": "normal", "out": "blade-normal-hit.png"},
+    {"id": "blade-miss", "query": "?dof70case=blade-miss&shot=blade&st=idle&targetKind=normal&targetMode=out-of-range&hit=miss&migration=none", "class": "blade", "state": "idle", "targetKind": "normal", "targetMode": "out-of-range", "hit": "miss", "migration": "none", "encounter": "miss", "out": "blade-miss.png"},
+    {"id": "berserker-elite", "query": "?dof70case=berserker-elite&shot=berserk&st=idle&targetKind=elite&targetMode=front&hit=hit&migration=none", "class": "berserk", "state": "idle", "targetKind": "elite", "targetMode": "front", "hit": "hit", "migration": "none", "encounter": "elite", "out": "berserker-elite.png"},
+    {"id": "berserker-boss", "query": "?dof70case=berserker-boss&shot=berserk&st=idle&targetKind=boss&targetMode=front&hit=hit&migration=none", "class": "berserk", "state": "idle", "targetKind": "boss", "targetMode": "front", "hit": "hit", "migration": "none", "encounter": "boss", "out": "berserker-boss.png"},
+    {"id": "disabled-class", "query": "?dof70case=disabled-class&shot=spectre&st=disabled&targetKind=none&targetMode=unavailable&hit=miss&migration=none", "class": "spectre", "state": "disabled", "targetKind": "none", "targetMode": "unavailable", "hit": "miss", "migration": "none", "encounter": "disabled", "out": "disabled-class.png"},
+    {"id": "save-migration", "query": "?dof70case=save-migration&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=v1-to-v2", "class": "blade", "state": "idle", "targetKind": "normal", "targetMode": "front", "hit": "hit", "migration": "v1-to-v2", "encounter": "migration", "out": "save-migration.png"}
   ],
   "artifacts": [],
   "errors": [

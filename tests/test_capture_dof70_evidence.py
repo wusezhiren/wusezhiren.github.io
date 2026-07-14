@@ -1,4 +1,5 @@
 import json
+import hashlib
 import importlib.util
 import os
 import subprocess
@@ -9,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPTURE = ROOT / "tools/capture_dof70_evidence.py"
+VERIFY = ROOT / "tools/verify_dof70_restoration.py"
 
 
 class CaptureDof70EvidenceTests(unittest.TestCase):
@@ -36,6 +38,44 @@ class CaptureDof70EvidenceTests(unittest.TestCase):
         self.assertIn("dump-dom", source)
         self.assertIn("dof70-evidence-result", source)
         self.assertIn("ffmpeg", source)
+
+    def test_verifier_accepts_pass_with_screenshots_and_global_movie(self):
+        scenarios = json.loads((ROOT / "tools/dof70_browser_scenarios.json").read_text())["scenarios"]
+        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
+            evidence = Path(tmp)
+            artifacts = []
+            for scenario in scenarios:
+                path = evidence / scenario["out"]
+                path.write_bytes(scenario["id"].encode())
+                artifacts.append({"type": "screenshot", "scenario": scenario["id"],
+                                  "path": str(path.relative_to(ROOT)), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+            movie = evidence / "movie.mp4"
+            movie.write_bytes(b"movie")
+            artifacts.append({"type": "movie", "scenario": None,
+                              "path": str(movie.relative_to(ROOT)), "sha256": hashlib.sha256(movie.read_bytes()).hexdigest()})
+            manifest = {"version": 1, "status": "PASS", "generated_at": "test", "checks": ["test"],
+                        "scenarios": scenarios, "artifacts": artifacts, "errors": []}
+            manifest_path = evidence / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest))
+            result = subprocess.run([sys.executable, str(VERIFY), "--evidence", str(manifest_path.relative_to(ROOT))], cwd=ROOT)
+            self.assertEqual(result.returncode, 0)
+
+    def test_verifier_rejects_blocked_and_invalid_scenario_schema(self):
+        scenarios = json.loads((ROOT / "tools/dof70_browser_scenarios.json").read_text())["scenarios"]
+        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
+            evidence = Path(tmp)
+            manifest = {"version": 1, "status": "BLOCKED", "checks": ["test"], "scenarios": scenarios,
+                        "artifacts": [], "errors": ["browser timeout"]}
+            path = evidence / "manifest.json"
+            path.write_text(json.dumps(manifest))
+            result = subprocess.run([sys.executable, str(VERIFY), "--evidence", str(path.relative_to(ROOT))], cwd=ROOT)
+            self.assertNotEqual(result.returncode, 0)
+            manifest["status"] = "PASS"
+            manifest["errors"] = []
+            manifest["scenarios"] = [scenario["id"] for scenario in scenarios]
+            path.write_text(json.dumps(manifest))
+            result = subprocess.run([sys.executable, str(VERIFY), "--evidence", str(path.relative_to(ROOT))], cwd=ROOT)
+            self.assertNotEqual(result.returncode, 0)
 
 
 if __name__ == "__main__":

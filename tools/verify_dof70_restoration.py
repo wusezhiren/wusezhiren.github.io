@@ -84,20 +84,26 @@ def evidence(path):
         errors.append("evidence checks are missing")
     scenarios = {item.get("id"): item for item in json.loads(MANIFEST.read_text(encoding="utf-8")).get("scenarios", [])}
     manifest_scenarios = data.get("scenarios")
-    if not isinstance(manifest_scenarios, list) or any(not isinstance(item, dict) for item in manifest_scenarios) or {item.get("id") for item in manifest_scenarios} != set(scenarios):
+    if (not isinstance(manifest_scenarios, list) or any(not isinstance(item, dict) for item in manifest_scenarios)
+            or manifest_scenarios != list(scenarios.values())):
         errors.append("evidence scenarios do not match browser scenario manifest")
     artifacts = data.get("artifacts")
-    if not isinstance(artifacts, list) or not artifacts:
-        errors.append("evidence artifacts must not be empty")
+    if not isinstance(artifacts, list):
+        errors.append("evidence artifacts must be a list")
     artifact_scenarios = set()
     for item in artifacts or []:
-        scenario = scenarios.get(item.get("scenario"))
-        if scenario is None:
-            errors.append(f"artifact has unknown scenario {item.get('scenario')}")
-        else:
-            artifact_scenarios.add(item.get("scenario"))
-            if item.get("query") != scenario.get("query"):
-                errors.append(f"artifact query mismatch {item.get('scenario')}")
+        artifact_type = item.get("type")
+        if artifact_type not in ("screenshot", "movie"):
+            errors.append(f"artifact has invalid type {artifact_type}")
+        scenario_id = item.get("scenario")
+        scenario = scenarios.get(scenario_id) if scenario_id is not None else None
+        if artifact_type == "screenshot":
+            if scenario is None:
+                errors.append(f"screenshot has unknown scenario {scenario_id}")
+            else:
+                artifact_scenarios.add(scenario_id)
+        elif scenario_id is not None and scenario is None:
+            errors.append(f"movie has unknown scenario {scenario_id}")
         target = ROOT / item.get("path", "")
         if not target.is_file():
             errors.append(f"missing evidence artifact {item.get('path')}")
