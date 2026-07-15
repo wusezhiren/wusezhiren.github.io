@@ -56,8 +56,16 @@ def main():
     errors = []
     if not browser: errors.append("missing Chromium browser (tried chromium, chromium-browser, google-chrome)")
     if not ffmpeg: errors.append("missing ffmpeg")
-    handler = lambda *a, **kw: http.server.SimpleHTTPRequestHandler(*a, directory=str(ROOT), **kw)
-    server = socketserver.TCPServer(("127.0.0.1", args.port), handler)
+    class EvidenceRequestHandler(http.server.SimpleHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
+
+        def end_headers(self):
+            self.send_header("Connection", "close")
+            super().end_headers()
+
+    handler = lambda *a, **kw: EvidenceRequestHandler(*a, directory=str(ROOT), **kw)
+    socketserver.ThreadingTCPServer.allow_reuse_address = True
+    server = socketserver.ThreadingTCPServer(("127.0.0.1", args.port), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
     artifacts = []
     try:
@@ -65,7 +73,7 @@ def main():
             for scenario in scenarios:
                 url = f"http://127.0.0.1:{args.port}/index.html{scenario['query']}"
                 try:
-                    dom = subprocess.run([browser, "--headless", "--no-sandbox", "--disable-gpu", "--dump-dom", url], cwd=ROOT, text=True, capture_output=True, timeout=45)
+                    dom = subprocess.run([browser, "--headless=new", "--no-sandbox", "--disable-gpu", "--dump-dom", url], cwd=ROOT, text=True, capture_output=True, timeout=45)
                     if dom.returncode: errors.append(f"{scenario['id']}: dump-dom exit {dom.returncode}: {dom.stderr[-300:]}")
                     try:
                         errors.extend(f"{scenario['id']}: {error}" for error in validate_evidence(parse_evidence(dom.stdout), scenario))

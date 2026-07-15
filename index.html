@@ -3122,7 +3122,8 @@ window.addEventListener('keydown',e=>{
 });
 
  gameState='menu';
- loop();
+ const isDof70Evidence=new URLSearchParams(location.search).has('dof70case');
+ if(!isDof70Evidence) loop();
 
 // 调试: ?shot=blade&st=run 自动开局便于无头截图(正式使用无影响)
 (function(){const q=new URLSearchParams(location.search);

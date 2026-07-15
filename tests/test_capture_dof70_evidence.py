@@ -36,8 +36,19 @@ class CaptureDof70EvidenceTests(unittest.TestCase):
     def test_capture_source_has_required_probe_contract(self):
         source = CAPTURE.read_text()
         self.assertIn("dump-dom", source)
+        self.assertIn("ThreadingTCPServer", source)
+        self.assertIn('protocol_version = "HTTP/1.1"', source)
+        self.assertIn('self.send_header("Connection", "close")', source)
+        self.assertIn("--headless=new", source)
         self.assertIn("dof70-evidence-result", source)
         self.assertIn("ffmpeg", source)
+
+    def test_evidence_mode_does_not_start_permanent_animation_loop(self):
+        source = (ROOT / "index.html").read_text()
+        evidence_gate = "const isDof70Evidence=new URLSearchParams(location.search).has('dof70case');"
+        self.assertIn(evidence_gate, source)
+        self.assertIn("if(!isDof70Evidence) loop();", source)
+        self.assertLess(source.index(evidence_gate), source.index("if(!isDof70Evidence) loop();"))
 
     def test_verifier_accepts_pass_with_screenshots_and_global_movie(self):
         scenarios = json.loads((ROOT / "tools/dof70_browser_scenarios.json").read_text())["scenarios"]
