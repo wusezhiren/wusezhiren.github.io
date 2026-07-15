@@ -52,7 +52,14 @@ def build_evidence_url(transport, scenario, port):
     return f"http://127.0.0.1:{port}/index.html{query}"
 
 def chrome_args(browser, url, *, dump_dom=False, screenshot=None, transport="file"):
-    args = [browser, "--headless=new", "--no-sandbox", "--disable-gpu"]
+    # virtual-time-budget lets the page run its game loop (assets load + rooms spawn +
+    # frames render) before dump-dom/screenshot fire; swiftshader flags avoid the VAAPI
+    # headless timeouts documented in PLAN.md.
+    args = [browser, "--headless=new", "--no-sandbox", "--disable-gpu",
+            "--disable-features=Vulkan,VaapiVideoDecoder,UseChromeOSDirectVideoDecoder",
+            "--use-gl=swiftshader", "--window-size=1280,800",
+            "--run-all-compositor-stages-before-draw",
+            "--virtual-time-budget=8000"]
     if transport == "file":
         args.append("--allow-file-access-from-files")
     if dump_dom:
@@ -61,6 +68,25 @@ def chrome_args(browser, url, *, dump_dom=False, screenshot=None, transport="fil
         args.append(f"--screenshot={screenshot}")
     args.append(url)
     return args
+
+
+MIN_BRIGHT_RATIO = 0.08  # blank/black captures measure ~0.024 (page chrome only)
+
+
+def screenshot_content_error(path):
+    """Reject captures that are effectively blank so black frames can't pass as evidence."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return "Pillow unavailable: cannot validate screenshot content"
+    with Image.open(path) as image:
+        gray = image.convert("L")
+        pixels = gray.getdata()
+        bright = sum(1 for p in pixels if p > 16)
+        ratio = bright / max(1, len(pixels))
+    if ratio < MIN_BRIGHT_RATIO:
+        return f"screenshot looks blank (bright ratio {ratio:.4f} < {MIN_BRIGHT_RATIO})"
+    return None
 
 def main():
     parser = argparse.ArgumentParser()
@@ -112,7 +138,10 @@ def main():
                     errors.append(f"{scenario['id']}: screenshot timed out")
                     continue
                 if shot.returncode: errors.append(f"{scenario['id']}: screenshot exit {shot.returncode}")
-                elif image.is_file(): artifacts.append({"type": "screenshot", "scenario": scenario, "path": image})
+                elif image.is_file():
+                    content_error = screenshot_content_error(image)
+                    if content_error: errors.append(f"{scenario['id']}: {content_error}")
+                    else: artifacts.append({"type": "screenshot", "scenario": scenario, "path": image})
         if ffmpeg and not errors:
             # A deterministic numbered sequence makes the movie reproducible from captured frames.
             frames = []

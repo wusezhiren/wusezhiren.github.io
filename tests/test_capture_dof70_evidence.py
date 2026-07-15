@@ -65,12 +65,32 @@ class CaptureDof70EvidenceTests(unittest.TestCase):
         self.assertEqual(module.build_evidence_url("http", scenario, 18765), "http://127.0.0.1:18765/index.html?dof70case=case&class=blade&state=idle")
         self.assertNotIn("--allow-file-access-from-files", module.chrome_args("chromium", "http://example.test", transport="http"))
 
-    def test_evidence_mode_does_not_start_permanent_animation_loop(self):
+    def test_evidence_mode_runs_game_loop_and_reports_live_state(self):
+        # Regression: gating loop() off in evidence mode produced black screenshots while
+        # the manifest still said PASS. Evidence pages must render for real and only set
+        # ready once assets are loaded, the scenario state is live, and frames were drawn.
         source = (ROOT / "index.html").read_text()
-        evidence_gate = "const isDof70Evidence=new URLSearchParams(location.search).has('dof70case');"
-        self.assertIn(evidence_gate, source)
-        self.assertIn("if(!isDof70Evidence) loop();", source)
-        self.assertLess(source.index(evidence_gate), source.index("if(!isDof70Evidence) loop();"))
+        self.assertNotIn("isDof70Evidence", source)
+        self.assertIn("\n loop();", source)
+        self.assertIn("checks.assets=Boolean(SPR.ready);", source)
+        self.assertIn("checks.rendered=_renderCount>30;", source)
+        self.assertIn("checks.live=", source)
+
+    def test_capture_waits_for_rendering_and_rejects_blank_screenshots(self):
+        source = CAPTURE.read_text()
+        self.assertIn("--virtual-time-budget=", source)
+        self.assertIn("screenshot_content_error", source)
+        spec = importlib.util.spec_from_file_location("capture_dof70_evidence", CAPTURE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as tmp:
+            blank = Path(tmp) / "blank.png"
+            Image.new("RGB", (80, 50), (0, 0, 0)).save(blank)
+            self.assertIsNotNone(module.screenshot_content_error(blank))
+            lively = Path(tmp) / "lively.png"
+            Image.new("RGB", (80, 50), (120, 90, 60)).save(lively)
+            self.assertIsNone(module.screenshot_content_error(lively))
 
     def test_verifier_accepts_pass_with_screenshots_and_global_movie(self):
         scenarios = json.loads((ROOT / "tools/dof70_browser_scenarios.json").read_text())["scenarios"]

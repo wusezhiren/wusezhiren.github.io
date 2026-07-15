@@ -1,15 +1,15 @@
 {
   "version": 1,
   "status": "PASS",
-  "generated_at": "2026-07-15T03:19:47Z",
+  "generated_at": "2026-07-15T06:50:03Z",
   "transport": "file",
   "urls": {
-    "blade-normal-hit": "file:///home/yjh/code/dnf/wusezhiren.github.io/.worktrees/dof70-blade-berserker/index.html?dof70case=blade-normal-hit&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=none&class=blade&state=idle",
-    "blade-miss": "file:///home/yjh/code/dnf/wusezhiren.github.io/.worktrees/dof70-blade-berserker/index.html?dof70case=blade-miss&shot=blade&st=idle&targetKind=normal&targetMode=out-of-range&hit=miss&migration=none&class=blade&state=idle",
-    "berserker-elite": "file:///home/yjh/code/dnf/wusezhiren.github.io/.worktrees/dof70-blade-berserker/index.html?dof70case=berserker-elite&shot=berserk&st=idle&targetKind=elite&targetMode=front&hit=hit&migration=none&class=berserk&state=idle",
-    "berserker-boss": "file:///home/yjh/code/dnf/wusezhiren.github.io/.worktrees/dof70-blade-berserker/index.html?dof70case=berserker-boss&shot=berserk&st=idle&targetKind=boss&targetMode=front&hit=hit&migration=none&class=berserk&state=idle",
-    "disabled-class": "file:///home/yjh/code/dnf/wusezhiren.github.io/.worktrees/dof70-blade-berserker/index.html?dof70case=disabled-class&shot=spectre&st=disabled&targetKind=none&targetMode=unavailable&hit=miss&migration=none&class=spectre&state=disabled",
-    "save-migration": "file:///home/yjh/code/dnf/wusezhiren.github.io/.worktrees/dof70-blade-berserker/index.html?dof70case=save-migration&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=v1-to-v2&class=blade&state=idle"
+    "blade-normal-hit": "file:///home/yjh/code/dnf/wusezhiren.github.io/index.html?dof70case=blade-normal-hit&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=none&class=blade&state=idle",
+    "blade-miss": "file:///home/yjh/code/dnf/wusezhiren.github.io/index.html?dof70case=blade-miss&shot=blade&st=idle&targetKind=normal&targetMode=out-of-range&hit=miss&migration=none&class=blade&state=idle",
+    "berserker-elite": "file:///home/yjh/code/dnf/wusezhiren.github.io/index.html?dof70case=berserker-elite&shot=berserk&st=idle&targetKind=elite&targetMode=front&hit=hit&migration=none&class=berserk&state=idle",
+    "berserker-boss": "file:///home/yjh/code/dnf/wusezhiren.github.io/index.html?dof70case=berserker-boss&shot=berserk&st=idle&targetKind=boss&targetMode=front&hit=hit&migration=none&class=berserk&state=idle",
+    "disabled-class": "file:///home/yjh/code/dnf/wusezhiren.github.io/index.html?dof70case=disabled-class&shot=spectre&st=disabled&targetKind=none&targetMode=unavailable&hit=miss&migration=none&class=spectre&state=disabled",
+    "save-migration": "file:///home/yjh/code/dnf/wusezhiren.github.io/index.html?dof70case=save-migration&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=v1-to-v2&class=blade&state=idle"
   },
   "checks": [
     "file://",
@@ -97,49 +97,49 @@
       "scenario": "blade-normal-hit",
       "query": "?dof70case=blade-normal-hit&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=none",
       "path": "assets/dof70/evidence/blade-normal-hit.png",
-      "sha256": "36f4a4338abe2457ad9b119289e274134978b184ce0e5e910739f2893b9e1119"
+      "sha256": "56d3f7686f6a43f001aa3bd69f91554bda645a0b54f43499c95801ec9c6d611d"
     },
     {
       "type": "screenshot",
       "scenario": "blade-miss",
       "query": "?dof70case=blade-miss&shot=blade&st=idle&targetKind=normal&targetMode=out-of-range&hit=miss&migration=none",
       "path": "assets/dof70/evidence/blade-miss.png",
-      "sha256": "36f4a4338abe2457ad9b119289e274134978b184ce0e5e910739f2893b9e1119"
+      "sha256": "b1781d2d43ce84bae6d2d901a1e0fe3fb51bb395027f83007bd8a4822c4d2955"
     },
     {
       "type": "screenshot",
       "scenario": "berserker-elite",
       "query": "?dof70case=berserker-elite&shot=berserk&st=idle&targetKind=elite&targetMode=front&hit=hit&migration=none",
       "path": "assets/dof70/evidence/berserker-elite.png",
-      "sha256": "36f4a4338abe2457ad9b119289e274134978b184ce0e5e910739f2893b9e1119"
+      "sha256": "397880c2b747ffe3cc7230739440f5b9cb6854c66fe3fd03153333a73cb13e7e"
     },
     {
       "type": "screenshot",
       "scenario": "berserker-boss",
       "query": "?dof70case=berserker-boss&shot=berserk&st=idle&targetKind=boss&targetMode=front&hit=hit&migration=none",
       "path": "assets/dof70/evidence/berserker-boss.png",
-      "sha256": "36f4a4338abe2457ad9b119289e274134978b184ce0e5e910739f2893b9e1119"
+      "sha256": "1ffa3438798f7a3ac30e20a20735949e3e5073573e34193b120d6d91adf6b6bc"
     },
     {
       "type": "screenshot",
       "scenario": "disabled-class",
       "query": "?dof70case=disabled-class&shot=spectre&st=disabled&targetKind=none&targetMode=unavailable&hit=miss&migration=none",
       "path": "assets/dof70/evidence/disabled-class.png",
-      "sha256": "36f4a4338abe2457ad9b119289e274134978b184ce0e5e910739f2893b9e1119"
+      "sha256": "bbebc75ef50beb47d6b8b54e3aea7e55f539709d5585bc1f651edeb2d3fcdf87"
     },
     {
       "type": "screenshot",
       "scenario": "save-migration",
       "query": "?dof70case=save-migration&shot=blade&st=idle&targetKind=normal&targetMode=front&hit=hit&migration=v1-to-v2",
       "path": "assets/dof70/evidence/save-migration.png",
-      "sha256": "36f4a4338abe2457ad9b119289e274134978b184ce0e5e910739f2893b9e1119"
+      "sha256": "43aa92c2e76f326bbd80408ec2b2ad12982664384d0985a77a0b643fcf078750"
     },
     {
       "type": "movie",
       "scenario": null,
       "query": null,
       "path": "assets/dof70/evidence/dof70-evidence.mp4",
-      "sha256": "5b41b2e6e80cd8502f7b86bc2be1f90b5674f6627ffe030a7a562b25b3d47df4"
+      "sha256": "abd3aab2bbddd49fe04a6c8ab89c8c665ee31c7a6655ead901e197fe977a29f9"
     }
   ],
   "errors": []

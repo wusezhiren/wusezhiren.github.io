@@ -3094,7 +3094,7 @@ function render(){
 }
 // 固定步长累加器: 逻辑固定 60 tick/秒, 与显示器刷新率(60/120/144Hz)解耦, 避免高刷屏"加速"
 const LOGIC_HZ=60, LOGIC_STEP=1000/LOGIC_HZ, MAX_CATCHUP=5;
-let _lastFrame=performance.now(), _acc=0;
+let _lastFrame=performance.now(), _acc=0, _renderCount=0, _timerDriven=false;
 function loop(now){
   if(now===undefined) now=performance.now();
   let dt=now-_lastFrame; _lastFrame=now;
@@ -3103,8 +3103,8 @@ function loop(now){
   let n=0;
   while(_acc>=LOGIC_STEP && n<MAX_CATCHUP){ update(); _acc-=LOGIC_STEP; n++; }
   if(n===MAX_CATCHUP) _acc=0;     // 追不上就丢弃积压, 保持实时
-  render();
-  requestAnimationFrame(loop);
+  render(); _renderCount++;
+  if(!_timerDriven) requestAnimationFrame(loop);
 }
 
 /* ===================== 全局按键 ===================== */
@@ -3122,17 +3122,30 @@ window.addEventListener('keydown',e=>{
 });
 
  gameState='menu';
- const isDof70Evidence=new URLSearchParams(location.search).has('dof70case');
- if(!isDof70Evidence) loop();
+ loop();
 
 // 调试: ?shot=blade&st=run 自动开局便于无头截图(正式使用无影响)
 (function(){const q=new URLSearchParams(location.search);
   if(q.has('dof70case')){
+    // 取证 ready 必须反映真实运行状态: 资源就绪 + 进入场景对应 gameState + 画布确实渲染过帧,
+    // 而不是仅回显 URL 参数;主循环在取证模式同样运行,截图才能拍到实际画面。
+    // headless 虚拟时间下 rAF 几乎不推进,取证模式改用定时器驱动同一个 loop()(渲染管线不变)。
+    _timerDriven=true; setInterval(()=>loop(performance.now()),16);
     const expected=['class','state','targetKind','targetMode','hit','migration'];
     const context=Object.fromEntries(expected.map(k=>[k,q.get(k)]));
-    const checks=Object.fromEntries(expected.map(k=>[k,Boolean(context[k])]));
-    const ready=Boolean(q.get('dof70case')) && Object.values(checks).every(Boolean);
-    document.getElementById('dof70-evidence-result').textContent=JSON.stringify({schema:1,page:'dof70',ready,scenario:q.get('dof70case'),...context,branch:context.targetMode,checks,errors:ready?[]:['incomplete dof70case context']});
+    const writeEvidence=()=>{
+      const checks=Object.fromEntries(expected.map(k=>[k,Boolean(context[k])]));
+      checks.assets=Boolean(SPR.ready);
+      checks.rendered=_renderCount>30;
+      checks.live=context.state==='disabled'
+        ? (gameState==='select'&&!player)
+        : (gameState==='play'&&player?.clsKey===context.class);
+      const ready=Boolean(q.get('dof70case')) && Object.values(checks).every(Boolean);
+      document.getElementById('dof70-evidence-result').textContent=JSON.stringify({schema:1,page:'dof70',ready,scenario:q.get('dof70case'),...context,branch:context.targetMode,checks,renderCount:_renderCount,
+        errors:ready?[]:['dof70 scenario not live: '+Object.entries(checks).filter(([,v])=>!v).map(([k])=>k).join(',')]});
+      if(!ready) setTimeout(writeEvidence,100);
+    };
+    setTimeout(writeEvidence,100);
   }
   if(q.has('cont')){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); continueGame(); }; g(); return; }
   if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); if(!startGame(q.get('shot')||'blade')) return; }; g(); return; }

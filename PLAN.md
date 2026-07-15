@@ -40,6 +40,27 @@
 > - tools/build_skill_stats.py 段数与 hpCost 列修正后重生成 skill_stats.json 并同步 index.html。
 > 验证:32 个 unittest 通过;node --check 通过;无头 Chrome 实测 不动明王阵持续场跳伤、萨亚冰冻场冰封敌人正常。
 
+> **剑魂+狂战士 DOF70 严格还原合入记录(2026-07-15)**:`feature/dof70-blade-berserker` 分支 Task1~16 全部完成并合回 main:
+> - 13 主动技能(共通上挑;剑魂:三段斩/拔刀斩/破军升龙击/猛龙断空斩/幻影剑舞/里·鬼剑术;狂战士:十字斩/崩山击/嗜魂之手/怒气爆发/嗜魂封魔斩/崩山裂地斩)
+>   + 9 被动(剑魂:武器奥义+五种武器精通;狂战士:血气唤醒/血之狂暴/暴走)按 Script.pvf 权威数据逐帧还原
+>   (专用技能链路、权威命中停顿合同、原版物理伤害纯函数、70 级怪物模板);
+> - 剑魂五类武器(光剑/太刀/巨剑/钝器/短剑)DOF70 图集与武器规则、旧存档迁移(`migrations.js`);鬼泣/阿修罗职业卡置灰"暂未开放";
+> - 新增门禁工具链:`dof70_skill_audit.py`、`dof70_action_audit.py`、`verify_dof70_restoration.py`(--structural / --evidence)、
+>   `capture_dof70_evidence.py`(无头 Chrome 6 场景截图+MP4,manifest 带 SHA-256 自校验);
+> - 验证:96 项 Python unittest + 72 项 Node 运行时测试 + skillfx/结构/取证门禁全绿;`node --check` 通过。
+> 注意:task16 文档中取证门禁命令应为 `verify_dof70_restoration.py --evidence assets/dof70/evidence/manifest.json`(--evidence 接路径)。
+
+> **取证黑屏修复记录(2026-07-15)**:合入后抽查发现 6 张取证截图全黑但 manifest 判 PASS——根因是
+> `dof70case` 取证模式下主循环被禁(`if(!isDof70Evidence) loop()`),画布从不渲染,`ready` 只回显 URL 参数,
+> 浏览器验收实为空转(还有一个单测把该行为锁进契约)。修复:
+> - `index.html`:取证模式同样运行 loop(headless 虚拟时间下 rAF 不推进,取证模式改由 setInterval 驱动同一 loop,渲染管线不变);
+>   `ready` 改为真实条件:SPR.ready + 进入场景对应 gameState(play 且职业匹配 / disabled 场景为 select)+ 实际渲染帧数>30;
+> - `tools/capture_dof70_evidence.py`:Chrome 加 `--virtual-time-budget=8000`、`--run-all-compositor-stages-before-draw`、
+>   swiftshader/窗口尺寸参数;新增 PIL 黑屏门禁(亮像素占比<0.08 判 BLOCKED,黑图实测 0.024);
+> - 测试更新:删除"取证模式不启动循环"的旧契约,新增"取证模式跑真实渲染 + 黑屏截图必须被拒"两条回归。
+> 验证:重拍 6 场景截图均为真实画面(剑魂技能栏/狂战士进房自动施放血之狂暴/鬼泣阿修罗置灰"暂未开放");
+> 全量 unittest + 72 项 Node 测试 + 结构/取证门禁 + node --check 全绿。
+
 ---
 
 ## 一、核心机制改造(最高优先 —— 决定"像不像 DNF")  ✅ 已全部完成
