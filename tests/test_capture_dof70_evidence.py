@@ -43,6 +43,28 @@ class CaptureDof70EvidenceTests(unittest.TestCase):
         self.assertIn("dof70-evidence-result", source)
         self.assertIn("ffmpeg", source)
 
+    def test_file_urls_preserve_query_and_use_file_access_flag(self):
+        spec = importlib.util.spec_from_file_location("capture_dof70_evidence", CAPTURE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        scenario = {"id": "case", "query": "?dof70case=case&hit=hit", "class": "blade", "state": "idle"}
+        url = module.build_evidence_url("file", scenario, 18765)
+        self.assertTrue(url.startswith("file://"))
+        self.assertIn(scenario["query"], url)
+        self.assertIn("&class=blade&state=idle", url)
+        self.assertNotIn("%3F", url)
+        command = module.chrome_args("chromium", url, dump_dom=True, transport="file")
+        self.assertIn("--allow-file-access-from-files", command)
+        self.assertIn("--dump-dom", command)
+
+    def test_http_url_transport_remains_available(self):
+        spec = importlib.util.spec_from_file_location("capture_dof70_evidence", CAPTURE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        scenario = {"id": "case", "query": "?dof70case=case", "class": "blade", "state": "idle"}
+        self.assertEqual(module.build_evidence_url("http", scenario, 18765), "http://127.0.0.1:18765/index.html?dof70case=case&class=blade&state=idle")
+        self.assertNotIn("--allow-file-access-from-files", module.chrome_args("chromium", "http://example.test", transport="http"))
+
     def test_evidence_mode_does_not_start_permanent_animation_loop(self):
         source = (ROOT / "index.html").read_text()
         evidence_gate = "const isDof70Evidence=new URLSearchParams(location.search).has('dof70case');"
