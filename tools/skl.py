@@ -82,9 +82,26 @@ def ints(toks):
     return [v for k, v in toks if k == "int"]
 
 
+def parse_pre_required_skills(toks):
+    non_integer = [kind for kind, _ in toks if kind != "int"]
+    if non_integer:
+        raise ValueError(
+            "pre required skill contains non-integer token: %s" % non_integer[0]
+        )
+    values = [value for _, value in toks]
+    if len(values) % 2:
+        raise ValueError("pre required skill has odd integer count: %d" % len(values))
+    return [
+        {"skill_index": values[i], "required_level": values[i + 1]}
+        for i in range(0, len(values), 2)
+    ]
+
+
 class SkillReader:
     def __init__(self, pvf_path):
-        self.pv = pvf.Pvf(str(pvf_path))
+        # Keep the source path so strict-field errors can identify the exact PVF.
+        self.pvf_path = str(Path(pvf_path).resolve())
+        self.pv = pvf.Pvf(self.pvf_path)
         self.st = StringTable(self.pv)
         self._strfiles = self._load_strfile_index()
         self._strcache = {}
@@ -143,11 +160,21 @@ class SkillReader:
             # 部分技能(冰刃/爆炎波动剑等)把 MP/冷却写在顶层而非 [dungeon] 段
             return ints(section_body(dungeon, tag)) or ints(section_body(toks, tag))
 
+        pre_required = parse_pre_required_skills(
+            section_body(toks, "pre required skill")
+        )
+
         info = {
             "path": path,
             "name": self.localized(toks, "name"),
             "name2": self.localized(toks, "name2"),
             "required_level": (ints(section_body(toks, "required level")) or [None])[0],
+            "required_level_range": (ints(section_body(toks, "required level range")) or [None])[0],
+            "growtype_maximum_level": ints(section_body(toks, "growtype maximum level")),
+            "pre_required_skills": pre_required,
+            "skill_type": section_body(toks, "type"),
+            "skill_class": section_body(toks, "skill class"),
+            "level_property": section_body(toks, "level property"),
             "consume_mp": dungeon_first("consume MP"),
             "cool_time_ms": (dungeon_first("cool time") or [None])[0],
             "casting_time_ms": (dungeon_first("casting time") or [None])[0],
@@ -163,6 +190,21 @@ class SkillReader:
             info["level_info_cols"] = 0
             info["level_info"] = []
         return info
+
+    def read_required(self, path, skill_key, field):
+        try:
+            value = self.read_skill(path).get(field)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                "skill %s missing required field %s in %s (%s): path not found"
+                % (skill_key, field, self.pvf_path, path)
+            ) from exc
+        if value is None or value == []:
+            raise KeyError(
+                "skill %s missing required field %s in %s (%s)"
+                % (skill_key, field, self.pvf_path, path)
+            )
+        return value
 
 
 if __name__ == "__main__":

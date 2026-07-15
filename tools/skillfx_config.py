@@ -5,12 +5,10 @@ DOF_CLIENT = Path("DOF（重生70版本）/DOF_src/DOF重生/客户端")
 FALLBACK_CLIENT = Path("地下城与勇士")
 PFX = "sprite_character_swordman_effect_"
 OUT_DIR = Path("assets")
-# 游戏内 25 个技能 fx 键(上挑 + 四职业各 6 技)
+# 运行时由专用动作时间轴创建的 13 个目标技能。
 TARGET_CLIPS = (
-    "uppercut", "tripleslash", "flashcut", "dragonup", "revolvingsword", "illusionslash", "hiddenblade",
-    "gorecross", "mountaincrash", "souldrain", "frenzy", "bloodseal", "chargecrash",
-    "darkslash", "liftslash", "saya", "epidemic", "ghoststep", "tombstone",
-    "normalwave", "icewave", "firewave", "waveeye", "wavespin", "vajra",
+    "uppercut", "tripleslash", "dragonup", "flashcut", "revolvingsword", "hiddenblade", "illusionslash",
+    "gorecross", "hopsmash", "bloodblast", "grabblastblood", "bloodyrave", "outragebreak",
 )
 
 
@@ -53,16 +51,16 @@ SKILL_SPECS = {
     "hiddenblade": SkillSpec("weaponcombo", anis=("weaponcombo/light", "weaponcombo/blade")),
     "gorecross": SkillSpec("gorecross", anis=(
         "gorecross/slash1", "gorecross/slash2", "gorecross/slash3", "gorecross/slash4")),
-    "mountaincrash": SkillSpec("hopsmash", anis=("hopsmash/smash", "hopsmash/sword")),
-    "souldrain": SkillSpec("grabblastblood", anis=("grabblastblood",), images=("normal.img", "impact-normal.img"), fps=14),
-    "frenzy": SkillSpec("atfrenzy", anis=(
+    "hopsmash": SkillSpec("hopsmash", anis=("hopsmash/smash", "hopsmash/sword")),
+    "bloodblast": SkillSpec("atfrenzy", anis=(
         "frenzy/cast", "frenzy/blast", "frenzy/buff", "frenzy/createball", "frenzy/ball",
         "frenzy/sword1-1", "frenzy/sword1-3", "frenzy/sword1-4")),
-    "bloodseal": SkillSpec("bloodyrave", anis=(
+    "grabblastblood": SkillSpec("grabblastblood", anis=("grabblastblood",), images=("normal.img", "impact-normal.img"), fps=14),
+    "bloodyrave": SkillSpec("bloodyrave", anis=(
         "bloodyrave/start1", "bloodyrave/start2", "bloodyrave/loop1", "bloodyrave/loop2",
         "bloodyrave/line1", "bloodyrave/line2", "bloodyrave/sword1",
         "bloodyrave/sword3", "bloodyrave/sword4", "bloodyrave/typhoon", "bloodyrave/end")),
-    "chargecrash": SkillSpec("outragebreak", anis=(
+    "outragebreak": SkillSpec("outragebreak", anis=(
         "outragebreak/sword_ready_none", "outragebreak/sword_slash_none",
         "outragebreak/sword_slash_impact_none", "outragebreak/sword_slash_stone")),
     "darkslash": SkillSpec("hardattack", anis=("hardattack1", "hardattack2")),
@@ -92,6 +90,18 @@ SKILL_SPECS = {
 }
 
 BUILD_SKILL_SPECS = SKILL_SPECS
+
+# Names retained for non-target consumers of the old generated asset.
+BUILD_SKILL_SPECS.update({
+    "mountaincrash": SKILL_SPECS["hopsmash"], "souldrain": SKILL_SPECS["grabblastblood"],
+    "frenzy": SKILL_SPECS["bloodblast"], "bloodseal": SKILL_SPECS["bloodyrave"],
+    "chargecrash": SKILL_SPECS["outragebreak"],
+})
+SKILL_SPECS.update({
+    "mountaincrash": SKILL_SPECS["hopsmash"], "souldrain": SKILL_SPECS["grabblastblood"],
+    "frenzy": SKILL_SPECS["bloodblast"], "bloodseal": SKILL_SPECS["bloodyrave"],
+    "chargecrash": SKILL_SPECS["outragebreak"],
+})
 
 
 def _candidate_roots(root: Path):

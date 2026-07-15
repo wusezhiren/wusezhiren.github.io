@@ -26,17 +26,47 @@
     移动 <b>方向键</b> ·跳跃 <b>C</b> ·普攻 <b>X</b> ·上挑 <b>Z</b> ·技能 <b>Q W E A S D</b> ·奔跑 <b>双击←/→</b> ·药水 <b>1-6</b> ·背包 <b>I</b> ·暂停 <b>P</b> ·菜单 <b>0</b>　(技能栏可拖拽换键)
   </div>
 </div>
+<pre id="dof70-evidence-result" hidden></pre>
 <script src="assets/swordman.meta.js"></script>
 <script src="assets/weapons.meta.js"></script>
 <script src="assets/monsters.meta.js"></script>
 <script src="assets/skillfx.meta.js"></script>
 <script src="assets/skill_actions.meta.js"></script>
+<script src="assets/dof70/swordman-timelines.meta.js"></script>
+<script src="src/classes/availability.js"></script>
+<script src="src/equipment/weapons.js"></script>
+<script src="src/save/migrations.js"></script>
+<script src="src/combat/damage.js"></script>
+<script src="src/combat/status.js"></script>
+<script src="src/combat/action-player.js"></script>
+<script src="src/combat/passives.js"></script>
+<script src="src/combat/skills/common/uppercut.js"></script>
+<script src="src/combat/skills/blade/triple-slash.js"></script>
+<script src="src/combat/skills/blade/charge-crash.js"></script>
+<script src="src/combat/skills/blade/momentary-slash.js"></script>
+<script src="src/combat/skills/blade/rapid-move-slash.js"></script>
+<script src="src/combat/skills/blade/weapon-combo.js"></script>
+<script src="src/combat/skills/blade/illusion-slash.js"></script>
+<script src="src/combat/skills/berserk/gore-cross.js"></script>
+<script src="src/combat/skills/berserk/hop-smash.js"></script>
+<script src="src/combat/skills/berserk/blood-blast.js"></script>
+<script src="src/combat/skills/berserk/grab-blast-blood.js"></script>
+<script src="src/combat/skills/berserk/bloody-rave.js"></script>
+<script src="src/combat/skills/berserk/outrage-break.js"></script>
+<script src="src/combat/skills/index.js"></script>
+<script src="src/monsters/dof70.js"></script>
 <script>
 "use strict";
+const {classAvailability,canStartClass}=DOF70.classes;
+const {WEAPON_TYPES,DEFAULT_WEAPON,canUseWeapon,normalizeWeapon}=DOF70.equipment;
+const {migrateSave,SAVE_SCHEMA_VERSION}=DOF70.save;
+const {resolveDamage}=DOF70.combat;
+const {MONSTERS_DOF70}=DOF70.monsters;
+const SKILL_HANDLERS=DOF70.combat.skills;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
-const DEFAULT_PLAYER_LEVEL=6;        // 测试技能用: 默认满级解锁所有技能
+const DEFAULT_PLAYER_LEVEL=70;       // 测试技能用: 默认满级解锁所有技能
 const MAX_UNLOCKED_DUNGEON=3;        // 当前 4 张图, 索引 3 表示全开
 const GROUND_TOP = 300, GROUND_BOT = 510, GRAVITY = 0.8;
 const WORLD_W = 1800;        // 房间世界宽度(>屏幕, 横向卷轴)
@@ -108,7 +138,7 @@ const aabb = (a,b) => Math.abs(a.x-b.x) < (a.w+b.w)/2 && Math.abs(a.y-b.y) < (a.
 /* ===================== 存档 ===================== */
 const Save = {
   data:{ high:0, vol:0.5, muted:false, unlocked:MAX_UNLOCKED_DUNGEON },
-  load(){ try{ const s=JSON.parse(localStorage.getItem('dnf_save')); if(s) Object.assign(this.data,s); }catch(e){} },
+  load(){ try{ const s=JSON.parse(localStorage.getItem('dnf_save')); if(s) this.data=Object.assign(this.data,migrateSave(s).save); }catch(e){} },
   save(){ try{ localStorage.setItem('dnf_save', JSON.stringify(this.data)); }catch(e){} }
 };
 Save.load();
@@ -192,9 +222,11 @@ function spawnLootFly(x,y,item){
 /* ===================== 战斗状态 ===================== */
 let combo={count:0,dmg:0,timer:0};
 let hitstop=0, score=0, shake=0;
+const combatClock=DOF70.combat.status.createClock();
 function comboHit(dmg,crit){
   combo.count++; combo.dmg+=dmg; combo.timer=100;
   hitstop=Math.max(hitstop, crit?6:3);
+  DOF70.combat.status.freeze(combatClock, crit?6:3);
   Audio2.sfx(crit?'crit':'hit');
 }
 
@@ -208,20 +240,20 @@ const CLASSES = {
       {key:'z',name:'三段斩',    mp:4, cd:360, type:'multi',hits:3,dmg:[16,19],reach:96, color:'#dff6ff', dur:30, ul:1, fx:'tripleslash',   fxScale:0.62,fxYo:64,fxAhead:70},
       {key:'a',name:'拔刀斩',    mp:16,cd:900, type:'aoe',  dmg:[122,148],ox:60,radius:104,knock:18, color:'#cfefff', dur:26, ul:3, fx:'flashcut',      fxScale:0.72,fxYo:62,fxAhead:96}, // 原版横斩击飞, 不挑空
       {key:'s',name:'破军升龙击',mp:11,cd:600, type:'melee',hits:2,dmg:[40,50],reach:74,launch:14, color:'#bfe6ff', dur:24, ul:2, fx:'dragonup',      fxScale:0.62,fxYo:98,fxAhead:32}, // 原版冲撞+上斩两段
-      {key:'d',name:'猛龙断空斩',mp:6, cd:1200,type:'dash', dmg:[22,26],reach:90, color:'#aef', dur:24, dash:17, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
+      {key:'d',name:'猛龙断空斩',mp:6, cd:1200,type:'multi',hits:5,dmg:[22,26],reach:90, color:'#aef', dur:24, ul:4, fx:'revolvingsword',fxScale:0.64,fxYo:60,fxAhead:60},
       {key:'f',name:'幻影剑舞',  mp:41,cd:2700,type:'multi',hits:10,dmg:[32,40],reach:104, color:'#eaf6ff', dur:48, ul:6, fx:'illusionslash', fxScale:0.7, fxYo:64,fxAhead:72}, // 原版lv1最小斩击10次
-      {key:'g',name:'里·鬼剑术',mp:30,cd:1200,type:'dash', dmg:[32,40],reach:100, color:'#ffffff', dur:34, dash:20, ul:5, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
+      {key:'g',name:'里·鬼剑术',mp:30,cd:1200,type:'multi',hits:5,dmg:[32,40],reach:100, color:'#ffffff', dur:15, ul:5, fx:'hiddenblade',   fxScale:0.9, fxYo:64,fxAhead:84},
     ]},
   berserk: { name:'狂战士', color:'#c0392b', dark:'#6e1f1f', elem:'#ff7a3c',
     hp:380, mp:100, speed:3.5, atkMul:1.15, lifesteal:0.12,
     desc:'高血近战狂徒,攻击吸血,可狂暴翻倍输出,越战越勇。',
     skills:[
       {key:'z',name:'十字斩',    mp:5, cd:180, type:'melee',hits:2,dmg:[11,13],reach:86,knock:14, color:'#ff7a5a', dur:22, ul:1, fx:'gorecross',     fxScale:0.62,fxYo:66,fxAhead:72}, // 原版斩击+血十字两段
-      {key:'a',name:'崩山击',    mp:3, cd:240, type:'aoe',  hits:2,dmg:[23,28],ox:55,radius:105,knock:12,hitDelay:12, color:'#ff8c42', dur:24, ul:2, fx:'mountaincrash',fxScale:0.6, fxYo:82,fxAhead:48}, // 原版跃劈砸地+冲击波, 非直线突进
-      {key:'s',name:'嗜魂之手',  mp:5, cd:360, type:'melee',dmg:[60,73],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'souldrain',     fxScale:0.6, fxYo:64,fxAhead:64},
-      {key:'d',name:'怒气爆发',  mp:13,cd:960, type:'aoe',  hits:4,dmg:[11,13],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'frenzy',        fxScale:0.95,fxYo:58,fxAhead:0}, // 原版对周围敌人攻击4次
-      {key:'f',name:'嗜魂封魔斩',mp:18,cd:1800,type:'melee',dmg:[115,140],reach:92,lifesteal:0.25,pull:150,hitDelay:14, color:'#ff5050', dur:26, ul:5, fx:'bloodseal',     fxScale:0.66,fxYo:64,fxAhead:64}, // 原版先吸附再斩
-      {key:'g',name:'崩山裂地斩',mp:0, hpCost:64,cd:2400,type:'aoe',  hits:7,dmg:[30,36],ox:50,radius:150,knock:16,hitDelay:10, color:'#ff2a2a', dur:40, ul:6, fx:'chargecrash',  fxScale:1.0, fxYo:46,fxAhead:50}, // 原版挥斩+龟裂6段; HP消耗为原版第4列400
+      {key:'a',name:'崩山击',    mp:3, cd:240, type:'aoe',  hits:2,dmg:[23,28],ox:55,radius:105,knock:12,hitDelay:12, color:'#ff8c42', dur:24, ul:2, fx:'hopsmash',fxScale:0.6, fxYo:82,fxAhead:48}, // 原版跃劈砸地+冲击波, 非直线突进
+      {key:'s',name:'嗜魂之手',  mp:5, cd:360, type:'melee',dmg:[60,73],reach:80,lifesteal:0.3, color:'#b06cff', dur:24, ul:3, fx:'grabblastblood',fxScale:0.6, fxYo:64,fxAhead:64},
+      {key:'d',name:'怒气爆发',  mp:13,cd:960, type:'aoe',  hits:4,dmg:[11,13],ox:0,radius:120,launch:8, color:'#ff3b3b', dur:26, ul:4, fx:'bloodblast',fxScale:0.95,fxYo:58,fxAhead:0}, // 原版对周围敌人攻击4次
+      {key:'f',name:'嗜魂封魔斩',mp:18,cd:1800,type:'melee',dmg:[115,140],reach:92,lifesteal:0.25,pull:150,hitDelay:14, color:'#ff5050', dur:26, ul:5, fx:'bloodyrave',fxScale:0.66,fxYo:64,fxAhead:64}, // 原版先吸附再斩
+      {key:'g',name:'崩山裂地斩',mp:0, hpCost:64,cd:2400,type:'aoe',  hits:7,dmg:[30,36],ox:50,radius:150,knock:16,hitDelay:10, color:'#ff2a2a', dur:40, ul:6, fx:'outragebreak',fxScale:1.0, fxYo:46,fxAhead:50}, // 原版挥斩+龟裂6段; HP消耗为原版第4列400
     ]},
   spectre: { name:'鬼泣', color:'#7d3cc9', dark:'#3f1d6e', elem:'#b98cff',
     hp:250, mp:150, speed:3.6, atkMul:1.0, lifesteal:0,
@@ -262,6 +294,11 @@ const SKILL_RUNTIME_PROFILE={
   illusionslash:{move:{vx:4,t:'dur'}, effect:null, pose:[1,10,188,194,199]},
   hiddenblade:{move:null, effect:null, pose:[194,195,196,197,198,188,189,190,191,192,193,1,2,3,4,5,6,11,12,13,14,15,16]},
   gorecross:{move:{vx:2.2,t:'dur'}, effect:null, pose:[10,11,12,13,14,15,200,201,202,203]},
+  hopsmash:{move:{vx:4.5,t:12,rise:6.5}, effect:null, pose:[125,126,127,204]},
+  bloodblast:{move:null, effect:null, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
+  grabblastblood:{move:{vx:2.2,t:10}, effect:null, pose:[159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175]},
+  bloodyrave:{move:{vx:2,t:8}, effect:null, pose:[164,175]},
+  outragebreak:{move:{vx:5,t:14,rise:7}, effect:null, pose:[124,125,126,127]},
   mountaincrash:{move:{vx:4.5,t:12,rise:6.5}, effect:null, pose:[125,126,127,204]}, // 原版跃劈: 跳跃距离150px/高度120px后砸地
   souldrain:{move:{vx:2.2,t:10}, effect:null, pose:[159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175]},
   frenzy:{move:null, effect:null, pose:[188,190,192,194,196,198,200,202,204,206,208,209]},
@@ -290,6 +327,10 @@ const SKILL_MOVE={
   mountaincrash:SKILL_RUNTIME_PROFILE.mountaincrash.move,
   illusionslash:SKILL_RUNTIME_PROFILE.illusionslash.move,
   gorecross:SKILL_RUNTIME_PROFILE.gorecross.move,
+  hopsmash:SKILL_RUNTIME_PROFILE.hopsmash.move,
+  grabblastblood:SKILL_RUNTIME_PROFILE.grabblastblood.move,
+  bloodyrave:SKILL_RUNTIME_PROFILE.bloodyrave.move,
+  outragebreak:SKILL_RUNTIME_PROFILE.outragebreak.move,
   souldrain:SKILL_RUNTIME_PROFILE.souldrain.move,
   bloodseal:SKILL_RUNTIME_PROFILE.bloodseal.move,
   chargecrash:SKILL_RUNTIME_PROFILE.chargecrash.move,
@@ -316,16 +357,16 @@ function genEquip(level){
   const mul=RARITY_MUL[rar], base=Math.max(1,level)*0.028;
   const stats={};
   if(type==='weapon'){
-    stats.atk=+((base*(0.8+Math.random()*0.4)*mul)).toFixed(3);
-    if(Math.random()<0.45) stats.crit=+(rand(0.02,0.05)*mul).toFixed(3);
-    if(Math.random()<0.35) stats.speed=+(rand(0.03,0.08)*mul).toFixed(3);
+    const weaponType=Object.keys(WEAPON_TYPES)[Math.floor(Math.random()*Object.keys(WEAPON_TYPES).length)];
+    const w=WEAPON_TYPES[weaponType];
+    return normalizeWeapon({id:Date.now()+Math.random(), name:w.name, type, rarity:rar, stats:{atk:0, speed:(w.attackSpeed-1)*0.1}, kind:'equip'}, player?.clsKey||'blade');
   } else {
     stats.hp=Math.round(16*(0.8+Math.random()*0.4)*mul*Math.max(1,level));
     if(Math.random()<0.35) stats.def=+(rand(0.03,0.07)*mul).toFixed(3);
     if(Math.random()<0.18) stats.speed=+(rand(0.01,0.035)*mul).toFixed(3);
   }
   if(Math.random()<0.25) stats.mp=Math.round(8*(0.8+Math.random()*0.4)*mul);
-  return {id:Date.now()+Math.random(), name:ITEM_NAMES[type][rar], type, rarity:rar, stats, kind:'equip'};
+  return {id:Date.now()+Math.random(), name:ITEM_NAMES[type][rar], type, rarity:rar, stats, kind:'equip', level:Math.max(1,level)};
 }
 const CONSUMABLE_DB = {
   hp_s:{name:'小血瓶', color:'#ff4d6a', hp:80,  icon:'♥', cd:120},
@@ -341,15 +382,15 @@ let clearPending=false, clearInfo=null, dunStats={t:0,kills:0,gold0:0};
 
 function sellPrice(item){
   const base={white:44,blue:115,purple:290,orange:820};
-  const sv=Object.values(item.stats).reduce((s,v)=>s+Math.abs(v)*140,0);
+  const sv=Object.entries(item.stats).reduce((s,[k,v])=>s+Math.abs(v)*(k==='atk'&&item.weaponType?0.08:140),0);
   return Math.round((base[item.rarity]+sv)*0.6);
 }
 function generateShopItems(){
   shopItems=[]; shopTab=0; shopCursor=0; shopSellMode=false;
-  const lv=difficulty();
+  const lv=70;
   const n=5+Math.floor(Math.random()*2);
   for(let i=0;i<n;i++){
-    const eq=genEquip(lv);
+     const eq=genEquip(lv);
     const rb={white:90,blue:250,purple:620,orange:1900};
     const sv=Object.values(eq.stats).reduce((s,v)=>s+Math.abs(v),0);
     eq.price=Math.round(rb[eq.rarity]*(1+sv*8)*(0.88+Math.random()*0.24));
@@ -366,7 +407,12 @@ class Fighter {
     this.speed=o.speed||3; this.color=o.color; this.dark=o.dark||'#333';
     this.dead=false; this.hurt=0; this.attackTimer=0; this.attackType=null;
     this.knock={x:0,y:0}; this.state='idle'; this.flash=0; this.walkPhase=0; this.slow=0; this.freeze=0;
+    this.combatStatus=DOF70.combat.status.createStatus();
+    this.actionPlayer=new DOF70.combat.action.ActionPlayer({clock:combatClock});
+    this.autoBuffActionPlayer=new DOF70.combat.action.ActionPlayer({clock:combatClock});
+    this.actionName='stand';
   }
+  selectAction(name){ if(this.actionName===name)return; this.actionName=name; const source=DOF70.combat.action.resolveAction(name,globalThis.DOF70_TIMELINES); this.actionPlayer.play(source); }
   get onGround(){ return this.z<=0.01; }
   applyKnock(){
     this.x+=this.knock.x; this.y+=this.knock.y;
@@ -402,7 +448,7 @@ class Projectile {
       if(Math.abs(this.x-e.x)<(this.w+e.w)/2 && Math.abs(this.y-e.y)<(this.depth+e.depth)/2 && Math.abs(this.z-e.z)<60){
         this.hit.add(e);
         const crit=Math.random()<player.crit;
-        let dmg=Math.round(rand(this.sk.dmg[0],this.sk.dmg[1])*player.dmgMul()*(crit?1.8:1));
+        const dmg=resolveDamage({channel:'percent',base:rand(this.sk.dmg[0],this.sk.dmg[1]),level:player.level,physicalPrimaryStat:player.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:player.damageMultiplier()});
         e.takeDamage(dmg,this.dir,9,crit); comboHit(dmg,crit);
         if(this.sk.slow) e.slow=this.sk.slow;
         if(this.sk.freeze) e.freeze=Math.max(e.freeze,this.sk.freeze);
@@ -467,7 +513,7 @@ class SkillField {
       if(e.dead)continue;
       if(Math.abs(e.x-this.x)>this.radius||Math.abs(e.y-this.y)>this.radius*0.6||e.z>90)continue;
       const crit=Math.random()<player.crit;
-      const dmg=Math.round(rand(sk.dmg[0],sk.dmg[1])*player.dmgMul()*(crit?1.8:1));
+      const dmg=resolveDamage({channel:'percent',base:rand(sk.dmg[0],sk.dmg[1]),level:player.level,physicalPrimaryStat:player.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:player.damageMultiplier()});
       e.takeDamage(dmg,Math.sign(e.x-this.x)||this.dir,sk.knock||4,crit); comboHit(dmg,crit);
       if(sk.launch){ e.vz=Math.max(e.vz,sk.launch); e.launched=true; }
       if(sk.slow) e.slow=Math.max(e.slow,sk.slow);
@@ -595,28 +641,45 @@ class Player extends Fighter {
     // 装备 & 背包
     this.inventory=[]; this.equipped={weapon:null,head:null,chest:null,legs:null,shoes:null};
     this.hotbar=new Array(6).fill(null); // {type,count,_cd} 或 null
+    const thisPlayer=this;
+    this.passiveEffects=DOF70.combat.passives.getPassiveEffects({classKey:clsKey, level:this.level, hp:this.hp, maxhp:this.maxhp});
+    this.autoBuffs=DOF70.combat.passives.createAutoBuffController({
+      actionPlayer:this.autoBuffActionPlayer,
+      resources:{get mp(){return thisPlayer.mp;},set mp(v){thisPlayer.mp=v;}},
+      status:this.combatStatus,
+      enabled:clsKey==='berserk' ? ['bloodRage','berserk'] : [],
+      canAct:()=>thisPlayer.attackTimer<=0 && !thisPlayer.dead,
+      emit:event=>{ if(event.type==='auto-buff') spawnText(thisPlayer.x,thisPlayer.screenY()-thisPlayer.h-20,event.name==='bloodRage'?'血之狂暴':'暴走','#ff5a5a'); },
+    });
     this.invOpen=false; this.invCursor=0;
   }
   get crit(){ return Math.min(0.7, this._crit + (this.equipped.weapon?.stats.crit||0) + (this.equipped.head?.stats.crit||0)); }
   equipStats(){
     return Object.values(this.equipped).reduce((s,e)=>{
       if(!e) return s;
-      s.atk+=(e.stats.atk||0); s.hp+=(e.stats.hp||0);
+       s.atk+=(e.weaponType ? e.physicalAttack/1000 : (e.stats.atk||0)); s.hp+=(e.stats.hp||0);
       s.mp+=(e.stats.mp||0); s.def+=(e.stats.def||0); s.speed+=(e.stats.speed||0);
       return s;
     },{atk:0,hp:0,mp:0,def:0,speed:0});
   }
   speedStat(){ return clamp(this.equipStats().speed,0,0.55); }
   attackSpeedMul(){ return 1/(1+this.speedStat()); }
-  dmgMul(){
-    const es=this.equipStats();
-    return this.cls.atkMul * (1+(this.level-1)*0.06+this.shopAtk+es.atk) * (this.buff?this.buff.atk:1);
-  }
+  physicalPrimaryStat(){ return 250 + this.shopAtk * 250 + this.equipStats().atk * 250; }
+   damageMultiplier(){
+     const passive=this.passiveEffects||{};
+     const rage=this.autoBuffs?.buffs?.bloodRage?1.2:1;
+     const berserk=this.autoBuffs?.buffs?.berserk?1.35:1;
+     return this.cls.atkMul * (1+(passive.mastery?.attack||0)+(passive.bloodAwakening?.attack||0)) * rage * berserk * (this.buff?this.buff.atk:1);
+   }
   takeDamage(dmg,fromDir,kb=8,crit=false){
     const def=clamp(this.equipStats().def,0,0.7);
     return super.takeDamage(Math.max(1,Math.round(dmg*(1-def))),fromDir,kb,crit);
   }
   equipItem(item){
+    if(item.type==='weapon'){
+      item=normalizeWeapon(item,this.clsKey);
+      if(!canUseWeapon(this.clsKey,item.weaponType)){ spawnText(this.x,this.screenY()-this.h-24,'职业无法使用该武器','#ff5a5a'); return false; }
+    }
     const old=this.equipped[item.type];
     if(old){ this.maxhp-=(old.stats.hp||0); this.maxmp-=(old.stats.mp||0); this.inventory.push(old); }
     this.equipped[item.type]=item;
@@ -624,6 +687,7 @@ class Player extends Fighter {
     this.hp=clamp(this.hp,0,this.maxhp); this.mp=clamp(this.mp,0,this.maxmp);
     this.inventory.splice(this.inventory.indexOf(item),1);
     Audio2.sfx('ui'); spawnText(this.x,this.screenY()-this.h-24,'装备:'+item.name,RARITY_COL[item.rarity]);
+    return true;
   }
   addItem(item){
     if(item.kind==='consumable'){
@@ -647,17 +711,16 @@ class Player extends Fighter {
   }
   gainExp(n){
     this.exp+=n;
-    while(this.exp>=this.expNext){
-      this.exp-=this.expNext; this.level++; this.expNext=Math.round(this.expNext*1.35+30);
-      this.maxhp+=26; this.maxmp+=12; this._crit=Math.min(0.5,this._crit+0.005);
-      this.hp=this.maxhp; this.mp=this.maxmp;
-      Audio2.sfx('levelup'); spawnText(this.x,this.screenY()-this.h-30,'升级! Lv.'+this.level,'#ffcf4d',true);
-      addEffect({type:'aura',x:this.x,y:this.y,color:'#ffcf4d',max:36,r0:20,r1:110});
-      shake=Math.max(shake,6);
-    }
   }
   update(){
     if(this.dead) return;
+    DOF70.combat.status.tick(this.combatStatus, 1);
+    this.actionPlayer.update(1000/60, this.attackSpeedMul ? 1 / this.attackSpeedMul() : 1);
+    this.autoBuffActionPlayer.update(1);
+    this.autoBuffs.update(1);
+    this.passiveEffects=DOF70.combat.passives.getPassiveEffects({classKey:this.clsKey, weaponType:this.equipped.weapon?.weaponType, level:this.level, hp:this.hp, maxhp:this.maxhp});
+    if(this.uppercutAction) this.uppercutAction.update(1);
+    if(this.bladeAction) this.bladeAction.update(1);
     if(this.comboTimer>0)this.comboTimer--; else this.combo=0;
     if(this.invuln>0)this.invuln--;
     if(this.flash>0)this.flash--;
@@ -693,7 +756,7 @@ class Player extends Fighter {
       this.state = runOn ? 'run' : ((mvx||mvy)?'walk':'idle');
       if(runOn && this.onGround && Math.random()<0.4) spawnHit(this.x-this.dir*16,this.screenY()-4,'#cfd8e6',1); // 奔跑扬尘
     }
-    if(down('c')&&this.onGround&&!acting){ this.vz=13; Audio2.sfx('ui'); }
+    if(down('c')&&this.onGround&&!acting){ this.vz=13; this.selectAction('jump_start'); Audio2.sfx('ui'); }
     this.physics();
 
     // 职业元素氛围: 平时微量飘逸, 奔跑/冲刺时更明显(在已有的每技能专属特效之外, 给角色本体加元素感)
@@ -738,7 +801,7 @@ class Player extends Fighter {
         if(aabb(box,e)&&Math.abs(this.z-e.z)<70){
           this.basicHit.add(e);
           const crit=Math.random()<this.crit;
-          let dmg=Math.round(rand(11,16)*this.dmgMul()*(crit?1.8:1));
+          const dmg=resolveDamage({channel:'percent',base:rand(11,16),level:this.level,physicalPrimaryStat:this.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:this.damageMultiplier()});
           e.takeDamage(dmg,this.dir,10,crit); comboHit(dmg,crit);
           this.mp=clamp(this.mp+3,0,this.maxmp); shake=Math.max(shake,4);
           spawnHit(e.x,e.screenY()-e.h*0.5,this.cls.elem,crit?4:2);                       // 元素命中火花
@@ -748,6 +811,17 @@ class Player extends Fighter {
       }
     }
     if(this.attackTimer>0)this.attackTimer--;
+    if(this.attackTimer>0 && this.attackType?.fx==='uppercut') {
+      this.selectAction('uppercut');
+    }
+    else if(this.attackTimer>0) {
+      const weapon=this.equipped?.weapon?.weaponType || classWeaponKey(this.clsKey);
+      this.selectAction(this.attackType?.basic ? `basic_${weapon}` : 'hit_front');
+    }
+    else if(!this.onGround) this.selectAction(this.vz>0?'airborne':'landing');
+    else if(this.state==='run') this.selectAction('run');
+    else if(this.state==='walk') this.selectAction('walk');
+    else this.selectAction('stand');
 
     for(let i=this.skillHits.length-1;i>=0;i--){ const hit=this.skillHits[i]; if(--hit.delay<=0){ this.resolveHit(hit); this.skillHits.splice(i,1); } }
     if(this.pendingProj){ if(--this.pendingProj.delay<=0){ const sk=this.pendingProj.sk; projectiles.push(new Projectile(this.x+this.dir*40,this.y,this.z+50,this.dir,sk)); this.pendingProj=null; } }
@@ -757,12 +831,74 @@ class Player extends Fighter {
     for(const kk in keys) if(kk.startsWith('__dash_')&&!down(kk.replace('__dash_','')))keys[kk]=false;
   }
   cast(sk){
-    this.mp-=sk.mp; if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost);  // 血气技能按原版消耗HP
-    sk._cd=sk.cd; const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
+    const dedicated=sk.fx==='uppercut'||(this.clsKey==='blade'&&['tripleslash','dragonup','flashcut','revolvingsword','hiddenblade','illusionslash'].includes(sk.fx))||(this.clsKey==='berserk'&&['gorecross','hopsmash','bloodblast','grabblastblood','bloodyrave','outragebreak'].includes(sk.fx));
+    if(!dedicated) this.mp-=sk.mp;
+    // if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost); 专用动作在指定阶段扣除HP
+    if(!dedicated) sk._cd=sk.cd;
+    const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
     this.attackTimer=Math.max(8,Math.round(actionDur*this.attackSpeedMul())); sk._castDur=this.attackTimer; this.attackType=sk;
     spawnText(this.x,this.screenY()-this.h-30,sk.name+'!',sk.color);
     Audio2.sfx(sk.type==='ult'?'ult':'skill');
-    spawnSkillFX(this, sk);                         // 每个技能的专属大型特效
+    spawnSkillFX(this, sk);                  // 专用动作保留阶段事件, 但施法只创建一次特效层
+    if(sk.fx==='uppercut'){
+      const self=this;
+      this.uppercutAction=SKILL_HANDLERS.uppercut.createUppercut({
+        clock:combatClock,
+        resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get cooldown(){return sk._cd;},set cooldown(v){sk._cd=v;}},
+        status:{setTimer:(name,value)=>DOF70.combat.status.setTimer(self.combatStatus,name,value)},
+        freeze:duration=>DOF70.combat.status.freeze(combatClock,duration),
+        emit:event=>self.handleUppercutEvent(event),
+      }, {mp:sk.mp, cooldown:sk.cd, launch:sk.launch, hitstun:18, superArmor:8}, {startup:3, active:2, recovery:Math.max(1,self.attackTimer-5)});
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='tripleslash'){
+      this.bladeAction=SKILL_HANDLERS.tripleSlash.createTripleSlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { slash1:4, slash2:4, slash3:4 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='dragonup'){
+      this.bladeAction=SKILL_HANDLERS.chargeCrash.createChargeCrash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { charge:8, impact:2, uppercut:3, recovery:6 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='flashcut'){
+      this.bladeAction=SKILL_HANDLERS.momentarySlash.createMomentarySlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { charge:8, slash:2, recovery:8 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='revolvingsword'){
+      this.bladeAction=SKILL_HANDLERS.rapidMoveSlash.createRapidMoveSlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { dash1:2, dash2:2, dash3:2, dash4:2, dash5:3 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='hiddenblade'){
+      this.bladeAction=SKILL_HANDLERS.weaponCombo.createWeaponCombo(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey)}, { weapon1:3, weapon2:3, weapon3:3, weapon4:3, weapon5:3 });
+      return;
+    }
+    if(this.clsKey==='blade'&&sk.fx==='illusionslash'){
+      this.bladeAction=SKILL_HANDLERS.illusionSlash.createIllusionSlash(this.bladeSkillContext(), {...sk, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), speedMultiplier:1/this.attackSpeedMul()}, { preparation:6, slashes:20, swordWave:3, recovery:8 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='gorecross'){
+      this.bladeAction=SKILL_HANDLERS.goreCross.createGoreCross(this.berserkSkillContext(), {...sk}, { horizontal:3, vertical:3, bloodCross:5, recovery:8 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='hopsmash'){
+      this.bladeAction=SKILL_HANDLERS.hopSmash.createHopSmash(this.berserkSkillContext(), {...sk}, { leap:5, forward:5, downward:2, landing:2, shockwave:3, recovery:7 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='bloodblast'){
+      this.bladeAction=SKILL_HANDLERS.bloodBlast.createBloodBlast(this.berserkSkillContext(), {...sk}, { startup:4, spray:3, final:3, recovery:7 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='grabblastblood'){
+      this.bladeAction=SKILL_HANDLERS.grabBlastBlood.createGrabBlastBlood(this.berserkSkillContext(), {...sk}, { startup:3, grab:2, blood:4, recovery:7 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='bloodyrave'){
+      this.bladeAction=SKILL_HANDLERS.bloodyRave.createBloodyRave(this.berserkSkillContext(), {...sk}, { startup:3, suction:12, release:3, final:3, recovery:7 });
+      return;
+    }
+    if(this.clsKey==='berserk'&&sk.fx==='outragebreak'){
+      this.bladeAction=SKILL_HANDLERS.outrageBreak.createOutrageBreak(this.berserkSkillContext(), {...sk}, { leap:5, descent:5, impact:2, eruption:2, recovery:7 });
+      return;
+    }
     const mv=SKILL_MOVE[sk.fx];                      // 技能位移: 角色跟随前冲/上升
     if(mv){ const ticks=mv.t==='dur'?this.attackTimer:mv.t;
       this.castMove={vx:this.dir*(mv.vx||0), ticks, decay:0.9};
@@ -779,6 +915,35 @@ class Player extends Fighter {
       kb:i<segs-1?2:(sk.knock||12)});
     if(sk.fire){ const fx2=this.x+this.dir*(sk.ox||0);
       for(let i=0;i<16;i++) particles.push({x:fx2+rand(-50,50),y:this.y-rand(0,70),vx:rand(-2,2),vy:rand(-5,-1),life:rand(18,36),max:36,color:i%2?'#ff9a3c':'#ffcf4d',r:rand(3,7)}); }
+  }
+  bladeSkillContext(){
+    const self=this;
+    const target=this.skillTarget();
+    return { direction:this.dir, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), clock:combatClock, owner:self, target, targetStatus:target?.combatStatus,
+      resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get hp(){return self.hp;},set hp(v){self.hp=Math.max(1,v);},get maxhp(){return self.maxhp;},get cooldown(){return self.attackType?self.attackType._cd:0;},set cooldown(v){if(self.attackType)self.attackType._cd=v;}},
+       statusState:self.combatStatus,
+       release:target=>{ if(target?.combatStatus) target.combatStatus.held=null; },
+       clearSuction:target=>{ if(target?.combatStatus?.suction?.target===self) target.combatStatus.suction={target:null,time:0}; },
+      status:{setTimer:(name,value)=>DOF70.combat.status.setTimer(self.combatStatus,name,value),clearTimer:name=>DOF70.combat.status.clearTimer(self.combatStatus,name)},
+       freeze:duration=>DOF70.combat.status.freeze(combatClock,duration), emit:event=>self.handleBladeEvent(event) };
+  }
+  skillTarget(){ return enemies.filter(e=>!e.dead&&e.x*this.dir>=this.x*this.dir).sort((a,b)=>Math.abs(a.x-this.x)-Math.abs(b.x-this.x))[0]||null; }
+  berserkSkillContext(){ const context=this.bladeSkillContext(); context.emit=event=>this.handleBerserkEvent(event); return context; }
+  handleBladeEvent(event){
+    if(event.type==='body') this.selectAction(event.skill==='triple-slash'?'hit_front':event.skill==='charge-crash'?'hit_front':'hit_front');
+    else if(event.type==='fx'||event.type==='fxOnce') { /* 专用技能特效已在 cast() 创建 */ }
+    else if(event.type==='move'){ this.x+=event.distance||0; }
+    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,damage:event.damage,damageType:event.damageType,weapon:event.weapon,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun,uppercut:event.stage==='uppercut'});
+  }
+  handleBerserkEvent(event){
+    if(event.type==='body') this.selectAction('hit_front');
+    else if(event.type==='fx'||event.type==='fxOnce') { /* 专用技能特效已在 cast() 创建 */ }
+    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,damage:event.damage,damageType:event.damageType,weapon:event.weapon,reach:event.reach,radius:event.radius,ox:0,kb:event.knock,launch:event.launch,hitstun:event.hitstun});
+  }
+  handleUppercutEvent(event){
+    if(event.type==='body') this.selectAction('uppercut');
+    else if(event.type==='fx'||event.type==='fxOnce') { /* 专用技能特效已在 cast() 创建 */ }
+    else if(event.type==='hitbox') this.skillHits.push({delay:0,sk:this.attackType,reach:event.radius,kb:2,launch:event.launch,hitstun:event.hitstun,uppercut:true});
   }
   resolveHit(hit){
     const sk=hit.sk; let box;
@@ -800,9 +965,10 @@ class Player extends Fighter {
       if(e.dead)continue;
       if(aabb(box,e)&&Math.abs(this.z-e.z)<72){
         const crit=Math.random()<this.crit;
-        let dmg=Math.round(rand(sk.dmg[0],sk.dmg[1])*this.dmgMul()*(crit?1.8:1));
+         const range=hit.damage||sk.dmg, base=Array.isArray(range)?rand(range[0],range[1]):range;
+         const dmg=resolveDamage({channel:hit.damageType||sk.damageType||'percent',base,level:this.level,physicalPrimaryStat:this.physicalPrimaryStat(),defense:e.conf.defense,critical:crit,multiplier:this.damageMultiplier(),weapon:hit.weapon||sk.weapon});
         const real=e.takeDamage(dmg,this.dir,hit.kb!=null?hit.kb:(sk.knock||12),crit); comboHit(dmg,crit);
-        if(sk.launch){ e.vz=Math.max(e.vz,sk.launch); e.launched=true; }
+        if(sk.launch || hit.uppercut){ e.vz=Math.max(e.vz,hit.launch||sk.launch); e.launched=true; }
         if(sk.slow) e.slow=sk.slow;
         if(sk.freeze) e.freeze=Math.max(e.freeze,sk.freeze);
         if(ls) healed+=real*ls;
@@ -843,18 +1009,18 @@ function unlockNextDungeon(id){
 }
 
 const ENEMY_CONF = {
-  gob:    {w:40,depth:26,h:84, hp:75, speed:2.4,color:'#9a7b4f',dark:'#5f4a2c',exp:14,gold:[1,3]},
-  orc:    {w:50,depth:32,h:104,hp:150,speed:1.9,color:'#5a8f4a',dark:'#33602a',exp:26,gold:[3,6]},
-  archer: {w:42,depth:26,h:88, hp:90, speed:1.7,color:'#6a5f9a',dark:'#352b5e',exp:22,gold:[3,6]},
-  charger:{w:54,depth:32,h:102,hp:170,speed:2.0,color:'#a05a2a',dark:'#5e3216',exp:30,gold:[4,8]},
-  bomber: {w:42,depth:26,h:80, hp:55, speed:2.7,color:'#9a9a3a',dark:'#5e5e1e',exp:18,gold:[2,5]},
-  boss:   {w:62,depth:38,h:130,hp:560,speed:1.6,color:'#b23a3a',dark:'#6e1f1f',exp:140,gold:[30,55]},
+  gob:    {w:40,depth:26,h:84, hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:2.4,color:'#9a7b4f',dark:'#5f4a2c',exp:14,gold:[1,3]},
+  orc:    {w:50,depth:32,h:104,hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:1.9,color:'#5a8f4a',dark:'#33602a',exp:26,gold:[3,6]},
+  archer: {w:42,depth:26,h:88, hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:1.7,color:'#6a5f9a',dark:'#352b5e',exp:22,gold:[3,6]},
+  charger:{w:54,depth:32,h:102,hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:2.0,color:'#a05a2a',dark:'#5e3216',exp:30,gold:[4,8]},
+  bomber: {w:42,depth:26,h:80, hp:1200, defense:180, level:70, staggerResistance:0.1,floatResistance:0.1,grabResistance:0.1, speed:2.7,color:'#9a9a3a',dark:'#5e5e1e',exp:18,gold:[2,5]},
+  boss:   {w:62,depth:38,h:130,hp:12000, defense:520, level:70, staggerResistance:0.65,floatResistance:0.7,grabResistance:0.6, speed:1.6,color:'#b23a3a',dark:'#6e1f1f',exp:140,gold:[30,55]},
 };
 class Enemy extends Fighter {
   constructor(x,y,kind='gob',scale=1){
     const c=ENEMY_CONF[kind];
     super(x,y,{w:c.w,depth:c.depth,h:c.h,hp:Math.round(c.hp*scale),speed:c.speed,color:c.color,dark:c.dark,dir:-1});
-    this.kind=kind; this.conf=c; this.scale=scale;
+    this.kind=kind; this.conf={...c}; this.level=70; this.scale=scale;
     this.attackCd=rand(20,80); this.knockdown=0; this.getupProtect=0; this.launched=false; this.airCombo=0; this.juggle=0;
     this.bossCd=180; this.enraged=false; this.fuse=0; this.chargeState=0; this.chargeCd=rand(40,120);
     this.atkScale=scale;
@@ -872,6 +1038,8 @@ class Enemy extends Fighter {
   }
   update(){
     if(this.dead)return;
+    DOF70.combat.status.tick(this.combatStatus, 1);
+    this.actionPlayer.update(1000/60);
     if(this.flash>0)this.flash--;
     if(this.slow>0)this.slow--;
     if(this.getupProtect>0)this.getupProtect--;
@@ -1038,13 +1206,13 @@ function pickSwordActionFrame(at, prog){
 
 /* ===================== 武器层(独立图集, 按职业/装备叠加) ===================== */
 const WEAPONS={};
-['lswd','beamswd'].forEach(key=>{ const o={img:new Image(),meta:null,ready:false};
-  o.img.onload=()=>{ if(o.meta)o.ready=true; }; o.img.src='assets/weapon_'+key+'.png'; WEAPONS[key]=o;
-  if(window.WEAPON_META&&window.WEAPON_META[key]){ o.meta=window.WEAPON_META[key]; if(o.img.complete&&o.img.naturalWidth)o.ready=true; }
-  else fetch('assets/weapon_'+key+'.json').then(r=>r.json()).then(m=>{o.meta=m; if(o.img.complete&&o.img.naturalWidth)o.ready=true;}).catch(()=>{});
+const WEAPON_ATLAS={lightsword:'beamswd',katana:'katana',greatsword:'greatsword',club:'club',shortsword:'shortsword'};
+Object.entries(WEAPON_ATLAS).forEach(([key,atlas])=>{ const o={img:new Image(),meta:null,ready:false};
+  o.img.onload=()=>{ if(o.meta)o.ready=true; }; o.img.src='assets/weapon_'+atlas+'.png'; WEAPONS[key]=o;
+  if(window.WEAPON_META&&window.WEAPON_META[atlas]){ o.meta=window.WEAPON_META[atlas]; if(o.img.complete&&o.img.naturalWidth)o.ready=true; }
+  else fetch('assets/weapon_'+atlas+'.json').then(r=>r.json()).then(m=>{o.meta=m; if(o.img.complete&&o.img.naturalWidth)o.ready=true;}).catch(()=>{});
 });
-// 职业默认武器外观: 剑魂=光剑, 其余=太刀
-function classWeaponKey(clsKey){ return clsKey==='blade'?'beamswd':'lswd'; }
+function classWeaponKey(clsKey){ return DEFAULT_WEAPON[clsKey] || 'katana'; }
 // 血刃染色帧缓存(离屏, 按需生成, 正确隔离不误染身体)
 const _tintCache={};
 function tintedWeaponFrame(key, fi, tint){
@@ -1205,7 +1373,7 @@ function drawSwordmanSprite(p){
   const dim=(p.invuln>0&&Math.floor(p.invuln/3)%2===0)?0.55:1;
   ctx.globalAlpha=dim;
   ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s);          // 身体层
-  const wkey=classWeaponKey(p.clsKey);
+   const wkey=(p.equipped.weapon&&p.equipped.weapon.weaponType)||classWeaponKey(p.clsKey);
   ctx.globalAlpha=dim; drawWeaponLayer(wkey, fi, s);                     // 武器层(剑魂光剑/其余太刀)
   const at=p.attackType;
   if(p.clsKey==='berserk' && p.attackTimer>0 && at && at.basic){        // 狂战副手血刃(仅普攻显示)
@@ -1937,6 +2105,7 @@ function drawHumanoid(x,feetY,dir,color,dark,ent,flash,invuln,big=false){
 }
 /* ===================== 技能专属特效派发 ===================== */
 function spawnSkillFX(p, sk){
+  window.__dof70SkillFXSpawnCount=(window.__dof70SkillFXSpawnCount||0)+1;
   const x=p.x, y=p.y, dir=p.dir;
   shake=Math.max(shake, sk.type==='ult'?12:7);
   // 施放特效: 原版特效与身体同坐标系(脚底原点)同缩放, 逐帧时序/坐标由 skillfx v3 数据驱动。
@@ -2180,7 +2349,9 @@ function drawInventoryPanel(){
     ctx.fillStyle='#0a0d16'; ctx.fillRect(eqX,sy2,esw,esh);
     ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.strokeRect(eqX,sy2,esw,esh);
     ctx.fillStyle='#556'; ctx.font='10px sans-serif'; ctx.fillText(SLOT_LABEL[slot],eqX+4,sy2+12);
-    if(item){ ctx.fillStyle=col; ctx.font='bold 11px sans-serif'; ctx.fillText(item.name,eqX+4,sy2+28); }
+     if(item){ ctx.fillStyle=col; ctx.font='bold 11px sans-serif'; ctx.fillText(item.name,eqX+4,sy2+28);
+       if(item.type==='weapon'){ ctx.fillStyle='#9aa6b8'; ctx.font='9px sans-serif'; ctx.fillText('Lv'+item.level+' '+item.physicalAttack+'攻 '+item.attackSpeed+'速',eqX+4,sy2+40); }
+     }
   });
   // 属性面板(装备栏下)
   const es=p.equipStats();
@@ -2212,7 +2383,7 @@ function drawInventoryPanel(){
   if(cur<p.inventory.length){
     const it=p.inventory[cur], dx=gx+INV_COLS*(ss+gg)+10, dy=gy;
     ctx.fillStyle=RARITY_COL[it.rarity]; ctx.font='bold 13px sans-serif'; ctx.fillText(it.name,dx,dy+18);
-    ctx.fillStyle='#9aa6b8'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[it.type]+']',dx,dy+32);
+     ctx.fillStyle='#9aa6b8'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[it.type]+']'+(it.weaponType?' '+it.weaponType+' Lv'+it.level+' 物攻'+it.physicalAttack+' 攻速'+it.attackSpeed:''),dx,dy+32);
     let yy=dy+50;
     const labs={atk:'攻击',hp:'最大HP',mp:'最大MP',crit:'暴击率',def:'减伤',speed:'攻速'};
     for(const [k,v] of Object.entries(it.stats)){
@@ -2369,7 +2540,7 @@ function drawShop(){
       ctx.strokeStyle=sel?'#ffcf4d':col; ctx.lineWidth=sel?2:1.5; ctx.strokeRect(lx,y,lw,ih-3);
       ctx.fillStyle=col; ctx.beginPath(); ctx.arc(lx+13,y+ih/2-2,6,0,7); ctx.fill();
       ctx.fillStyle=col; ctx.font='bold 13px sans-serif'; ctx.fillText(eq.name,lx+28,y+18);
-      ctx.fillStyle='#666'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[eq.type]+']',lx+28,y+ih-10);
+       ctx.fillStyle='#666'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[eq.type]+']'+(eq.weaponType?' '+eq.weaponType+' Lv'+eq.level+' 物攻'+eq.physicalAttack+' 攻速'+eq.attackSpeed:''),lx+28,y+ih-10);
       ctx.fillStyle='#7CFC00'; ctx.font='11px sans-serif';
       const sv=Object.entries(eq.stats).map(([k,v])=>{const l={atk:'攻',hp:'血',mp:'蓝',crit:'暴',def:'防',speed:'速'}[k]||k;return l+(k==='atk'||k==='crit'||k==='def'||k==='speed'?'+'+(v*100).toFixed(0)+'%':'+'+v);}).join(' ');
       ctx.fillText(sv,lx+120,y+18);
@@ -2382,7 +2553,7 @@ function drawShop(){
     if(sel){
       const col=RARITY_COL[sel.rarity]; let dy=ly+14;
       ctx.fillStyle=col; ctx.font='bold 14px sans-serif'; ctx.fillText(sel.name,detX+10,dy); dy+=18;
-      ctx.fillStyle='#8a93a6'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[sel.type]+']',detX+10,dy); dy+=20;
+       ctx.fillStyle='#8a93a6'; ctx.font='10px sans-serif'; ctx.fillText('['+SLOT_LABEL[sel.type]+']'+(sel.weaponType?' '+sel.weaponType+' Lv'+sel.level+' 物攻'+sel.physicalAttack+' 攻速'+sel.attackSpeed:''),detX+10,dy); dy+=20;
       const labs={atk:'攻击力',hp:'最大HP',mp:'最大MP',crit:'暴击率',def:'减伤%',speed:'攻速'};
       const PCT=k=>k==='atk'||k==='crit'||k==='def'||k==='speed';
       for(const [k,v] of Object.entries(sel.stats)){
@@ -2441,7 +2612,7 @@ function drawShop(){
 }
 
 /* ===================== 主菜单 / 选职业 / 帮助 ===================== */
-let menuIndex=0, selIndex=0;
+let menuIndex=0, selIndex=0, classSelectMessage='';
 function getMenu(){
   const m=[];
   if(Save.data.run){
@@ -2498,7 +2669,8 @@ function drawSelect(){
   ctx.fillStyle='#9aa6b8'; ctx.font='13px sans-serif'; ctx.fillText('← → 选择    Enter/空格/数字键 确认    Esc 返回',W/2,84);
   const N=CLASS_KEYS.length, gap=24, ch=250;
   const cw=Math.min(200,(W-40-(N-1)*gap)/N), total=N*cw+(N-1)*gap, x0=(W-total)/2, y0=118;
-  CLASS_KEYS.forEach((ck,i)=>{ const c=CLASSES[ck], x=x0+i*(cw+gap), sel=i===selIndex;
+  CLASS_KEYS.forEach((ck,i)=>{ const c=CLASSES[ck], availability=classAvailability(ck)||{label:'暂未开放'}, x=x0+i*(cw+gap), sel=i===selIndex;
+    ctx.save(); if(!canStartClass(ck)) ctx.globalAlpha=0.45;
     ctx.fillStyle=sel?'#1c2330':'#11151c'; ctx.fillRect(x,y0,cw,ch);
     ctx.strokeStyle=sel?c.color:'#333';ctx.lineWidth=sel?4:2;ctx.strokeRect(x,y0,cw,ch);
     drawShadow(x+cw/2,y0+162,30);
@@ -2506,7 +2678,10 @@ function drawSelect(){
     ctx.fillStyle=c.color;ctx.font='bold 22px sans-serif';ctx.fillText(c.name,x+cw/2,y0+182);
     ctx.fillStyle='#cfd8e6';ctx.font='12px sans-serif'; wrapText(c.desc,x+cw/2,y0+204,cw-24,16);
     ctx.fillStyle='#8a93a6';ctx.font='11px sans-serif';ctx.fillText('HP '+c.hp+'  MP '+c.mp,x+cw/2,y0+ch-12);
-    ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.fillText('['+(i+1)+']',x+cw/2,y0+22); });
+    ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.fillText('['+(i+1)+']',x+cw/2,y0+22);
+    if(availability.label){ ctx.fillStyle='#ffcf4d';ctx.font='bold 16px sans-serif';ctx.fillText(availability.label,x+cw/2,y0+ch-34); }
+    ctx.restore(); });
+  if(classSelectMessage){ ctx.fillStyle='#ff8c42';ctx.font='bold 16px sans-serif';ctx.fillText(classSelectMessage,W/2,H-60); }
   ctx.textAlign='left';
 }
 function drawHelp(){
@@ -2545,11 +2720,17 @@ let door=null, transition=0, bossIntro=0, bossGate=false;
 const ROOMS_PER_DUNGEON=6; // 1~5 普通房, 6 = Boss 房
 function resetPools(){ particles.length=0;floatTexts.length=0;effects.length=0;projectiles.length=0;enemyProjectiles.length=0;pickups.length=0;hazards.length=0;lootFly.length=0;fields.length=0; }
 function startGame(clsKey){
+  if(!canStartClass(clsKey)){
+    player=null; gameState='select'; classSelectMessage=classAvailability(clsKey)?.label||'无效职业，无法开始游戏';
+    return false;
+  }
+  classSelectMessage='';
   player=new Player(clsKey);
   enemies=[]; resetPools();
   dungeonId=0; dungeon=1; room=1; score=0; shake=0; hitstop=0; combo={count:0,dmg:0,timer:0};
   door=null; transition=0; mapIndex=Math.min(Save.data.unlocked||0,DUNGEONS.length-1);
   gameState='mapsel'; Audio2.ensure(); Audio2.stopBgm();
+  return true;
 }
 function beginDungeon(id){
   dungeonId=clamp(id,0,DUNGEONS.length-1); dungeon=dungeonId+1; room=1; clearInfo=null;
@@ -2561,6 +2742,7 @@ function beginDungeon(id){
 function serializeRun(){
   if(!player||player.dead) return;
   const p=player;
+  Save.data.schemaVersion=SAVE_SCHEMA_VERSION;
   Save.data.run={ clsKey:p.clsKey, level:p.level, exp:p.exp, expNext:p.expNext, gold:p.gold,
     crit:p._crit, shopAtk:p.shopAtk, buy:p.buy, maxhp:p.maxhp, maxmp:p.maxmp, hp:p.hp, mp:p.mp,
     equipped:p.equipped, inventory:p.inventory, hotbar:p.hotbar, dungeonId, dungeon:dungeonId+1, room,
@@ -2569,13 +2751,20 @@ function serializeRun(){
 }
 function clearRun(){ if(Save.data.run){ Save.data.run=null; Save.save(); } }
 function continueGame(){
+  if(typeof migrateSave==='function'){ const migrated=migrateSave(Save.data); Save.data=migrated.save; }
   const r=Save.data.run; if(!r){ gameState='select'; return; }
+  if(!canStartClass(r.clsKey)){
+    player=null; gameState='select'; classSelectMessage=classAvailability(r.clsKey)?.label||'存档职业无效，无法继续游戏';
+    return false;
+  }
+  classSelectMessage='';
   player=new Player(r.clsKey); enemies=[]; resetPools();
   Object.assign(player,{ level:r.level, exp:r.exp, expNext:r.expNext, gold:r.gold,
     _crit:r.crit, shopAtk:r.shopAtk, buy:r.buy||{atk:0,hp:0,mp:0,crit:0},
     maxhp:r.maxhp, maxmp:r.maxmp, hp:r.hp, mp:r.mp,
-    equipped:r.equipped||{weapon:null,head:null,chest:null,legs:null,shoes:null},
-    inventory:r.inventory||[], hotbar:r.hotbar||new Array(6).fill(null) });
+     equipped:{...(r.equipped||{}), weapon:r.equipped?.weapon ? normalizeWeapon(r.equipped.weapon,r.clsKey) : null},
+     inventory:(r.inventory||[]).map(item=>item?.type==='weapon'?normalizeWeapon(item,r.clsKey):item).filter(item=>!item?.weaponType||canUseWeapon(r.clsKey,item.weaponType)), hotbar:r.hotbar||new Array(6).fill(null) });
+   if(player.equipped.weapon&&!canUseWeapon(r.clsKey,player.equipped.weapon.weaponType)){ player.equipped.weapon=null; spawnText(player.x,player.screenY()-player.h-24,'武器不符合当前职业限制，已卸下','#ff5a5a'); }
   if(r.skillOrder){ const head=player.skills[0], rest=player.skills.slice(1);   // 恢复技能槽自定义顺序
     const ordered=r.skillOrder.map(nm=>rest.find(s=>s.name===nm)).filter(Boolean);
     rest.forEach(s=>{ if(!ordered.includes(s)) ordered.push(s); });
@@ -2585,19 +2774,21 @@ function continueGame(){
   door=null; transition=0; bossIntro=0; bossGate=false;
   gameState='play'; Audio2.ensure(); Audio2.startBgm(); enterRoom();
   dunStats.gold0=player.gold;
+  return true;
 }
-function difficulty(){ return currentDungeonDef().recommendedLv + room + dungeonId*2; } // 地图推荐等级 + 房间推进
+ function difficulty(){ return DEFAULT_PLAYER_LEVEL; } // 地图主题只决定房数与怪物池
 function enterRoom(){
-  enemies=[]; resetPools();
+   enemies=[]; resetPools();
+   if(player?.autoBuffs) player.autoBuffs.enterRoom();
   if(room===1) dunStats={t:0,kills:0,gold0:player?player.gold:0}; // 新一图开始, 重置统计
   const diff=difficulty();
-  const scale=1+(diff-1)*0.1;
+  const scale=1;
   const dun=currentDungeonDef();
   const isBoss=room===currentRooms();
   // 门常驻于世界右端, 进房即关闭, 清场后才激活
   door={x:WORLD_W-46, y:(GROUND_TOP+GROUND_BOT)/2, boss:isBoss, open:false, grace:0};
   if(isBoss){
-    enemies.push(new Enemy(WORLD_W-160,(GROUND_TOP+GROUND_BOT)/2,dun.boss,1+dungeonId*0.5));
+    enemies.push(new Enemy(WORLD_W-160,(GROUND_TOP+GROUND_BOT)/2,dun.boss,1));
     bossIntro=120; bossGate=true; Audio2.startBossBgm();
     showBanner('⚠ '+dun.name+' 首领 ⚠','#ff5a5a',true);
     showStageTitle(dun.name+' · 首领房','ROOM '+room+' / '+currentRooms(),'#ff5a5a',true);
@@ -2612,8 +2803,9 @@ function enterRoom(){
     if(diff>=2 && enemies.length && Math.random()<0.24){
       const e=enemies[Math.floor(Math.random()*enemies.length)];
       e.elite=true; e.eliteCol='#ffcf4d';
-      e.maxhp=Math.round(e.maxhp*2.4); e.hp=e.maxhp;
-      e.atkScale*=1.45; e.scale*=1.3; e.aggroRange+=80;
+       const elite=MONSTERS_DOF70.elite;
+       e.maxhp=elite.hp; e.hp=e.maxhp; Object.assign(e.conf,elite);
+       e.atkScale*=1.45; e.scale=1; e.aggroRange+=80;
     }
     showBanner(dun.name+' · 第'+room+'/'+currentRooms()+'房','#cfd8e6');
     showStageTitle(dun.name,'ROOM '+room+' / '+currentRooms(),dun.tint[1],false);
@@ -2662,18 +2854,18 @@ function dropLoot(e){
     // Boss 必掉 2~4 件装备(随稀有度)
     for(let i=0;i<5;i++) pickups.push(new Pickup(e.x+rand(-40,40),e.y,'gold',Math.round(rand(8,16))));
     const dropN=2+Math.floor(Math.random()*3);
-    for(let i=0;i<dropN;i++) pickups.push(new Pickup(e.x+rand(-70,70),e.y,'equip',genEquip(difficulty()),{bossDrop:true}));
+    for(let i=0;i<dropN;i++) pickups.push(new Pickup(e.x+rand(-70,70),e.y,'equip',genEquip(DEFAULT_PLAYER_LEVEL),{bossDrop:true}));
     // 并有机会掉消耗品
     if(Math.random()<0.6) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'consumable','hp_m'));
     if(Math.random()<0.4) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'consumable','mp_m'));
   } else if(e.elite){
     // 精英怪: 必掉 1 件装备 + 额外金币, 较高概率掉消耗品
     for(let i=0;i<3;i++) pickups.push(new Pickup(e.x+rand(-30,30),e.y,'gold',Math.round(rand(6,12))));
-    pickups.push(new Pickup(e.x+rand(-30,30),e.y,'equip',genEquip(difficulty()+4)));
+    pickups.push(new Pickup(e.x+rand(-30,30),e.y,'equip',genEquip(DEFAULT_PLAYER_LEVEL)));
     if(Math.random()<0.5){ const types=['hp_m','mp_s','atk_p']; pickups.push(new Pickup(e.x,e.y,'consumable',types[Math.floor(Math.random()*types.length)])); }
   } else {
     // 普通怪 5% 概率掉装备、10% 掉消耗品
-    if(Math.random()<0.05) pickups.push(new Pickup(e.x,e.y,'equip',genEquip(difficulty())));
+    if(Math.random()<0.05) pickups.push(new Pickup(e.x,e.y,'equip',genEquip(DEFAULT_PLAYER_LEVEL)));
     else if(Math.random()<0.10){
       const types=['hp_s','mp_s','hp_s','atk_p'];
       pickups.push(new Pickup(e.x,e.y,'consumable',types[Math.floor(Math.random()*types.length)]));
@@ -2700,7 +2892,7 @@ function update(){
     const N=CLASS_KEYS.length;
     if(pressed('arrowleft')){selIndex=(selIndex+N-1)%N;Audio2.sfx('ui');}
     if(pressed('arrowright')){selIndex=(selIndex+1)%N;Audio2.sfx('ui');}
-    if(pressed('escape')){gameState='menu';return;}
+    if(pressed('escape')){classSelectMessage='';gameState='menu';return;}
     for(let i=1;i<=Math.min(9,N);i++) if(pressed(''+i)){selIndex=i-1;startGame(CLASS_KEYS[selIndex]);return;}
     if(pressed('enter')||pressed(' ')){startGame(CLASS_KEYS[selIndex]);return;}
     return;
@@ -2791,7 +2983,7 @@ function update(){
     for(let i=0;i<6;i++) if(pressed(''+(i+1))) player.useHotbar(i);
   }
 
-  if(hitstop>0){ hitstop--; return; } // 命中冻帧
+  if(hitstop>0){ hitstop--; DOF70.combat.status.tickClock(combatClock, 1); return; } // 命中冻帧: 所有战斗时钟同时冻结
   dunStats.t++;                        // 本图用时(帧)
 
   player.update();
@@ -2919,7 +3111,7 @@ function loop(now){
 window.addEventListener('keydown',e=>{
   Audio2.ensure();
   const k=e.key.toLowerCase();
-  if(k==='0'){ if(gameState==='play'||gameState==='pause')Audio2.startBgm(); gameState='menu'; menuIndex=0; }
+  if(k==='0'){ if(gameState==='play'||gameState==='pause')Audio2.startBgm(); classSelectMessage=''; gameState='menu'; menuIndex=0; }
   if(k==='p'){ if(gameState==='play')gameState='pause'; else if(gameState==='pause')gameState='play'; }
   if(k==='m'){ Audio2.toggleMute(); }
   if(k==='i'&&player&&gameState==='play'){
@@ -2929,17 +3121,25 @@ window.addEventListener('keydown',e=>{
   if(k==='escape'&&player&&player.invOpen) player.invOpen=false;
 });
 
-gameState='menu';
-loop();
+ gameState='menu';
+ const isDof70Evidence=new URLSearchParams(location.search).has('dof70case');
+ if(!isDof70Evidence) loop();
 
 // 调试: ?shot=blade&st=run 自动开局便于无头截图(正式使用无影响)
 (function(){const q=new URLSearchParams(location.search);
+  if(q.has('dof70case')){
+    const expected=['class','state','targetKind','targetMode','hit','migration'];
+    const context=Object.fromEntries(expected.map(k=>[k,q.get(k)]));
+    const checks=Object.fromEntries(expected.map(k=>[k,Boolean(context[k])]));
+    const ready=Boolean(q.get('dof70case')) && Object.values(checks).every(Boolean);
+    document.getElementById('dof70-evidence-result').textContent=JSON.stringify({schema:1,page:'dof70',ready,scenario:q.get('dof70case'),...context,branch:context.targetMode,checks,errors:ready?[]:['incomplete dof70case context']});
+  }
   if(q.has('cont')){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); continueGame(); }; g(); return; }
-  if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); startGame(q.get('shot')||'blade'); gameState='mapsel'; }; g(); return; }
+  if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); if(!startGame(q.get('shot')||'blade')) return; }; g(); return; }
   if(!q.has('shot'))return;
   const cls=q.get('shot')||'blade', st=q.get('st')||'idle';
   const go=()=>{ if(!SPR.ready) return setTimeout(go,50);
-    startGame(cls); beginDungeon(parseInt(q.get('map')||'0',10)||0); player.x=120; updateCam();
+    if(!startGame(cls)) return; beginDungeon(parseInt(q.get('map')||'0',10)||0); player.x=120; updateCam();
     if(q.get('mon')){ // 调试: 一字排开所有怪物种类
       enemies.length=0; const kinds=['gob','orc','archer','charger','bomber','boss'];
       kinds.forEach((kk,i)=>{ const e=new Enemy(260+i*120,(GROUND_TOP+GROUND_BOT)/2,kk,1); e.aggro=false; e.dir=-1;

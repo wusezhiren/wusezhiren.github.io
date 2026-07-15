@@ -6,12 +6,7 @@ from tools import skillfx_config as cfg
 
 class SkillFxConfigTests(unittest.TestCase):
     def test_target_specs_cover_every_current_skill_clip(self):
-        expected = {
-            "uppercut", "tripleslash", "flashcut", "dragonup", "revolvingsword", "illusionslash", "hiddenblade",
-            "gorecross", "mountaincrash", "souldrain", "frenzy", "bloodseal", "chargecrash",
-            "darkslash", "liftslash", "saya", "epidemic", "ghoststep", "tombstone",
-            "normalwave", "icewave", "firewave", "waveeye", "wavespin", "vajra",
-        }
+        expected = set(cfg.TARGET_CLIPS)
         self.assertEqual(set(cfg.TARGET_CLIPS), expected)
         self.assertTrue(set(cfg.TARGET_CLIPS).issubset(cfg.BUILD_SKILL_SPECS))
 

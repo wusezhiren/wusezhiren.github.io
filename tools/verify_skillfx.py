@@ -8,7 +8,7 @@ except ImportError:  # Allow running as `python3 tools/verify_skillfx.py`.
     from skillfx_config import TARGET_CLIPS
 
 
-def validate_meta(meta, targets=TARGET_CLIPS):
+def validate_meta(meta, targets=TARGET_CLIPS, strict=False):
     """校验 v3 元数据: {"v":3,"clips":{name:{"dur",layers:[{loop,frames}]}}}.
 
     实帧 = [sx,sy,sw,sh,ox,oy,delay,rx,ry,a]; 空帧 = [delay]。
@@ -21,6 +21,8 @@ def validate_meta(meta, targets=TARGET_CLIPS):
         if not layers:
             issues.append(f"missing clip {target}")
             continue
+        if strict and not clip.get("source"):
+            issues.append(f"{target} missing source")
         if not isinstance(clip.get("dur"), int) or clip["dur"] <= 0:
             issues.append(f"{target} invalid dur")
         for li, layer in enumerate(layers):
@@ -34,6 +36,8 @@ def validate_meta(meta, targets=TARGET_CLIPS):
                 if not isinstance(frame, list) or len(frame) not in (1, 10):
                     issues.append(f"{target} layer {li} frame {fi} invalid frame")
                     continue
+                if strict and len(frame) == 10 and not isinstance(frame[-1], int):
+                    issues.append(f"{target} layer {li} frame {fi} invalid alpha")
                 if len(frame) == 1:
                     continue
                 real += 1
