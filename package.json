@@ -1,0 +1,12 @@
+{
+  "name": "dnf-town-online",
+  "private": true,
+  "scripts": {
+    "dev:multiplayer": "wrangler dev",
+    "deploy:multiplayer": "wrangler deploy",
+    "test:worker": "node --test tests/worker/*.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.111.0"
+  }
+}

@@ -38,6 +38,16 @@ class WeaponAtlasTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             atlas.validate_frames([{"image": None, "link": -1, "form": 0x10}])
 
+    def test_composes_weapon_base_and_glow_layers_on_shared_canvas(self):
+        base = {"image": Image.new("RGBA", (2, 3), (255, 0, 0, 255)),
+                "x": 4, "y": 5, "w": 2, "h": 3, "fw": 20, "fh": 20, "link": -1, "form": 0x10}
+        glow = {"image": Image.new("RGBA", (3, 2), (0, 0, 255, 255)),
+                "x": 7, "y": 3, "w": 3, "h": 2, "fw": 20, "fh": 20, "link": -1, "form": 0x10}
+        merged = atlas.compose_layers([base], [glow])[0]
+        self.assertEqual((merged["x"], merged["y"], merged["w"], merged["h"]), (4, 3, 6, 5))
+        self.assertEqual(merged["image"].getpixel((0, 2)), (255, 0, 0, 255))
+        self.assertEqual(merged["image"].getpixel((3, 0)), (0, 0, 255, 255))
+
 
 if __name__ == "__main__":
     unittest.main()

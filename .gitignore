@@ -20,3 +20,8 @@ index.html.bak
 # Python cache
 __pycache__/
 *.pyc
+
+# Node / Cloudflare local state
+node_modules/
+.wrangler/
+.dev.vars

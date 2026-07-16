@@ -16,6 +16,25 @@
   #tips { font-size:12px; color:#7e879a; letter-spacing:1px; }
   #tips b { color:#ffcf4d; }
   .title { color:#ffcf4d; font-weight:bold; letter-spacing:3px; font-size:15px; }
+  #accountBar { position:fixed; top:14px; right:18px; z-index:10; display:flex; align-items:center; gap:8px;
+    padding:7px 10px; background:rgba(8,10,16,.88); border:1px solid #343b49; border-radius:4px; font-size:12px; }
+  #accountBar button, #accountModal button { color:#f3d778; background:#222936; border:1px solid #596274;
+    border-radius:3px; padding:5px 11px; cursor:pointer; font-family:inherit; }
+  #accountBar button:hover, #accountModal button:hover { border-color:#ffcf4d; color:#fff; }
+  #accountState.online { color:#8fe388; }
+  #accountModal { position:fixed; inset:0; z-index:20; display:none; place-items:center; background:rgba(0,0,0,.76); }
+  #accountModal.open { display:grid; }
+  .account-card { width:min(390px,92vw); padding:24px; background:#10141d; border:2px solid #3d4657;
+    box-shadow:0 18px 70px rgba(0,0,0,.8); }
+  .account-card h2 { color:#ffcf4d; text-align:center; margin-bottom:6px; letter-spacing:4px; }
+  .account-card p { color:#8994a8; font-size:12px; text-align:center; margin-bottom:18px; }
+  .account-card label { display:block; color:#cdd5e1; font-size:12px; margin:11px 0 5px; }
+  .account-card input { width:100%; padding:10px; color:#fff; background:#080b11; border:1px solid #3b4453; outline:none; }
+  .account-card input:focus { border-color:#ffcf4d; }
+  .account-actions { display:flex; gap:9px; margin-top:18px; }
+  .account-actions button { flex:1; padding:9px; }
+  #accountMessage { min-height:18px; margin-top:12px; color:#ff7b6e; text-align:center; font-size:12px; }
+  #accountClose { float:right; padding:2px 7px!important; }
 </style>
 </head>
 <body>
@@ -23,8 +42,29 @@
   <div class="title">地 下 城 与 勇 士 · 鬼 剑 士</div>
   <canvas id="game" width="960" height="540"></canvas>
   <div id="tips">
-    移动 <b>方向键</b> ·跳跃 <b>C</b> ·普攻 <b>X</b> ·上挑 <b>Z</b> ·技能 <b>Q W E A S D</b> ·奔跑 <b>双击←/→</b> ·药水 <b>1-6</b> ·背包 <b>I</b> ·暂停 <b>P</b> ·菜单 <b>0</b>　(技能栏可拖拽换键)
+    移动 <b>方向键</b> ·交互 <b>空格/Enter</b> ·跳跃 <b>C</b> ·普攻 <b>X</b> ·上挑 <b>Z</b> ·技能 <b>Q W E A S D</b> ·奔跑 <b>双击←/→</b> ·药水 <b>1-6</b> ·背包 <b>I</b> ·暂停 <b>P</b> ·菜单 <b>0</b>
   </div>
+</div>
+<div id="accountBar">
+  <span id="accountState">未登录 · 本地存档</span>
+  <button id="accountOpen" type="button">注册 / 登录</button>
+  <button id="accountLogout" type="button" hidden>退出</button>
+</div>
+<div id="accountModal">
+  <form class="account-card" id="accountForm">
+    <button id="accountClose" type="button">×</button>
+    <h2>冒险家账户</h2>
+    <p>登录后自动保存角色、装备、背包与副本进度</p>
+    <label for="accountUsername">用户名</label>
+    <input id="accountUsername" name="username" maxlength="16" autocomplete="username" required>
+    <label for="accountPassword">密码</label>
+    <input id="accountPassword" name="password" type="password" minlength="8" maxlength="72" autocomplete="current-password" required>
+    <div class="account-actions">
+      <button type="button" id="accountRegister">注册</button>
+      <button type="submit">登录</button>
+    </div>
+    <div id="accountMessage"></div>
+  </form>
 </div>
 <pre id="dof70-evidence-result" hidden></pre>
 <script src="assets/swordman.meta.js"></script>
@@ -33,6 +73,9 @@
 <script src="assets/skillfx.meta.js"></script>
 <script src="assets/skill_actions.meta.js"></script>
 <script src="assets/dof70/swordman-timelines.meta.js"></script>
+<script src="assets/town_hendonmyre.meta.js"></script>
+<script src="assets/dungeons_original.meta.js"></script>
+<script src="assets/multiplayer.config.js"></script>
 <script src="src/classes/availability.js"></script>
 <script src="src/equipment/weapons.js"></script>
 <script src="src/save/migrations.js"></script>
@@ -139,10 +182,68 @@ const aabb = (a,b) => Math.abs(a.x-b.x) < (a.w+b.w)/2 && Math.abs(a.y-b.y) < (a.
 const Save = {
   data:{ high:0, vol:0.5, muted:false, unlocked:MAX_UNLOCKED_DUNGEON },
   load(){ try{ const s=JSON.parse(localStorage.getItem('dnf_save')); if(s) this.data=Object.assign(this.data,migrateSave(s).save); }catch(e){} },
-  save(){ try{ localStorage.setItem('dnf_save', JSON.stringify(this.data)); }catch(e){} }
+  save(){ try{ localStorage.setItem('dnf_save', JSON.stringify(this.data)); }catch(e){}
+    if(typeof AUTH!=='undefined')AUTH.scheduleSave(); }
 };
 Save.load();
 Save.data.unlocked = Math.max(0, Math.min(MAX_UNLOCKED_DUNGEON, Save.data.unlocked ?? MAX_UNLOCKED_DUNGEON));
+
+/* ===================== 云端账户与存档 ===================== */
+const AUTH={
+  token:null,username:null,saving:false,timer:null,els:null,
+  apiBase(){try{const u=new URL(window.DNF_MULTIPLAYER_URL||'',location.href);u.protocol='https:';u.pathname='';u.search='';return u.toString().replace(/\/$/,'');}catch{return '';}},
+  init(){
+    const modal=document.querySelector('#accountModal');if(!modal)return;
+    this.els={modal,state:document.querySelector('#accountState'),open:document.querySelector('#accountOpen'),logout:document.querySelector('#accountLogout'),form:document.querySelector('#accountForm'),register:document.querySelector('#accountRegister'),close:document.querySelector('#accountClose'),message:document.querySelector('#accountMessage')};
+    modal.addEventListener('keydown',event=>event.stopPropagation());modal.addEventListener('keyup',event=>event.stopPropagation());
+    this.els.open.addEventListener('click',()=>this.show());this.els.close.addEventListener('click',()=>this.hide());
+    this.els.form.addEventListener('submit',event=>{event.preventDefault();this.submit('login');});
+    this.els.register.addEventListener('click',()=>this.submit('register'));this.els.logout.addEventListener('click',()=>this.logout());
+    try{this.token=localStorage.getItem('dnf_auth_token');this.username=localStorage.getItem('dnf_auth_user');}catch{}
+    this.paint();if(this.token)this.restore();
+  },
+  show(){this.els.modal.classList.add('open');this.els.message.textContent='';document.querySelector('#accountUsername')?.focus();},
+  hide(){this.els.modal.classList.remove('open');},
+  paint(status){
+    if(!this.els)return;const online=!!this.token;
+    this.els.state.textContent=status||(online?this.username+' · 云存档':'未登录 · 本地存档');this.els.state.classList.toggle('online',online);
+    this.els.open.hidden=online;this.els.logout.hidden=!online;
+  },
+  credentials(){const form=new FormData(this.els.form);return {username:String(form.get('username')||'').trim(),password:String(form.get('password')||'')};},
+  async request(path,options={}){
+    const base=this.apiBase();if(!base)throw new Error('账户服务未配置');
+    const headers={'Content-Type':'application/json',...(options.headers||{})};if(this.token)headers.Authorization='Bearer '+this.token;
+    const response=await fetch(base+path,{...options,headers});const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'请求失败');return data;
+  },
+  async submit(mode){
+    this.els.message.textContent='处理中...';
+    try{const data=await this.request('/auth/'+mode,{method:'POST',body:JSON.stringify(this.credentials())});this.accept(data);this.hide();
+      if(data.save)this.applyCloudSave(data.save);else await this.saveNow();}
+    catch(error){this.els.message.textContent=error.message;}
+  },
+  accept(data){this.token=data.token;this.username=data.username;try{localStorage.setItem('dnf_auth_token',this.token);localStorage.setItem('dnf_auth_user',this.username);}catch{}this.paint();},
+  async restore(){
+    this.paint('正在恢复 '+(this.username||'账户')+'...');
+    try{const data=await this.request('/auth/me');this.username=data.username;if(data.save)this.applyCloudSave(data.save);else await this.saveNow();this.paint();}
+    catch{this.signOut('登录已失效 · 本地存档');}
+  },
+  applyCloudSave(cloud){
+    if(!cloud||typeof cloud!=='object')return;this.saving=true;
+    Save.data=Object.assign({high:0,vol:.5,muted:false,unlocked:MAX_UNLOCKED_DUNGEON},migrateSave(cloud).save);
+    try{localStorage.setItem('dnf_save',JSON.stringify(Save.data));}catch{}
+    if(typeof player!=='undefined'&&player){MULTIPLAYER.disconnect();player=null;enemies=[];gameState='menu';}
+    this.saving=false;menuIndex=0;
+  },
+  scheduleSave(){if(!this.token||this.saving)return;clearTimeout(this.timer);this.timer=setTimeout(()=>this.saveNow(),800);},
+  async saveNow(keepalive=false){
+    if(!this.token||this.saving)return;this.saving=true;clearTimeout(this.timer);
+    try{await this.request('/save',{method:'PUT',body:JSON.stringify({save:Save.data}),keepalive});this.paint();}
+    catch(error){this.paint('云存档待同步');}finally{this.saving=false;}
+  },
+  async logout(){try{await this.request('/auth/logout',{method:'POST'});}catch{}this.signOut();},
+  signOut(message){this.token=null;this.username=null;clearTimeout(this.timer);try{localStorage.removeItem('dnf_auth_token');localStorage.removeItem('dnf_auth_user');}catch{}this.paint(message);},
+};
 
 /* ===================== 音频(WebAudio 合成) ===================== */
 const Audio2 = {
@@ -983,18 +1084,22 @@ class Player extends Fighter {
 /* ===================== 敌人 ===================== */
 const DUNGEONS = [
   {id:'lorien', name:'洛兰幽暗密林', recommendedLv:1, rooms:5,
+    theme:'light',
     tint:['#241c2e','#3a2c40'], floor:['#4a3f33','#2b2520'],
     monsterPool:['gob','gob','gob','orc'], boss:'boss',
     desc:'新手森林,哥布林成群出没,适合熟悉走门刷图节奏。'},
   {id:'grakqarak', name:'格兰之森·雷鸣废墟', recommendedLv:3, rooms:6,
+    theme:'ice',
     tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
     monsterPool:['gob','orc','orc','archer','archer'], boss:'boss',
     desc:'阴冷废墟,弓箭手拉开距离,需要用突进打断。'},
   {id:'flamepass', name:'烈焰格拉卡', recommendedLv:5, rooms:6,
+    theme:'red',
     tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
     monsterPool:['orc','charger','charger','bomber','gob'], boss:'boss',
     desc:'灼热通道,冲锋怪和自爆怪压迫走位。'},
   {id:'shadowkeep', name:'暗黑雷鸣废墟', recommendedLv:8, rooms:7,
+    theme:'dark',
     tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
     monsterPool:['orc','archer','charger','bomber','bomber','gob'], boss:'boss',
     desc:'高阶混编地下城,远程、冲锋、自爆同时登场。'},
@@ -1228,11 +1333,12 @@ function tintedWeaponFrame(key, fi, tint){
 // 在已 translate/scale 到角色坐标系后, 绘制某武器层的第 fi 帧(tint!=null 用血刃染色, dx/dy 额外偏移)
 function drawWeaponLayer(key, fi, s, tint, alpha, dx, dy){
   const w=WEAPONS[key]; if(!w||!w.ready||!w.meta) return;
+  const anchorX=224.5,anchorY=338; // 客户端公共500x500画布的角色脚底原点
   if(alpha!=null) ctx.globalAlpha=alpha;
   if(tint){ const t=tintedWeaponFrame(key,fi,tint); if(!t) return;
-    ctx.drawImage(t.cv, (t.ox+(dx||0))*s, (t.oy+(dy||0))*s, t.sw*s, t.sh*s); return; }
+    ctx.drawImage(t.cv, (t.ox-anchorX+(dx||0))*s, (t.oy-anchorY+(dy||0))*s, t.sw*s, t.sh*s); return; }
   const F=w.meta.frames[fi]; if(!F) return;
-  ctx.drawImage(w.img, F[0],F[1],F[2],F[3], (F[4]+(dx||0))*s, (F[5]+(dy||0))*s, F[2]*s, F[3]*s);
+  ctx.drawImage(w.img, F[0],F[1],F[2],F[3], (F[4]-anchorX+(dx||0))*s, (F[5]-anchorY+(dy||0))*s, F[2]*s, F[3]*s);
 }
 
 /* ===================== 技能特效精灵图集(客户端真实特效) ===================== */
@@ -1291,7 +1397,7 @@ function drawFXClip(clip, tMs, x, y, scale, dir, alpha){
   const info=fxClipInfo(clip);
   return drawFXClipLayers(clip, tMs, x, y, scale, dir, alpha, true, -info.cx, -info.cy);
 }
-let SPR_SCALE=0.62; // Q版缩小比例(可调)
+let SPR_SCALE=0.88; // 原版角色比例，身体、武器与技能特效统一缩放
 // 动画区间(帧索引), 凭客户端帧序划分, 可微调
 const SWORD_ANIM={
   idle:  {f:[90,91,92,93,94],                   fps:5},   // 持剑站立(剑握在手垂于身侧)
@@ -1373,16 +1479,17 @@ function drawSwordmanSprite(p){
   const dim=(p.invuln>0&&Math.floor(p.invuln/3)%2===0)?0.55:1;
   ctx.globalAlpha=dim;
   ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s);          // 身体层
-   const wkey=(p.equipped.weapon&&p.equipped.weapon.weaponType)||classWeaponKey(p.clsKey);
-  ctx.globalAlpha=dim; drawWeaponLayer(wkey, fi, s);                     // 武器层(剑魂光剑/其余太刀)
+   const wkey=(p.equipped.weapon&&p.equipped.weapon.weaponType)||classWeaponKey(p.clsKey), wf=WEAPONS[wkey]?.meta?.frames?.[fi];
+   const visibleWeapon=wf&&wf[2]*wf[3]>=400?wkey:(WEAPONS.katana?.meta?.frames?.[fi]?'katana':wkey);
+  ctx.globalAlpha=dim; drawWeaponLayer(visibleWeapon, fi, s);             // 光剑空/剑柄帧以同锚点太刀补齐站街外观
   const at=p.attackType;
   if(p.clsKey==='berserk' && p.attackTimer>0 && at && at.basic){        // 狂战副手血刃(仅普攻显示)
-    ctx.globalAlpha=dim*0.9; drawWeaponLayer(wkey, fi, s, '#ff2538', 0.9, -16, 9);
+    ctx.globalAlpha=dim*0.9; drawWeaponLayer(visibleWeapon, fi, s, '#ff2538', 0.9, -16, 9);
     if(Math.random()<0.6) particles.push({x:p.x+rand(-16,16),y:feetY-rand(20,80),vx:rand(-1,1),vy:rand(-2,-0.3),life:rand(10,20),max:20,color:'#ff3b3b',r:rand(2,4)});
   }
   ctx.globalAlpha=1;
   if(p.flash>0&&p.flash%2===0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.5;
-    ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s); drawWeaponLayer(wkey, fi, s); }
+    ctx.drawImage(SPR.img, sx,sy,sw,sh, ox*s, oy*s, sw*s, sh*s); drawWeaponLayer(visibleWeapon, fi, s); }
   ctx.restore();
   drawClassAura(p, feetY);   // 职业常驻标识(修罗杀意波动/波动刻印, 鬼泣鬼神)
   return true;
@@ -2241,7 +2348,7 @@ function drawStageTitle(){
     ctx.fillStyle='#cfd8e6'; ctx.font='13px sans-serif'; ctx.fillText(e.sub,W/2+slide,150);
   }
   ctx.restore(); ctx.textAlign='left';
-  if(gameState==='play'||gameState==='transition'){ e.life--; if(e.life<=0) stageTitle=null; }
+  if(gameState==='play'||gameState==='transition'||gameState==='town'){ e.life--; if(e.life<=0) stageTitle=null; }
 }
 function drawTransitionCard(){
   const a=clamp(1-Math.abs(transition-20)/20,0,1);
@@ -2266,39 +2373,182 @@ function drawLootFly(){
   }
 }
 
-/* ===================== 背景(分章节配色 + 视差) ===================== */
+/* ===================== 原版副本环境 ===================== */
+const DUNGEON_SPR={img:new Image(),meta:window.DUNGEONS_ORIGINAL_META||null,ready:false};
+DUNGEON_SPR.img.onload=()=>{if(DUNGEON_SPR.meta)DUNGEON_SPR.ready=true;};
+DUNGEON_SPR.img.src='assets/dungeons_original.png';
+if(DUNGEON_SPR.meta&&DUNGEON_SPR.img.complete&&DUNGEON_SPR.img.naturalWidth)DUNGEON_SPR.ready=true;
+function dungeonTheme(){return DUNGEON_SPR.meta?.themes?.[currentDungeonDef().theme||'light'];}
+function drawDungeonSprite(name,x,y,sx=1,sy=sx){
+  const sprite=dungeonTheme()?.[name],f=sprite?.frame;if(!DUNGEON_SPR.ready||!f)return false;
+  ctx.drawImage(DUNGEON_SPR.img,f[0],f[1],f[2],f[3],x,y,f[2]*sx,f[3]*sy);return true;
+}
+function dungeonSceneProps(){
+  const variant=(room+dungeonId)%3;
+  return [{x:330+variant*90,y:385,name:'tree',scale:.58},{x:760+variant*170,y:445,name:variant===1?'statue':'crystal',scale:variant===1?.86:.9},{x:1250-variant*95,y:475,name:'treeSmall',scale:.72}];
+}
+function drawDungeonProp(prop){
+  const f=dungeonTheme()?.[prop.name]?.frame;if(!f)return;
+  ctx.drawImage(DUNGEON_SPR.img,f[0],f[1],f[2],f[3],prop.x-f[2]*prop.scale/2,prop.y-f[3]*prop.scale,f[2]*prop.scale,f[3]*prop.scale);
+}
 function drawBackground(){
   const dun=currentDungeonDef();
-  const t=dun.tint;
-  const g=ctx.createLinearGradient(0,0,0,GROUND_TOP); g.addColorStop(0,t[0]);g.addColorStop(1,t[1]);
-  ctx.fillStyle=g;ctx.fillRect(0,0,WORLD_W,GROUND_TOP);
-  // —— 视差远景层(随相机缓慢平移, 营造纵深) —— 上下文已 -camX, 故按屏幕坐标铺再 +camX 还原
-  const plx=(pf,step,fn)=>{ const off=((camX*pf)%step+step)%step; for(let s=-step;s<=W+step;s+=step) fn(s-off+camX); };
-  ctx.fillStyle='rgba(0,0,0,0.24)';                                   // 最远: 大拱门剪影
-  plx(0.18,300,(cx)=>{ ctx.beginPath(); ctx.moveTo(cx,GROUND_TOP); ctx.lineTo(cx,80);
-    ctx.quadraticCurveTo(cx+105,18,cx+210,80); ctx.lineTo(cx+210,GROUND_TOP); ctx.closePath(); ctx.fill(); });
-  ctx.fillStyle='rgba(0,0,0,0.16)';                                   // 次远: 廊柱
-  plx(0.40,160,(cx)=>{ ctx.fillRect(cx,96,28,GROUND_TOP-96); ctx.fillRect(cx-6,90,40,8); });
-  // 远景砖柱
-  ctx.fillStyle='rgba(0,0,0,.18)';
-  for(let x=0;x<WORLD_W;x+=120) ctx.fillRect(x,40,40,GROUND_TOP-40);
-  ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1;
-  for(let y=20;y<GROUND_TOP;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(WORLD_W,y);ctx.stroke();}
-  for(let x=0;x<WORLD_W;x+=56){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,GROUND_TOP);ctx.stroke();}
-  // 沿世界分布的火把
-  for(let fx=160; fx<WORLD_W; fx+=320){ const fy=90+Math.sin(performance.now()/200+fx)*2;
-    ctx.fillStyle='#5b3a1a';ctx.fillRect(fx-3,fy,6,40);
-    const grd=ctx.createRadialGradient(fx,fy,2,fx,fy,28);
-    grd.addColorStop(0,'rgba(255,180,60,.9)');grd.addColorStop(1,'rgba(255,120,0,0)');
-    ctx.fillStyle=grd;ctx.beginPath();ctx.arc(fx,fy,28,0,7);ctx.fill(); }
-  const floor=dun.floor||['#4a3f33','#2b2520'];
-  const gg=ctx.createLinearGradient(0,GROUND_TOP,0,H); gg.addColorStop(0,floor[0]);gg.addColorStop(1,floor[1]);
-  ctx.fillStyle=gg;ctx.fillRect(0,GROUND_TOP,WORLD_W,H-GROUND_TOP);
-  ctx.strokeStyle='rgba(0,0,0,.3)';
-  for(let i=0;i<8;i++){const yy=GROUND_TOP+i*(H-GROUND_TOP)/8;ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(WORLD_W,yy);ctx.stroke();}
-  // 左侧封闭石墙(来路已封)
-  ctx.fillStyle='#15121b'; ctx.fillRect(-60,0,60,GROUND_BOT+30);
-  ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(0,0,10,GROUND_BOT+30);
+  if(DUNGEON_SPR.ready&&dungeonTheme()){
+    ctx.fillStyle=dun.tint[0];ctx.fillRect(0,0,WORLD_W,H);
+    for(let x=0;x<WORLD_W;x+=640)drawDungeonSprite('far',x,0,1,GROUND_TOP/380);
+    for(let x=0;x<WORLD_W;x+=640)drawDungeonSprite('mid',x,0,1,GROUND_TOP/380);
+    ctx.fillStyle=dun.floor[1];ctx.fillRect(0,GROUND_TOP,WORLD_W,H-GROUND_TOP);
+    for(let x=0;x<WORLD_W;x+=224)drawDungeonSprite('floor',x,GROUND_TOP,1,(H-GROUND_TOP)/270);
+    ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(0,0,10,GROUND_BOT+30);return;
+  }
+  const t=dun.tint,g=ctx.createLinearGradient(0,0,0,GROUND_TOP);g.addColorStop(0,t[0]);g.addColorStop(1,t[1]);ctx.fillStyle=g;ctx.fillRect(0,0,WORLD_W,GROUND_TOP);
+  const floor=dun.floor||['#4a3f33','#2b2520'],gg=ctx.createLinearGradient(0,GROUND_TOP,0,H);gg.addColorStop(0,floor[0]);gg.addColorStop(1,floor[1]);ctx.fillStyle=gg;ctx.fillRect(0,GROUND_TOP,WORLD_W,H-GROUND_TOP);
+}
+
+/* ===================== 城镇 ===================== */
+const TOWN_SPR={img:new Image(),meta:window.TOWN_HENDONMYRE_META||null,ready:false};
+TOWN_SPR.img.onload=()=>{ if(TOWN_SPR.meta)TOWN_SPR.ready=true; };
+TOWN_SPR.img.src='assets/town_hendonmyre.png';
+if(TOWN_SPR.meta&&TOWN_SPR.img.complete&&TOWN_SPR.img.naturalWidth) TOWN_SPR.ready=true;
+function drawTownSprite(name,x,y,sx=1,sy=sx){
+  if(!TOWN_SPR.ready)return;
+  const f=TOWN_SPR.meta.sprites[name]; if(!f)return;
+  ctx.drawImage(TOWN_SPR.img,f[0],f[1],f[2],f[3],x,y,f[2]*sx,f[3]*sy);
+}
+const TOWN={
+  id:'hendonmyre',name:'赫顿玛尔',spawn:{x:180,y:430},
+  npc:{x:690,y:430,name:'林纳斯',action:'shop'},
+  gate:{x:1660,y:405,name:'格兰之森入口'},
+};
+let townPrompt='', shopReturnState='town';
+const MULTIPLAYER={
+  socket:null,id:null,players:new Map(),lastSent:'',lastSendAt:0,retry:null,
+  endpoint(){
+    const q=new URLSearchParams(location.search), configured=q.get('server')||window.DNF_MULTIPLAYER_URL||'';
+    if(!configured)return '';
+    try{ const url=new URL(configured,location.href);url.protocol=url.protocol==='https:'?'wss:':url.protocol==='http:'?'ws:':url.protocol;url.searchParams.set('channel','hendonmyre-1');return url.toString(); }catch{return '';}
+  },
+  name(){
+    if(typeof AUTH!=='undefined'&&AUTH.username)return AUTH.username;
+    const q=new URLSearchParams(location.search), requested=q.get('name');
+    if(requested){try{localStorage.setItem('dnf_player_name',requested.slice(0,16));}catch{}return requested.slice(0,16);}
+    try{ const saved=localStorage.getItem('dnf_player_name');if(saved)return saved; }catch{}
+    const generated='冒险家'+String(Math.floor(Math.random()*10000)).padStart(4,'0');
+    try{localStorage.setItem('dnf_player_name',generated);}catch{} return generated;
+  },
+  connect(){
+    const endpoint=this.endpoint();
+    if(!endpoint||typeof WebSocket==='undefined'||this.socket?.readyState===0||this.socket?.readyState===1)return;
+    clearTimeout(this.retry); const socket=new WebSocket(endpoint);this.socket=socket;
+    socket.addEventListener('open',()=>{this.lastSent='';this.send(true);});
+    socket.addEventListener('message',event=>this.receive(event.data));
+    socket.addEventListener('close',()=>{if(this.socket===socket)this.socket=null;this.id=null;this.players.clear();if(gameState==='town')this.retry=setTimeout(()=>this.connect(),2000);});
+    socket.addEventListener('error',()=>socket.close());
+  },
+  disconnect(){
+    clearTimeout(this.retry);this.retry=null;this.id=null;this.players.clear();
+    const socket=this.socket;this.socket=null;if(socket&&(socket.readyState===0||socket.readyState===1))socket.close(1000,'left town');
+  },
+  receive(raw){
+    let message;try{message=JSON.parse(raw);}catch{return;}
+    if(message.type==='welcome'){
+      this.id=message.id;this.players.clear();for(const p of message.players||[])if(p.id!==this.id)this.upsert(p,true);return;
+    }
+    if(message.id===this.id)return;
+    if(message.type==='leave'){this.players.delete(message.id);return;}
+    if(message.type==='join'||message.type==='move')this.upsert(message,message.type==='join');
+  },
+  upsert(data,instant){
+    const old=this.players.get(data.id), x=Number(data.x)||180,y=Number(data.y)||430;
+    this.players.set(data.id,{id:data.id,name:String(data.name||'冒险家').slice(0,16),cls:data.cls==='berserk'?'berserk':'blade',x:instant||!old?x:old.x,y:instant||!old?y:old.y,tx:x,ty:y,dir:data.dir<0?-1:1,state:data.state==='walk'||data.state==='run'?data.state:'idle',walkPhase:old?.walkPhase||0});
+  },
+  send(force=false){
+    if(gameState!=='town'||!player||this.socket?.readyState!==1)return;
+    const state=player.state==='walk'||player.state==='run'?player.state:'idle';
+    const payload={name:this.name(),cls:player.clsKey,x:Math.round(player.x),y:Math.round(player.y),dir:player.dir,state};
+    const encoded=JSON.stringify(payload),now=performance.now();if(!force&&(encoded===this.lastSent||now-this.lastSendAt<80))return;
+    this.socket.send(JSON.stringify({type:this.id?'move':'join',player:payload}));this.lastSent=encoded;this.lastSendAt=now;
+  },
+  update(){
+    for(const remote of this.players.values()){remote.x=lerp(remote.x,remote.tx,.28);remote.y=lerp(remote.y,remote.ty,.28);if(remote.state!=='idle')remote.walkPhase+=.18;}
+    this.send();
+  }
+};
+function enterTown(x,y){
+  enemies=[]; resetPools(); door=null; clearInfo=null; clearPending=false; shopPending=false;
+  gameState='town'; Audio2.ensure(); Audio2.stopBgm();
+  player.x=x??TOWN.spawn.x; player.y=y??TOWN.spawn.y; player.z=0; player.vz=0;
+  player.attackTimer=0; player.attackType=null; player.running=0; player.invOpen=false;
+  updateCam(); serializeRun();
+  MULTIPLAYER.connect();
+  showStageTitle(TOWN.name,'冒险家的休整之地','#ffcf4d',false);
+}
+function nearTownObject(obj,range=105){ return Math.hypot(player.x-obj.x,(player.y-obj.y)*1.6)<range; }
+function updateTown(){
+  let mx=0,my=0;
+  if(down('arrowleft')){mx=-1;player.dir=-1;}
+  if(down('arrowright')){mx=1;player.dir=1;}
+  if(down('arrowup'))my=-1;
+  if(down('arrowdown'))my=1;
+  const moving=mx||my, sp=player.speed*0.72;
+  player.x=clamp(player.x+mx*sp,30,WORLD_W-30);
+  player.y=clamp(player.y+my*sp*0.72,GROUND_TOP+40,GROUND_BOT);
+  player.walkPhase=moving?player.walkPhase+0.18:0;
+  player.state=moving?'walk':'idle'; player.selectAction(moving?'walk':'stand');
+  updateCam();
+  MULTIPLAYER.update();
+  townPrompt=nearTownObject(TOWN.npc)?'空格 / Enter  与 '+TOWN.npc.name+' 交谈':nearTownObject(TOWN.gate,125)?'空格 / Enter  进入 '+TOWN.gate.name:'';
+  if(pressed('enter')||pressed(' ')){
+    if(nearTownObject(TOWN.npc)){ generateShopItems(); shopReturnState='town'; gameState='shop'; Audio2.sfx('select'); }
+    else if(nearTownObject(TOWN.gate,125)){ mapIndex=Math.min(Save.data.unlocked||0,DUNGEONS.length-1); MULTIPLAYER.disconnect(); gameState='mapsel'; Audio2.sfx('select'); }
+  }
+}
+function drawTownBackground(){
+  ctx.fillStyle='#091c4b'; ctx.fillRect(0,0,WORLD_W,GROUND_TOP);
+  if(!TOWN_SPR.ready){ ctx.fillStyle='#796b50';ctx.fillRect(0,GROUND_TOP,WORLD_W,H-GROUND_TOP);return; }
+  for(let x=0;x<WORLD_W;x+=960) drawTownSprite('far',x,0,1.5,1.5);
+  for(let x=-80;x<WORLD_W;x+=895) drawTownSprite('mid',x,42,1,1);
+  ctx.fillStyle='#d6bf8d';ctx.fillRect(0,GROUND_TOP,WORLD_W,H-GROUND_TOP);
+  for(let y=GROUND_TOP;y<H;y+=120) for(let x=0;x<WORLD_W;x+=224) drawTownSprite('ground',x,y,1,1);
+}
+function drawTownNpc(){
+  const n=TOWN.npc; drawShadow(n.x,n.y,28);
+  if(TOWN_SPR.ready){
+    const frames=TOWN_SPR.meta.linus.frames, fi=Math.floor(performance.now()/TOWN_SPR.meta.linus.frameMs)%frames.length, f=frames[fi], scale=.72;
+    ctx.drawImage(TOWN_SPR.img,f[0],f[1],f[2],f[3],n.x+f[4]*scale,n.y+f[5]*scale,f[2]*scale,f[3]*scale);
+  }
+  ctx.textAlign='center'; ctx.fillStyle='#ffd24d'; ctx.font='bold 13px sans-serif'; ctx.fillText(n.name,n.x,n.y-103);
+  ctx.fillStyle='#d7dde6'; ctx.font='11px sans-serif'; ctx.fillText('武器商人',n.x,n.y-88); ctx.textAlign='left';
+}
+function drawTownGate(){
+  const g=TOWN.gate, pulse=.45+.2*Math.sin(performance.now()/180);
+  if(TOWN_SPR.ready) drawTownSprite('forestGate',g.x-126,g.y-259,.55,.55);
+  ctx.save();ctx.globalAlpha=pulse;ctx.fillStyle='#9adf72';ctx.beginPath();ctx.ellipse(g.x,g.y-72,38,70,0,0,7);ctx.fill();ctx.restore();
+  ctx.textAlign='center';ctx.fillStyle='#dff6b8';ctx.font='bold 15px sans-serif';ctx.fillText(g.name,g.x,202);ctx.textAlign='left';
+}
+function drawTownHud(){
+  ctx.fillStyle='rgba(5,7,10,.72)';ctx.fillRect(14,14,260,54);ctx.strokeStyle='#4c5360';ctx.strokeRect(14,14,260,54);
+  ctx.fillStyle='#ffcf4d';ctx.font='bold 15px sans-serif';ctx.fillText(player.cls.name+'  Lv.'+player.level,26,36);
+  ctx.fillStyle='#d7dde6';ctx.font='12px sans-serif';ctx.fillText(TOWN.name+'    金币 '+player.gold,26,57);
+  const online=MULTIPLAYER.socket?.readyState===1?'在线 '+(MULTIPLAYER.players.size+1)+' 人':MULTIPLAYER.endpoint()?'连接中':'单机';
+  ctx.textAlign='right';ctx.fillStyle=MULTIPLAYER.socket?.readyState===1?'#8fe388':'#9aa6b8';ctx.fillText(online,W-24,32);ctx.textAlign='left';
+  if(townPrompt){ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(W/2-180,H-72,360,32);ctx.strokeStyle='#ffcf4d';ctx.strokeRect(W/2-180,H-72,360,32);ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';ctx.fillText(townPrompt,W/2,H-51);ctx.textAlign='left';}
+}
+function drawTown(){
+  ctx.save();ctx.translate(-camX,0);drawTownBackground();drawTownGate();
+  const scene=[
+    {y:410,draw:()=>drawTownSprite('treeSmall',360,104,.82,.82)},
+    {y:445,draw:()=>drawTownNpc()},
+    {y:player.y,draw:()=>player.draw()},
+    {y:488,draw:()=>drawTownSprite('treeLarge',1160,188,.78,.78)},
+  ];
+  for(const remote of MULTIPLAYER.players.values())scene.push({y:remote.y,draw:()=>drawRemotePlayer(remote)});
+  scene.sort((a,b)=>a.y-b.y).forEach(item=>item.draw());ctx.restore();
+  drawTownHud();drawStageTitle();
+}
+function drawRemotePlayer(remote){
+  const proxy={...remote,z:0,w:46,h:96,dead:false,hurt:0,attackTimer:0,attackType:null,invuln:0,flash:0,buff:null,onGround:true,equipped:{weapon:null},screenY(){return this.y;}};
+  drawPlayerFigure(proxy);ctx.textAlign='center';ctx.font='bold 12px sans-serif';ctx.fillStyle='#fff';ctx.fillText(remote.name,remote.x,remote.y-104);ctx.fillStyle='#8fe388';ctx.font='10px sans-serif';ctx.fillText(remote.cls==='berserk'?'狂战士':'剑魂',remote.x,remote.y-90);ctx.textAlign='left';
 }
 
 /* ===================== UI ===================== */
@@ -2468,7 +2718,7 @@ function drawClear(){
     ctx.textAlign='left';  ctx.fillStyle='#8893a7'; ctx.font='15px sans-serif'; ctx.fillText(r[0],bx+16,y);
     ctx.textAlign='right'; ctx.fillStyle='#fff';    ctx.font='bold 16px sans-serif'; ctx.fillText(r[1],bx+284,y); });
   ctx.textAlign='center'; ctx.fillStyle='#ffcf4d'; ctx.font='15px sans-serif';
-  ctx.fillText('Enter/空格 返回选图    S 进入商店',W/2,H-46);
+  ctx.fillText('Enter/空格 返回城镇    S 进入商店',W/2,H-46);
   ctx.textAlign='left';
 }
 
@@ -2616,9 +2866,12 @@ let menuIndex=0, selIndex=0, classSelectMessage='';
 function getMenu(){
   const m=[];
   if(Save.data.run){
-    const rid=Save.data.run.dungeonId!=null ? Save.data.run.dungeonId : (Save.data.run.dungeon||1)-1;
-    const dn=(DUNGEONS[rid]||DUNGEONS[0]).name;
-    m.push({label:'继续游戏 ('+dn+' '+Save.data.run.room+'房)',act:'continue'});
+    if(Save.data.run.location==='town') m.push({label:'继续游戏 ('+TOWN.name+')',act:'continue'});
+    else {
+      const rid=Save.data.run.dungeonId!=null ? Save.data.run.dungeonId : (Save.data.run.dungeon||1)-1;
+      const dn=(DUNGEONS[rid]||DUNGEONS[0]).name;
+      m.push({label:'继续游戏 ('+dn+' '+Save.data.run.room+'房)',act:'continue'});
+    }
   }
   m.push({label:'开始游戏',act:'start'},{label:'操作说明',act:'help'},{label:'音效: '+(Save.data.muted?'关':'开'),act:'mute'});
   return m;
@@ -2647,7 +2900,7 @@ function drawClassPortrait(clsKey,x,feetY,dir,scale){
 function drawMapSelect(){
   drawBackground(); ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center'; ctx.fillStyle='#ffcf4d'; ctx.font='bold 32px sans-serif'; ctx.fillText('选 择 地 下 城',W/2,56);
-  ctx.fillStyle='#9aa6b8'; ctx.font='13px sans-serif'; ctx.fillText('↑↓ 选择    Enter/空格 进入    S 商店    Esc 返回职业选择',W/2,82);
+  ctx.fillStyle='#9aa6b8'; ctx.font='13px sans-serif'; ctx.fillText('↑↓ 选择    Enter/空格 进入    Esc 返回城镇',W/2,82);
   const cardW=660, cardH=74, x=(W-cardW)/2, y0=118;
   DUNGEONS.forEach((d,i)=>{ const y=y0+i*(cardH+14), sel=i===mapIndex, locked=i>(Save.data.unlocked||0), risky=player&&player.level<d.recommendedLv;
     ctx.fillStyle=locked?'rgba(8,10,16,.78)':(sel?'#1c2840':'#101620'); ctx.fillRect(x,y,cardW,cardH);
@@ -2696,12 +2949,13 @@ function drawHelp(){
     '【技能】Q W E A S D   六个职业技能，随等级 Lv 解锁；技能栏可鼠标拖拽换键',
     '【连段】普攻/技能后摇均可被取消接技，搓招连段；浮空可追击',
     '【升级】击杀获得经验，升级回满血蓝并成长',
-    '【选图】选职业后进入地下城选择；通关后解锁下一张图',
+    '【城镇】选择职业后进入赫顿玛尔；靠近 NPC 或地下城入口按空格/Enter',
+    '【选图】从城镇右侧格兰之森入口选择地下城；通关后解锁下一张图',
     '【刷图】每房打完怪开门，走到门口进入下一房；怪有仇恨范围',
     '【背包】I 打开/关闭（不暂停）  ↑↓←→ 选择  Enter 穿戴',
     '【消耗品】1~6 快捷栏即时使用药水（掉落/商店获得）',
     '【装备】Boss 概率掉装备，分白蓝紫橙四档；穿戴提升属性',
-    '【商店】通关一图后进入，可买武器/防具/药水，S 出售',
+    '【商店】与城镇武器商人交谈，可买武器/防具/药水，S 出售',
     '【系统】P 暂停   M 静音   0 返回主菜单',
     '',
     '怪物：哥布林 / 兽人 / 弓箭手 / 冲锋怪 / 自爆怪 / 首领',
@@ -2729,10 +2983,12 @@ function startGame(clsKey){
   enemies=[]; resetPools();
   dungeonId=0; dungeon=1; room=1; score=0; shake=0; hitstop=0; combo={count:0,dmg:0,timer:0};
   door=null; transition=0; mapIndex=Math.min(Save.data.unlocked||0,DUNGEONS.length-1);
-  gameState='mapsel'; Audio2.ensure(); Audio2.stopBgm();
+  gameState='town'; Audio2.ensure(); Audio2.stopBgm();
+  if(typeof enterTown==='function') enterTown();
   return true;
 }
 function beginDungeon(id){
+  MULTIPLAYER.disconnect();
   dungeonId=clamp(id,0,DUNGEONS.length-1); dungeon=dungeonId+1; room=1; clearInfo=null;
   enemies=[]; resetPools(); door=null; transition=0; bossIntro=0; bossGate=false; clearPending=false; shopPending=false;
   gameState='play'; Audio2.ensure(); Audio2.startBgm(); enterRoom();
@@ -2745,7 +3001,8 @@ function serializeRun(){
   Save.data.schemaVersion=SAVE_SCHEMA_VERSION;
   Save.data.run={ clsKey:p.clsKey, level:p.level, exp:p.exp, expNext:p.expNext, gold:p.gold,
     crit:p._crit, shopAtk:p.shopAtk, buy:p.buy, maxhp:p.maxhp, maxmp:p.maxmp, hp:p.hp, mp:p.mp,
-    equipped:p.equipped, inventory:p.inventory, hotbar:p.hotbar, dungeonId, dungeon:dungeonId+1, room,
+    equipped:p.equipped, inventory:p.inventory, hotbar:p.hotbar, location:gameState==='town'?'town':'dungeon',
+    townPosition:gameState==='town'?{x:p.x,y:p.y}:null, dungeonId, dungeon:dungeonId+1, room,
     skillOrder:p.skills.slice(1).map(s=>s.name) };   // 技能槽自定义顺序(槽1..6)
   Save.save();
 }
@@ -2772,6 +3029,10 @@ function continueGame(){
   dungeonId = r.dungeonId!=null ? r.dungeonId : clamp((r.dungeon||1)-1,0,DUNGEONS.length-1);
   dungeon=dungeonId+1; room=r.room||1; score=0; shake=0; hitstop=0; combo={count:0,dmg:0,timer:0};
   door=null; transition=0; bossIntro=0; bossGate=false;
+  if(r.location==='town'){
+    enterTown(r.townPosition?.x,r.townPosition?.y);
+    return true;
+  }
   gameState='play'; Audio2.ensure(); Audio2.startBgm(); enterRoom();
   dunStats.gold0=player.gold;
   return true;
@@ -2897,12 +3158,16 @@ function update(){
     if(pressed('enter')||pressed(' ')){startGame(CLASS_KEYS[selIndex]);return;}
     return;
   }
+  if(gameState==='town'){
+    updateTown();
+    if(pressed('escape')){ serializeRun(); MULTIPLAYER.disconnect(); gameState='menu'; menuIndex=0; }
+    return;
+  }
   if(gameState==='mapsel'){
     const N=DUNGEONS.length; mapIndex=clamp(mapIndex,0,N-1);
     if(pressed('arrowup')){mapIndex=(mapIndex+N-1)%N;Audio2.sfx('ui');}
     if(pressed('arrowdown')){mapIndex=(mapIndex+1)%N;Audio2.sfx('ui');}
-    if(pressed('s')){ generateShopItems(); gameState='shop'; Audio2.sfx('ui'); return; }
-    if(pressed('escape')){gameState='select';return;}
+    if(pressed('escape')){enterTown(TOWN.gate.x-120,TOWN.gate.y);return;}
     for(let i=1;i<=Math.min(9,N);i++) if(pressed(''+i)){mapIndex=i-1;}
     if((pressed('enter')||pressed(' ')) && mapIndex<=(Save.data.unlocked||0)){ beginDungeon(mapIndex); return; }
     return;
@@ -2941,15 +3206,15 @@ function update(){
       }
     }
     if(pressed('escape')||pressed(' ')){
-      if(clearInfo){ mapIndex=dungeonId; gameState='mapsel'; Audio2.stopBgm(); }
+      if(shopReturnState==='town'||clearInfo){ enterTown(TOWN.npc.x+110,TOWN.npc.y); }
       else { gameState='play'; Audio2.startBgm(); enterRoom(); player.x=80; player.y=(GROUND_TOP+GROUND_BOT)/2; updateCam(); }
     }
     return;
   }
   if(gameState==='pause'){ if(pressed('enter')) gameState='play'; return; }
   if(gameState==='clear'){
-    if(pressed('s')){ Audio2.sfx('select'); gameState='shop'; return; }
-    if(pressed('enter')||pressed(' ')){ Audio2.sfx('select'); mapIndex=dungeonId; gameState='mapsel'; }
+    if(pressed('s')){ Audio2.sfx('select'); shopReturnState='town'; gameState='shop'; return; }
+    if(pressed('enter')||pressed(' ')){ Audio2.sfx('select'); enterTown(); }
     return;
   }
   if(gameState==='transition'){
@@ -3026,6 +3291,13 @@ function update(){
 }
 
 function drawDoor(){
+  if(DUNGEON_SPR.ready&&dungeonTheme()){
+    const name=door.boss?'bossDoor':'door',light=door.boss?'bossDoorLight':'doorLight',sprite=dungeonTheme()[name],f=sprite?.frame;
+    if(f){const scale=.72,x=door.x-f[2]*scale/2,y=GROUND_BOT-f[3]*scale;
+      ctx.save();ctx.drawImage(DUNGEON_SPR.img,f[0],f[1],f[2],f[3],x,y,f[2]*scale,f[3]*scale);
+      if(door.open){const glow=dungeonTheme()[light]?.frame,blink=.55+.45*Math.sin(performance.now()/120);if(glow){ctx.globalAlpha=blink;ctx.drawImage(DUNGEON_SPR.img,glow[0],glow[1],glow[2],glow[3],door.x-glow[2]*scale/2,GROUND_BOT-glow[3]*scale,glow[2]*scale,glow[3]*scale);}ctx.globalAlpha=blink;ctx.fillStyle='#fff';ctx.font='bold 28px sans-serif';ctx.textAlign='center';ctx.fillText('▶',door.x,door.y+8);}
+      ctx.restore();ctx.textAlign='left';return;}
+  }
   const cx=door.x, dw=64, dh=150, bot=GROUND_BOT+6, top=bot-dh;
   const col=door.boss?'#ff8c42':'#ffd24d';
   ctx.save();
@@ -3054,6 +3326,7 @@ function render(){
   if(gameState==='menu'){ drawMenu(); return; }
   if(gameState==='help'){ drawHelp(); return; }
   if(gameState==='select'){ drawSelect(); return; }
+  if(gameState==='town'){ drawTown(); return; }
   if(gameState==='mapsel'){ drawMapSelect(); return; }
   if(gameState==='shop'){ drawShop(); return; }
   if(gameState==='clear'){ drawClear(); return; }
@@ -3065,8 +3338,8 @@ function render(){
   for(const h of hazards)h.draw();
   for(const f of fields)f.draw();       // 持续场地面阵法(压在实体之下)
   for(const pk of pickups)pk.draw();
-  const ents=[player,...enemies].sort((a,b)=>a.y-b.y);
-  for(const e of ents){ if(e.dead&&e._t>2){ctx.save();ctx.globalAlpha=clamp(1-(e._t/30),0,1);e.draw();ctx.restore();} else e.draw(); }
+  const ents=[...dungeonSceneProps().map(prop=>({y:prop.y,draw:()=>drawDungeonProp(prop),prop:true})),player,...enemies].sort((a,b)=>a.y-b.y);
+  for(const e of ents){if(e.prop)e.draw();else if(e.dead&&e._t>2){ctx.save();ctx.globalAlpha=clamp(1-(e._t/30),0,1);e.draw();ctx.restore();}else e.draw();}
   for(const p of projectiles)p.draw();
   for(const p of enemyProjectiles)p.draw();
   drawEffects();
@@ -3111,7 +3384,7 @@ function loop(now){
 window.addEventListener('keydown',e=>{
   Audio2.ensure();
   const k=e.key.toLowerCase();
-  if(k==='0'){ if(gameState==='play'||gameState==='pause')Audio2.startBgm(); classSelectMessage=''; gameState='menu'; menuIndex=0; }
+  if(k==='0'){ if(gameState==='play'||gameState==='pause')Audio2.startBgm(); if(typeof MULTIPLAYER!=='undefined')MULTIPLAYER.disconnect(); classSelectMessage=''; gameState='menu'; menuIndex=0; }
   if(k==='p'){ if(gameState==='play')gameState='pause'; else if(gameState==='pause')gameState='play'; }
   if(k==='m'){ Audio2.toggleMute(); }
   if(k==='i'&&player&&gameState==='play'){
@@ -3120,7 +3393,13 @@ window.addEventListener('keydown',e=>{
   }
   if(k==='escape'&&player&&player.invOpen) player.invOpen=false;
 });
+window.addEventListener('beforeunload',()=>{
+  if(player&&!player.dead)serializeRun();
+  if(typeof AUTH!=='undefined')AUTH.saveNow(true);
+  MULTIPLAYER.disconnect();
+});
 
+ AUTH.init();
  gameState='menu';
  loop();
 
@@ -3148,10 +3427,11 @@ window.addEventListener('keydown',e=>{
     setTimeout(writeEvidence,100);
   }
   if(q.has('cont')){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); continueGame(); }; g(); return; }
-  if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); if(!startGame(q.get('shot')||'blade')) return; }; g(); return; }
+  if(q.get('state')==='town'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); startGame(q.get('shot')||'blade'); }; g(); return; }
+  if(q.get('state')==='mapsel'){ const g=()=>{ if(!SPR.ready) return setTimeout(g,50); if(!startGame(q.get('shot')||'blade')) return; gameState='mapsel'; }; g(); return; }
   if(!q.has('shot'))return;
   const cls=q.get('shot')||'blade', st=q.get('st')||'idle';
-  const go=()=>{ if(!SPR.ready) return setTimeout(go,50);
+  const go=()=>{ if(!SPR.ready||(typeof DUNGEON_SPR!=='undefined'&&!DUNGEON_SPR.ready)) return setTimeout(go,50);
     if(!startGame(cls)) return; beginDungeon(parseInt(q.get('map')||'0',10)||0); player.x=120; updateCam();
     if(q.get('mon')){ // 调试: 一字排开所有怪物种类
       enemies.length=0; const kinds=['gob','orc','archer','charger','bomber','boss'];

@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dnf-town-online",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-07-16",
+  "preview_urls": false,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dnf-accounts",
+      "database_id": "78a781c4-5d3a-4c71-97d8-4ac643cf6987"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TOWN_CHANNEL",
+        "class_name": "TownChannel"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["TownChannel"]
+    }
+  ]
+}

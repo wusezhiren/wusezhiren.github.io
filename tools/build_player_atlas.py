@@ -73,6 +73,31 @@ def validate_frames(frames):
         raise ValueError("image atlas contains no visible key frame")
 
 
+def compose_layers(*layers):
+    """Merge the weapon base/glow IMG entries in their shared client canvas."""
+    count = max((len(layer) for layer in layers if layer), default=0)
+    result = []
+    for index in range(count):
+        frames = [resolve(layer, index) for layer in layers if layer and index < len(layer)]
+        width = max((frame.get("fw", 0) or frame["x"] + frame["w"] for frame in frames), default=1)
+        height = max((frame.get("fh", 0) or frame["y"] + frame["h"] for frame in frames), default=1)
+        canvas = Image.new("RGBA", (max(1, width), max(1, height)), (0, 0, 0, 0))
+        form = 0x10
+        for frame in frames:
+            form = frame.get("form", form)
+            if frame["image"] is not None and frame["image"].getbbox() is not None:
+                canvas.alpha_composite(frame["image"], (frame["x"], frame["y"]))
+        bbox = canvas.getbbox()
+        if bbox is None:
+            result.append({"image": Image.new("RGBA", (1, 1)), "x": 0, "y": 0,
+                           "w": 1, "h": 1, "fw": width, "fh": height, "link": -1, "form": form})
+            continue
+        image = canvas.crop(bbox)
+        result.append({"image": image, "x": bbox[0], "y": bbox[1], "w": image.width,
+                       "h": image.height, "fw": width, "fh": height, "link": -1, "form": form})
+    return result
+
+
 def build_single(frames, output_dir, name, foot_x=0, foot_y=0, scale=1.0):
     validate_frames(frames)
     cells = []
@@ -117,7 +142,13 @@ def build_weapons(output_dir, names=None, source_dir=None):
         raise ValueError(f"unknown weapon type: {sorted(unknown)}")
     result = {}
     for name in names:
-        frames = load(source_dir / WEAPON_NPKS[name])
+        path = source_dir / WEAPON_NPKS[name]
+        base = load(path, 0)
+        try:
+            detail = load(path, 1)
+        except ValueError:
+            detail = []
+        frames = compose_layers(base, detail)
         result[name] = build_single(frames, output_dir, name)
     for alias, canonical in WEAPON_ALIASES.items():
         if canonical in result:
