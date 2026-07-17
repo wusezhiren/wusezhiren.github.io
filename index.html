@@ -191,6 +191,12 @@ Save.data.unlocked = Math.max(0, Math.min(MAX_UNLOCKED_DUNGEON, Save.data.unlock
 /* ===================== 云端账户与存档 ===================== */
 const AUTH={
   token:null,username:null,saving:false,timer:null,els:null,
+  isAuthenticated(){return !this.els||!!this.token;},
+  requireLogin(){
+    if(this.isAuthenticated())return true;
+    if(this.els){this.paint('请先登录后开始游戏');this.show();}
+    return false;
+  },
   apiBase(){try{const u=new URL(window.DNF_MULTIPLAYER_URL||'',location.href);u.protocol='https:';u.pathname='';u.search='';return u.toString().replace(/\/$/,'');}catch{return '';}},
   init(){
     const modal=document.querySelector('#accountModal');if(!modal)return;
@@ -242,7 +248,14 @@ const AUTH={
     catch(error){this.paint('云存档待同步');}finally{this.saving=false;}
   },
   async logout(){try{await this.request('/auth/logout',{method:'POST'});}catch{}this.signOut();},
-  signOut(message){this.token=null;this.username=null;clearTimeout(this.timer);try{localStorage.removeItem('dnf_auth_token');localStorage.removeItem('dnf_auth_user');}catch{}this.paint(message);},
+  signOut(message){
+    this.token=null;this.username=null;clearTimeout(this.timer);
+    try{localStorage.removeItem('dnf_auth_token');localStorage.removeItem('dnf_auth_user');}catch{}
+    if(typeof MULTIPLAYER!=='undefined')MULTIPLAYER.disconnect();
+    if(typeof player!=='undefined'&&player){player=null;enemies=[];gameState='menu';menuIndex=0;}
+    this.paint(message||'请先登录后开始游戏');
+    if(this.els)this.show();
+  },
 };
 
 /* ===================== 音频(WebAudio 合成) ===================== */
@@ -2990,6 +3003,7 @@ let door=null, transition=0, bossIntro=0, bossGate=false;
 const ROOMS_PER_DUNGEON=6; // 1~5 普通房, 6 = Boss 房
 function resetPools(){ particles.length=0;floatTexts.length=0;effects.length=0;projectiles.length=0;enemyProjectiles.length=0;pickups.length=0;hazards.length=0;lootFly.length=0;fields.length=0; }
 function startGame(clsKey){
+  if(typeof AUTH!=='undefined'&&!AUTH.requireLogin())return false;
   if(!canStartClass(clsKey)){
     player=null; gameState='select'; classSelectMessage=classAvailability(clsKey)?.label||'无效职业，无法开始游戏';
     return false;
@@ -3024,6 +3038,7 @@ function serializeRun(){
 }
 function clearRun(){ if(Save.data.run){ Save.data.run=null; Save.save(); } }
 function continueGame(){
+  if(typeof AUTH!=='undefined'&&!AUTH.requireLogin())return false;
   if(typeof migrateSave==='function'){ const migrated=migrateSave(Save.data); Save.data=migrated.save; }
   const r=Save.data.run; if(!r){ gameState='select'; return; }
   if(!canStartClass(r.clsKey)){

@@ -18,3 +18,14 @@ test('cloud save is wired to local save and page shutdown', () => {
   assert.match(html, /beforeunload[\s\S]*serializeRun\(\)[\s\S]*AUTH\.saveNow\(true\)/);
   assert.match(config, /wss:\/\/dnf-town-online\.1781718217\.workers\.dev\/town/);
 });
+
+test('game entry points require an authenticated account', () => {
+  assert.match(html, /isAuthenticated\(\)\{return !this\.els\|\|!!this\.token;\}/);
+  assert.match(html, /function startGame\(clsKey\)\{\s*if\(typeof AUTH!=='undefined'&&!AUTH\.requireLogin\(\)\)return false;/);
+  assert.match(html, /function continueGame\(\)\{\s*if\(typeof AUTH!=='undefined'&&!AUTH\.requireLogin\(\)\)return false;/);
+  assert.match(html, /请先登录后开始游戏/);
+});
+
+test('logout clears an active player and returns to the menu', () => {
+  assert.match(html, /signOut\(message\)[\s\S]*player=null;enemies=\[\];gameState='menu';menuIndex=0;/);
+});

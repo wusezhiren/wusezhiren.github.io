@@ -20,6 +20,7 @@ test('new character starts in town and the dungeon gate opens map selection', ()
   const page = pageContext();
   const result = vm.runInContext(`(() => {
     Audio2.sfx = () => {};
+    AUTH.token = 'test-token';
     startGame('blade');
     const startState = gameState;
     player.x = TOWN.gate.x;
@@ -33,10 +34,27 @@ test('new character starts in town and the dungeon gate opens map selection', ()
   assert.equal(result.enemies, 0);
 });
 
+test('anonymous players cannot create a character', () => {
+  const page = pageContext();
+  const result = vm.runInContext(`(() => {
+    AUTH.els = {
+      modal: { classList: { add() {} } }, state: { textContent: '', classList: { toggle() {} } },
+      open: { hidden: false }, logout: { hidden: true }, message: { textContent: '' },
+    };
+    AUTH.token = null;
+    const started = startGame('blade');
+    return { started, state: gameState, player: Boolean(player) };
+  })()`, page);
+  assert.equal(result.started, false);
+  assert.equal(result.state, 'menu');
+  assert.equal(result.player, false);
+});
+
 test('town NPC opens the shop and leaving it returns to town', () => {
   const page = pageContext();
   const result = vm.runInContext(`(() => {
     Audio2.sfx = () => {};
+    AUTH.token = 'test-token';
     startGame('blade');
     player.x = TOWN.npc.x;
     player.y = TOWN.npc.y;
@@ -54,6 +72,7 @@ test('town NPC opens the shop and leaving it returns to town', () => {
 test('town location and position survive run serialization', () => {
   const page = pageContext();
   const run = vm.runInContext(`(() => {
+    AUTH.token = 'test-token';
     startGame('blade');
     player.x = 812;
     player.y = 466;
@@ -67,6 +86,7 @@ test('town location and position survive run serialization', () => {
 test('multiplayer stays optional and does not connect without a configured endpoint', () => {
   const page = pageContext();
   const result = vm.runInContext(`(() => {
+    AUTH.token = 'test-token';
     startGame('blade');
     return { endpoint: MULTIPLAYER.endpoint(), socket: MULTIPLAYER.socket, state: gameState };
   })()`, page);
