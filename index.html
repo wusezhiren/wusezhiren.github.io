@@ -933,9 +933,9 @@ class Player extends Fighter {
   }
   cast(sk){
     const dedicated=sk.fx==='uppercut'||(this.clsKey==='blade'&&['tripleslash','dragonup','flashcut','revolvingsword','hiddenblade','illusionslash'].includes(sk.fx))||(this.clsKey==='berserk'&&['gorecross','hopsmash','bloodblast','grabblastblood','bloodyrave','outragebreak'].includes(sk.fx));
+    sk._cd=sk.cd;
     if(!dedicated) this.mp-=sk.mp;
     // if(sk.hpCost) this.hp=Math.max(1,this.hp-sk.hpCost); 专用动作在指定阶段扣除HP
-    if(!dedicated) sk._cd=sk.cd;
     const actionDur=skillActionDurationTicks(sk.fx,sk.dur);
     this.attackTimer=Math.max(8,Math.round(actionDur*this.attackSpeedMul())); sk._castDur=this.attackTimer; this.attackType=sk;
     spawnText(this.x,this.screenY()-this.h-30,sk.name+'!',sk.color);
@@ -945,7 +945,7 @@ class Player extends Fighter {
       const self=this;
       this.uppercutAction=SKILL_HANDLERS.uppercut.createUppercut({
         clock:combatClock,
-        resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get cooldown(){return sk._cd;},set cooldown(v){sk._cd=v;}},
+        resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get cooldown(){return sk._cd;},set cooldown(v){sk._cd=Math.max(sk._cd,v||0);}},
         status:{setTimer:(name,value)=>DOF70.combat.status.setTimer(self.combatStatus,name,value)},
         freeze:duration=>DOF70.combat.status.freeze(combatClock,duration),
         emit:event=>self.handleUppercutEvent(event),
@@ -1021,7 +1021,7 @@ class Player extends Fighter {
     const self=this;
     const target=this.skillTarget();
     return { direction:this.dir, weapon:this.equipped?.weapon?.weaponType||classWeaponKey(this.clsKey), clock:combatClock, owner:self, target, targetStatus:target?.combatStatus,
-      resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get hp(){return self.hp;},set hp(v){self.hp=Math.max(1,v);},get maxhp(){return self.maxhp;},get cooldown(){return self.attackType?self.attackType._cd:0;},set cooldown(v){if(self.attackType)self.attackType._cd=v;}},
+      resources:{get mp(){return self.mp;},set mp(v){self.mp=v;},get hp(){return self.hp;},set hp(v){self.hp=Math.max(1,v);},get maxhp(){return self.maxhp;},get cooldown(){return self.attackType?self.attackType._cd:0;},set cooldown(v){if(self.attackType)self.attackType._cd=Math.max(self.attackType._cd,v||0);}},
        statusState:self.combatStatus,
        release:target=>{ if(target?.combatStatus) target.combatStatus.held=null; },
        clearSuction:target=>{ if(target?.combatStatus?.suction?.target===self) target.combatStatus.suction={target:null,time:0}; },
@@ -1103,6 +1103,10 @@ const DUNGEONS = [
     tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
     monsterPool:['orc','archer','charger','bomber','bomber','gob'], boss:'boss',
     desc:'高阶混编地下城,远程、冲锋、自爆同时登场。'},
+  {id:'mushroomgarden', name:'蘑菇花园', recommendedLv:12, rooms:7,
+    theme:'mushroom', tint:['#17201e','#263b2c'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','orc','bomber','archer','charger'], boss:'boss',
+    desc:'荧光蘑菇与孢子遍布的异变花园,环境明暗交错。'},
 ];
 function currentDungeonDef(){ return DUNGEONS[dungeonId] || DUNGEONS[0]; }
 function currentRooms(){ return currentDungeonDef().rooms || ROOMS_PER_DUNGEON; }
@@ -1126,7 +1130,7 @@ class Enemy extends Fighter {
     const c=ENEMY_CONF[kind];
     super(x,y,{w:c.w,depth:c.depth,h:c.h,hp:Math.round(c.hp*scale),speed:c.speed,color:c.color,dark:c.dark,dir:-1});
     this.kind=kind; this.conf={...c}; this.level=70; this.scale=scale;
-    this.attackCd=rand(20,80); this.knockdown=0; this.getupProtect=0; this.launched=false; this.airCombo=0; this.juggle=0;
+    this.attackCd=rand(20,80); this.knockdown=0; this.launched=false; this.airCombo=0; this.juggle=0;
     this.bossCd=180; this.enraged=false; this.fuse=0; this.chargeState=0; this.chargeCd=rand(40,120);
     this.atkScale=scale;
     this.aggro=(kind==='boss'); // 仇恨: 玩家进入范围或被攻击后激活, Boss 进房即仇恨
@@ -1135,9 +1139,9 @@ class Enemy extends Fighter {
   hurtPlayer(dmg,kb){ if(player.dead||player.invuln>0)return false;
     player.takeDamage(dmg,this.dir,kb); player.invuln=18; shake=Math.max(shake,5); Audio2.sfx('hurt'); return true; }
   takeDamage(dmg,fromDir,kb,crit){
-    if(this.getupProtect>0 && this.onGround) return 0; // 起身保护: 倒地刚起身不再被无限压起身
     if(!this.onGround||this.launched){ this.airCombo++; this.juggle=50; dmg=Math.round(dmg*1.12); this.vz=Math.max(this.vz,3.2); }
     const r=super.takeDamage(dmg,fromDir,kb,crit);
+    if(!this.dead&&this.kind!=='boss'&&this.onGround&&!this.launched&&kb>=12) this.knockdown=Math.max(this.knockdown,24);
     if(!this.dead&&!this.aggro) alertChain(this);
     return r;
   }
@@ -1147,7 +1151,6 @@ class Enemy extends Fighter {
     this.actionPlayer.update(1000/60);
     if(this.flash>0)this.flash--;
     if(this.slow>0)this.slow--;
-    if(this.getupProtect>0)this.getupProtect--;
     if(this.juggle>0)this.juggle--;
     if(this.freeze>0){ // 冰冻(原版冰霜之萨亚/冰刃波动剑): 完全定身, 不移动不攻击, 仍可被打
       this.freeze--; this.applyKnock(); this.physics();
@@ -1156,7 +1159,7 @@ class Enemy extends Fighter {
     }
     if(this.knockdown>0){
       this.knockdown--; this.applyKnock(); this.physics();
-      if(this.knockdown<=0){ this.getupProtect=34; this.airCombo=0; spawnText(this.x,this.screenY()-this.h-8,'起身保护','#8ab4ff'); addEffect({type:'aura',x:this.x,y:this.y,color:'#8ab4ff',max:24,r0:10,r1:62}); }
+      if(this.knockdown<=0) this.airCombo=0;
       return;
     }
     if(this.launched && this.onGround && this.vz<=0){ this.launched=false; this.juggle=0; this.knockdown=24+Math.min(28,this.airCombo*4); spawnHit(this.x,this.y,'#fff',6); }
@@ -1533,7 +1536,7 @@ for(const k in MON_DEF){ const d=MON_DEF[k], o={img:new Image(),meta:null,ready:
 function pickMonFrame(e,d){
   let a,idx;
   if(e.dead){ a=d.die; idx=Math.min(a.length-1,Math.floor((e._t||0)/3)); }
-  else if(e.knockdown>0){ a=d.die; idx=0; }
+  else if(e.knockdown>0){ a=d.die; idx=a.length-1; }
   else if(e.attackTimer>0){ a=d.attack; const dur=(e.kind==='boss'?28:22);
     idx=Math.min(a.length-1,Math.floor(clamp(1-e.attackTimer/dur,0,1)*a.length)); }
   else if(e.aggro){ a=d.walk; idx=Math.floor(performance.now()/110)%a.length; }
@@ -2418,6 +2421,13 @@ function drawTownSprite(name,x,y,sx=1,sy=sx){
 const TOWN={
   id:'hendonmyre',name:'赫顿玛尔',spawn:{x:180,y:430},
   npc:{x:690,y:430,name:'林纳斯',action:'shop'},
+  npcs:[
+    {x:690,y:430,name:'林纳斯',role:'武器商人',sprite:'linus',action:'shop'},
+    {x:900,y:438,name:'赛丽亚',role:'旅馆主人',sprite:'seria',message:'欢迎回来,冒险家。旅馆永远为你留着房间。'},
+    {x:1110,y:442,name:'达芙妮',role:'徽章商人',sprite:'daphne',message:'想让装备更闪耀吗？收集徽章来找我吧。'},
+    {x:1310,y:440,name:'米内特',role:'暗精灵导师',sprite:'minet',message:'暗影之力需要耐心,也需要精准的时机。'},
+    {x:1510,y:443,name:'贝希守卫',role:'城门守卫',sprite:'guard',message:'前方就是格兰之森,祝你平安归来。'},
+  ],
   gate:{x:1660,y:405,name:'格兰之森入口'},
 };
 let townPrompt='', shopReturnState='town';
@@ -2484,6 +2494,7 @@ function enterTown(x,y){
   showStageTitle(TOWN.name,'冒险家的休整之地','#ffcf4d',false);
 }
 function nearTownObject(obj,range=105){ return Math.hypot(player.x-obj.x,(player.y-obj.y)*1.6)<range; }
+function nearestTownNpc(){ return TOWN.npcs.find(n=>nearTownObject(n,105))||null; }
 function updateTown(){
   let mx=0,my=0;
   if(down('arrowleft')){mx=-1;player.dir=-1;}
@@ -2497,9 +2508,11 @@ function updateTown(){
   player.state=moving?'walk':'idle'; player.selectAction(moving?'walk':'stand');
   updateCam();
   MULTIPLAYER.update();
-  townPrompt=nearTownObject(TOWN.npc)?'空格 / Enter  与 '+TOWN.npc.name+' 交谈':nearTownObject(TOWN.gate,125)?'空格 / Enter  进入 '+TOWN.gate.name:'';
+  const nearbyNpc=nearestTownNpc();
+  townPrompt=nearbyNpc?'空格 / Enter  与 '+nearbyNpc.name+' 交谈':nearTownObject(TOWN.gate,125)?'空格 / Enter  进入 '+TOWN.gate.name:'';
   if(pressed('enter')||pressed(' ')){
-    if(nearTownObject(TOWN.npc)){ generateShopItems(); shopReturnState='town'; gameState='shop'; Audio2.sfx('select'); }
+    if(nearbyNpc?.action==='shop'){ generateShopItems(); shopReturnState='town'; gameState='shop'; Audio2.sfx('select'); }
+    else if(nearbyNpc){ spawnText(nearbyNpc.x,nearbyNpc.y-110,nearbyNpc.message,'#ffe08a'); Audio2.sfx('select'); }
     else if(nearTownObject(TOWN.gate,125)){ mapIndex=Math.min(Save.data.unlocked||0,DUNGEONS.length-1); MULTIPLAYER.disconnect(); gameState='mapsel'; Audio2.sfx('select'); }
   }
 }
@@ -2512,13 +2525,16 @@ function drawTownBackground(){
   for(let y=GROUND_TOP;y<H;y+=120) for(let x=0;x<WORLD_W;x+=224) drawTownSprite('ground',x,y,1,1);
 }
 function drawTownNpc(){
-  const n=TOWN.npc; drawShadow(n.x,n.y,28);
-  if(TOWN_SPR.ready){
-    const frames=TOWN_SPR.meta.linus.frames, fi=Math.floor(performance.now()/TOWN_SPR.meta.linus.frameMs)%frames.length, f=frames[fi], scale=.72;
-    ctx.drawImage(TOWN_SPR.img,f[0],f[1],f[2],f[3],n.x+f[4]*scale,n.y+f[5]*scale,f[2]*scale,f[3]*scale);
+  for(const n of TOWN.npcs){
+    drawShadow(n.x,n.y,28);
+    if(TOWN_SPR.ready){
+      const data=TOWN_SPR.meta.npcs?.[n.sprite], frames=data?.frames||[], fi=frames.length?Math.floor(performance.now()/data.frameMs)%frames.length:-1;
+      if(fi>=0){ const f=frames[fi], scale=n.sprite==='guard'?.72:.72; ctx.drawImage(TOWN_SPR.img,f[0],f[1],f[2],f[3],n.x+f[4]*scale,n.y+f[5]*scale,f[2]*scale,f[3]*scale); }
+    }
+    ctx.textAlign='center'; ctx.fillStyle='#ffd24d'; ctx.font='bold 13px sans-serif'; ctx.fillText(n.name,n.x,n.y-103);
+    ctx.fillStyle='#d7dde6'; ctx.font='11px sans-serif'; ctx.fillText(n.role,n.x,n.y-88);
   }
-  ctx.textAlign='center'; ctx.fillStyle='#ffd24d'; ctx.font='bold 13px sans-serif'; ctx.fillText(n.name,n.x,n.y-103);
-  ctx.fillStyle='#d7dde6'; ctx.font='11px sans-serif'; ctx.fillText('武器商人',n.x,n.y-88); ctx.textAlign='left';
+  ctx.textAlign='left';
 }
 function drawTownGate(){
   const g=TOWN.gate, pulse=.45+.2*Math.sin(performance.now()/180);
@@ -3442,8 +3458,8 @@ window.addEventListener('beforeunload',()=>{
     if(q.get('lv')){ player.level=parseInt(q.get('lv'),10)||1; }
     if(st==='walk'||st==='run'){ keys['arrowright']=true; if(st==='run') player.running=1; }
     if(st==='attack'){ const a=()=>{ if(player&&!player.dead){ keys['x']=true; setTimeout(()=>keys['x']=false,30);} setTimeout(a,260); }; a(); }
-    if(q.get('sk')){ player.level=Math.max(player.level,6); const sk=q.get('sk'); // 反复释放某技能便于截图
-      const c=()=>{ if(player&&!player.dead){ player.mp=player.maxmp; for(const s of player.skills)s._cd=0; keys[sk]=true; setTimeout(()=>keys[sk]=false,40);} setTimeout(c,500); }; c(); }
+    if(q.get('sk')){ player.level=Math.max(player.level,6); const sk=q.get('sk'); // 反复尝试释放某技能便于截图, 仍遵守蓝量和冷却
+      const c=()=>{ if(player&&!player.dead){ keys[sk]=true; setTimeout(()=>keys[sk]=false,40);} setTimeout(c,500); }; c(); }
     if(q.get('clear')){ clearInfo={dungeon:1,name:currentDungeonDef().name,sec:142,kills:27,gold:386,grade:q.get('clear'),lv:5,hp:73}; gameState='clear'; }
   }; go();
 })();

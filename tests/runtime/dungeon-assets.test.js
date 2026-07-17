@@ -10,7 +10,7 @@ test('loads four original dungeon themes and renders their layered environments'
   vm.createContext(context);
   vm.runInContext(fs.readFileSync('assets/dungeons_original.meta.js', 'utf8'), context);
   const themes = context.window.DUNGEONS_ORIGINAL_META.themes;
-  assert.deepEqual(Object.keys(themes), ['light', 'ice', 'red', 'dark']);
+  assert.deepEqual(Object.keys(themes), ['light', 'ice', 'red', 'dark', 'mushroom']);
   for (const theme of Object.values(themes)) {
     for (const name of ['far', 'mid', 'floor', 'tree', 'crystal', 'door', 'bossDoor']) {
       assert.ok(theme[name]?.frame, `missing ${name}`);
@@ -19,6 +19,17 @@ test('loads four original dungeon themes and renders their layered environments'
   assert.match(html, /const DUNGEON_SPR=/);
   assert.match(html, /dungeonSceneProps\(\)/);
   assert.match(html, /door\.boss\?'bossDoor':'door'/);
+});
+
+test('town atlas includes original NPC animation sets', () => {
+  const context = { window: {} };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync('assets/town_hendonmyre.meta.js', 'utf8'), context);
+  const npcs = context.window.TOWN_HENDONMYRE_META.npcs;
+  for (const name of ['linus', 'seria', 'daphne', 'minet', 'guard']) {
+    assert.ok(npcs[name]?.frames?.length > 0, `missing ${name}`);
+  }
+  assert.match(html, /const nearbyNpc=nearestTownNpc\(\)/);
 });
 
 test('uses a larger unified character scale and visible stand weapon fallback', () => {

@@ -25,6 +25,7 @@ MAP_SPRITES = {
     "treeSmall": (123, 0),
     "forestGate": (113, 0),
 }
+NPC_SPRITES = {"linus": 267, "seria": 772, "daphne": 821, "minet": 606, "guard": 496}
 
 
 def resolved_frame(frames, index):
@@ -62,29 +63,31 @@ def main():
     map_entries = dict(read_npk(str(MAP_NPK)))
     npc_entries = dict(read_npk(str(NPC_NPK)))
     cells = {}
-    metadata = {"source": "DOF70", "sprites": {}, "linus": {"frameMs": 140, "frames": []}}
+    metadata = {"source": "DOF70", "sprites": {}, "npcs": {}}
 
     for name, (img_index, frame_index) in MAP_SPRITES.items():
         frames = parse_img(map_entries[img_index])["frames"]
         frame = resolved_frame(frames, frame_index)
         cells[name] = frame["image"]
 
-    linus_frames = parse_img(npc_entries[267])["frames"]
-    first = resolved_frame(linus_frames, 0)
-    foot_x = first["x"] + first["w"] / 2
-    foot_y = first["y"] + first["h"]
-    linus_offsets = []
-    for index in range(len(linus_frames)):
-        frame = resolved_frame(linus_frames, index)
-        key = f"linus{index}"
-        cells[key] = frame["image"]
-        linus_offsets.append((key, round(frame["x"] - foot_x, 1), round(frame["y"] - foot_y, 1)))
+    for npc_name, image_index in NPC_SPRITES.items():
+        frames = parse_img(npc_entries[image_index])["frames"]
+        first = resolved_frame(frames, 0)
+        foot_x = first["x"] + first["w"] / 2
+        foot_y = first["y"] + first["h"]
+        values = {"frameMs": 140, "frames": []}
+        for index in range(len(frames)):
+            frame = resolved_frame(frames, index)
+            key = f"{npc_name}{index}"
+            cells[key] = frame["image"]
+            values["frames"].append([key, round(frame["x"] - foot_x, 1), round(frame["y"] - foot_y, 1)])
+        metadata["npcs"][npc_name] = values
 
     atlas, positions = pack(cells)
     for name in MAP_SPRITES:
         metadata["sprites"][name] = list(positions[name])
-    for key, ox, oy in linus_offsets:
-        metadata["linus"]["frames"].append([*positions[key], ox, oy])
+    for npc in metadata["npcs"].values():
+        npc["frames"] = [[*positions[key], ox, oy] for key, ox, oy in npc["frames"]]
 
     OUT.mkdir(parents=True, exist_ok=True)
     atlas.save(OUT / "town_hendonmyre.png", optimize=True)

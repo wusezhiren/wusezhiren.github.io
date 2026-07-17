@@ -19,6 +19,7 @@ THEMES = {
     "ice": "icecrystal_forest",
     "red": "redcrystal_forest",
     "dark": "darkrex_darkforest",
+    "mushroom": "mushroomgarden",
 }
 
 
@@ -56,16 +57,28 @@ def main():
     cells = {}
     metadata = {"source": "DOF70", "themes": {}}
     for theme, source in THEMES.items():
-        base = f"sprite_map_season4_metastasis_abnoba_{source}.NPK"
-        tile = f"sprite_map_season4_metastasis_abnoba_{source}_tile.NPK"
-        obj = f"sprite_map_season4_metastasis_abnoba_{source}_obj.NPK"
-        gate = f"sprite_map_pathgate_season4_abnoba_{source}.NPK"
-        specs = {
-            "far": (base, 0, 0), "mid": (base, 2, 0), "floor": (tile, 0, 0),
-            "tree": (obj, 13, 0), "treeSmall": (obj, 14, 0), "crystal": (obj, 1, 0),
-            "statue": (obj, 11, 0), "door": (gate, 12, 0), "doorLight": (gate, 13, 0),
-            "bossDoor": (gate, 4, 0), "bossDoorLight": (gate, 5, 0),
-        }
+        if theme == "mushroom":
+            base = f"sprite_map_season4_meltdown_{source}.NPK"
+            tile = f"sprite_map_season4_meltdown_{source}_tile.NPK"
+            obj = f"sprite_map_season4_meltdown_{source}_obj.NPK"
+            gate = "sprite_map_pathgate_season4_meltdown_mushroomgarden&salif.NPK"
+            specs = {
+                "far": (base, 2, 0), "mid": (base, 1, 0), "floor": (tile, 0, 0),
+                "tree": (obj, 0, 0), "treeSmall": (obj, 2, 0), "crystal": (obj, 4, 0),
+                "statue": (obj, 11, 0), "door": (gate, 0, 0), "doorLight": (gate, 1, 0),
+                "bossDoor": (gate, 2, 0), "bossDoorLight": (gate, 3, 0),
+            }
+        else:
+            base = f"sprite_map_season4_metastasis_abnoba_{source}.NPK"
+            tile = f"sprite_map_season4_metastasis_abnoba_{source}_tile.NPK"
+            obj = f"sprite_map_season4_metastasis_abnoba_{source}_obj.NPK"
+            gate = f"sprite_map_pathgate_season4_abnoba_{source}.NPK"
+            specs = {
+                "far": (base, 0, 0), "mid": (base, 2, 0), "floor": (tile, 0, 0),
+                "tree": (obj, 13, 0), "treeSmall": (obj, 14, 0), "crystal": (obj, 1, 0),
+                "statue": (obj, 11, 0), "door": (gate, 12, 0), "doorLight": (gate, 13, 0),
+                "bossDoor": (gate, 4, 0), "bossDoorLight": (gate, 5, 0),
+            }
         metadata["themes"][theme] = {}
         for name, (pack_name, image_index, frame_index) in specs.items():
             key = f"{theme}_{name}"

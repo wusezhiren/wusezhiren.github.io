@@ -17,7 +17,7 @@ test('tracks invincibility, hit immunity and super armor independently', () => {
   assert.equal(status.hasSuperArmor(s), false);
 });
 
-test('transitions hitstun, launch, landing, knockdown, getup and protection', () => {
+test('transitions hitstun, launch, landing, knockdown and getup without protection', () => {
   const s = status.createStatus();
   status.applyHitstun(s, 20);
   assert.equal(s.state, 'hitstun');
@@ -29,7 +29,7 @@ test('transitions hitstun, launch, landing, knockdown, getup and protection', ()
   assert.equal(s.state, 'getup');
   status.tick(s, s.timers.getup);
   assert.equal(s.state, 'idle');
-  assert.equal(status.isGetupProtected(s), true);
+  assert.equal(status.canHit(s), true);
 });
 
 test('supports grab, held target, suction and per-target hit intervals', () => {

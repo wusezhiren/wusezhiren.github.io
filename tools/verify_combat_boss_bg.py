@@ -2,7 +2,6 @@
 """Static checks for combat feel, boss staging, and background depth polish."""
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 src = (Path(__file__).resolve().parents[1] / "index.html").read_text(encoding="utf-8")
@@ -11,9 +10,8 @@ checks: list[tuple[str, bool]] = []
 def check(name: str, ok: bool) -> None:
     checks.append((name, ok))
 
-check("enemy has get-up protection state", "getupProtect" in src and "起身保护" in src)
 check("launched enemies can be juggled before knockdown", "juggle" in src and "launched" in src and "airCombo" in src)
-check("enemy damage respects get-up protection", re.search(r"if\(this\.getupProtect>0\).*return 0", src) is not None)
+check("downed enemies do not gain get-up immunity", "getupProtect" not in src and "起身保护" not in src)
 check("player attack speed stat affects timers", "attackSpeedMul" in src and "speedStat" in src)
 check("equipment can roll attack speed", "stats.speed" in src or "speed:" in src and "攻速" in src)
 check("boss intro lock state exists", "bossIntro" in src and "bossGate" in src)

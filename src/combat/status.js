@@ -6,7 +6,7 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(globalThis, function () {
   'use strict';
-  const TIMER_NAMES = ['invincible', 'hitImmunity', 'superArmor', 'hitstun', 'knockdown', 'getup', 'getupProtection', 'grab', 'ungrabbable'];
+  const TIMER_NAMES = ['invincible', 'hitImmunity', 'superArmor', 'hitstun', 'knockdown', 'getup', 'grab', 'ungrabbable'];
   function createStatus() {
     const timers = Object.fromEntries(TIMER_NAMES.map(name => [name, 0]));
     return { state: 'idle', timers, held: null, suction: { target: null, time: 0 }, hits: new Map() };
@@ -22,7 +22,7 @@
     if (s.state === 'hitstun' && !s.timers.hitstun) s.state = 'idle';
     if (s.state === 'launched' && !s.timers.hitstun) s.state = 'idle';
     if (s.state === 'knockdown' && !s.timers.knockdown) s.state = 'getup', setTimer(s, 'getup', 1);
-    else if (s.state === 'getup' && !s.timers.getup) s.state = 'idle', setTimer(s, 'getupProtection', 34);
+    else if (s.state === 'getup' && !s.timers.getup) s.state = 'idle';
     return s;
   }
   function canHit(s) { return !s.timers.invincible && !s.timers.hitImmunity; }
@@ -37,10 +37,9 @@
   function canHitTarget(s, target) { return !s.hits.has(target) || s.hits.get(target) <= 0; }
   function recordHit(s, target, interval) { s.hits.set(target, Math.max(0, interval || 0)); return s; }
   function tickHits(s, amount = 1) { for (const [target, time] of s.hits) s.hits.set(target, Math.max(0, time - amount)); return s; }
-  function isGetupProtected(s) { return !!s.timers.getupProtection; }
   function createClock() { return { hitstop: 0 }; }
   function freeze(clock, duration) { clock.hitstop = Math.max(clock.hitstop || 0, Math.max(0, duration || 0)); return clock; }
   function tickClock(clock, amount = 1) { clock.hitstop = Math.max(0, (clock.hitstop || 0) - amount); return clock; }
   function advanceClock(clock, amount) { return clock.hitstop > 0 ? 0 : amount; }
-  return { createStatus, setTimer, clearTimer, tick, canHit, hasSuperArmor, applyHitstun, launch, land, grab, isHolding, isUngrabbable, suction, canHitTarget, recordHit, tickHits, isGetupProtected, createClock, freeze, tickClock, advanceClock };
+  return { createStatus, setTimer, clearTimer, tick, canHit, hasSuperArmor, applyHitstun, launch, land, grab, isHolding, isUngrabbable, suction, canHitTarget, recordHit, tickHits, createClock, freeze, tickClock, advanceClock };
 });
