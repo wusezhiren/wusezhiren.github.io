@@ -69,6 +69,26 @@ test('town NPC opens the shop and leaving it returns to town', () => {
   assert.equal(result.returnState, 'town');
 });
 
+test('resting at Shusia pub fully restores HP and MP (original [recover stamina] role)', () => {
+  const page = pageContext();
+  const result = vm.runInContext(`(() => {
+    Audio2.sfx = () => {};
+    AUTH.token = 'test-token';
+    startGame('blade');
+    const pub = TOWN.npcs.find(n => n.action === 'rest');
+    player.hp = 1; player.mp = 0;
+    player.x = pub.x; player.y = pub.y;
+    keys['enter'] = true;
+    update();
+    return { npc: pub.name, hp: player.hp, mp: player.mp,
+      maxHp: player.maxhp, maxMp: player.maxmp, state: gameState };
+  })()`, page);
+  assert.equal(result.npc, '索西雅');
+  assert.equal(result.hp, result.maxHp);
+  assert.equal(result.mp, result.maxMp);
+  assert.equal(result.state, 'town');
+});
+
 test('town location and position survive run serialization', () => {
   const page = pageContext();
   const run = vm.runInContext(`(() => {

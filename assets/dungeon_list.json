@@ -1,0 +1,4883 @@
+{
+ "source": "DOF70 Script.pvf",
+ "count": 349,
+ "dungeons": [
+  {
+   "id": 1,
+   "path": "act1/lorien.dgn",
+   "act": "act1",
+   "name": "洛蘭",
+   "name_sc": "洛兰",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    2,
+    3
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 2,
+   "path": "act1/lorieninside.dgn",
+   "act": "act1",
+   "name": "洛蘭深處",
+   "name_sc": "洛兰深处",
+   "minLevel": 2,
+   "basisLevel": 2,
+   "mazeSize": [
+    3,
+    3
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 3,
+   "path": "act1/mirkwood.dgn",
+   "act": "act1",
+   "name": "幽暗密林",
+   "name_sc": "幽暗密林",
+   "minLevel": 2,
+   "basisLevel": 4,
+   "mazeSize": [
+    3,
+    4
+   ],
+   "rooms": 7
+  },
+  {
+   "id": 4,
+   "path": "act1/mirkwooddeep.dgn",
+   "act": "act1",
+   "name": "幽暗密林深處",
+   "name_sc": "幽暗密林深处",
+   "minLevel": 3,
+   "basisLevel": 6,
+   "mazeSize": [
+    3,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 5,
+   "path": "act1/sunderland.dgn",
+   "act": "act1",
+   "name": "雷鳴廢墟",
+   "name_sc": "雷鸣废墟",
+   "minLevel": 5,
+   "basisLevel": 8,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 6,
+   "path": "act1/sunderlandpoison.dgn",
+   "act": "act1",
+   "name": "猛毒雷鳴廢墟",
+   "name_sc": "猛毒雷鸣废墟",
+   "minLevel": 7,
+   "basisLevel": 10,
+   "mazeSize": [
+    5,
+    2
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 7,
+   "path": "act1/grakkarak.dgn",
+   "act": "act1",
+   "name": "格拉卡",
+   "name_sc": "格拉卡",
+   "minLevel": 10,
+   "basisLevel": 13,
+   "mazeSize": [
+    6,
+    3
+   ],
+   "rooms": 11
+  },
+  {
+   "id": 8,
+   "path": "act1/grakkarakburning.dgn",
+   "act": "act1",
+   "name": "烈焰格拉卡",
+   "name_sc": "烈焰格拉卡",
+   "minLevel": 12,
+   "basisLevel": 15,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 9,
+   "path": "act1/mirkwoodfrost.dgn",
+   "act": "act1",
+   "name": "冰霜幽暗密林",
+   "name_sc": "冰霜幽暗密林",
+   "minLevel": 8,
+   "basisLevel": 11,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 11
+  },
+  {
+   "id": 11,
+   "path": "act2/draconiantower.dgn",
+   "act": "act2",
+   "name": "龍人之塔",
+   "name_sc": "龙人之塔",
+   "minLevel": 16,
+   "basisLevel": 19,
+   "mazeSize": [
+    4,
+    5
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 12,
+   "path": "act2/hallofdoll.dgn",
+   "act": "act2",
+   "name": "人偶玄關",
+   "name_sc": "人偶玄关",
+   "minLevel": 18,
+   "basisLevel": 21,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 11
+  },
+  {
+   "id": 13,
+   "path": "act2/golemtower.dgn",
+   "act": "act2",
+   "name": "石巨人塔",
+   "name_sc": "石巨人塔",
+   "minLevel": 20,
+   "basisLevel": 23,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 14,
+   "path": "act2/darkentrance.dgn",
+   "act": "act2",
+   "name": "黑暗玄廊",
+   "name_sc": "黑暗玄廊",
+   "minLevel": 22,
+   "basisLevel": 25,
+   "mazeSize": [
+    5,
+    5
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 15,
+   "path": "act2/palaceofload.dgn",
+   "act": "act2",
+   "name": "城主宮殿",
+   "name_sc": "城主宫殿",
+   "minLevel": 25,
+   "basisLevel": 28,
+   "mazeSize": [
+    3,
+    6
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 17,
+   "path": "act2/floatingcastle.dgn",
+   "act": "act2",
+   "name": "懸空城",
+   "name_sc": "悬空城",
+   "minLevel": 24,
+   "basisLevel": 27,
+   "mazeSize": [
+    1,
+    9
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 21,
+   "path": "act3/outerwall.dgn",
+   "act": "act3",
+   "name": "神殿外圍",
+   "name_sc": "神殿外围",
+   "minLevel": 27,
+   "basisLevel": 30,
+   "mazeSize": [
+    6,
+    3
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 22,
+   "path": "act3/jungle.dgn",
+   "act": "act3",
+   "name": "樹精叢林",
+   "name_sc": "树精丛林",
+   "minLevel": 28,
+   "basisLevel": 31,
+   "mazeSize": [
+    4,
+    7
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 23,
+   "path": "act3/darkhell.dgn",
+   "act": "act3",
+   "name": "煉獄",
+   "name_sc": "炼狱",
+   "minLevel": 29,
+   "basisLevel": 32,
+   "mazeSize": [
+    5,
+    6
+   ],
+   "rooms": 13
+  },
+  {
+   "id": 24,
+   "path": "act3/whitenight.dgn",
+   "act": "act3",
+   "name": "極晝",
+   "name_sc": "极昼",
+   "minLevel": 30,
+   "basisLevel": 33,
+   "mazeSize": [
+    5,
+    7
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 25,
+   "path": "act3/1stbackbone.dgn",
+   "act": "act3",
+   "name": "第一脊椎",
+   "name_sc": "第一脊椎",
+   "minLevel": 32,
+   "basisLevel": 35,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 26,
+   "path": "act3/2ndbackbone.dgn",
+   "act": "act3",
+   "name": "第二脊椎",
+   "name_sc": "第二脊椎",
+   "minLevel": 34,
+   "basisLevel": 37,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 11
+  },
+  {
+   "id": 27,
+   "path": "act3/bloodhell.dgn",
+   "act": "act3",
+   "name": "天帷禁地",
+   "name_sc": "天帷禁地",
+   "minLevel": 36,
+   "basisLevel": 39,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 31,
+   "path": "act4/shallowkeep.dgn",
+   "act": "act4",
+   "name": "淺棲之地",
+   "name_sc": "浅栖之地",
+   "minLevel": 37,
+   "basisLevel": 40,
+   "mazeSize": [
+    4,
+    5
+   ],
+   "rooms": 12
+  },
+  {
+   "id": 32,
+   "path": "act4/marpissalair.dgn",
+   "act": "act4",
+   "name": "蜘蛛洞穴",
+   "name_sc": "蜘蛛洞穴",
+   "minLevel": 38,
+   "basisLevel": 41,
+   "mazeSize": [
+    6,
+    5
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 33,
+   "path": "act4/kingsruins.dgn",
+   "act": "act4",
+   "name": "王的遺跡",
+   "name_sc": "王的遗迹",
+   "minLevel": 52,
+   "basisLevel": 55,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 34,
+   "path": "act4/magmacave.dgn",
+   "act": "act4",
+   "name": "熔巖穴",
+   "name_sc": "熔岩穴",
+   "minLevel": 40,
+   "basisLevel": 43,
+   "mazeSize": [
+    3,
+    8
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 35,
+   "path": "act4/darkelfcemetary.dgn",
+   "act": "act4",
+   "name": "暗精靈墓地",
+   "name_sc": "暗精灵墓地",
+   "minLevel": 39,
+   "basisLevel": 42,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 36,
+   "path": "act4/underfoot.dgn",
+   "act": "act4",
+   "name": "暗黑城入口",
+   "name_sc": "暗黑城入口",
+   "minLevel": 51,
+   "basisLevel": 54,
+   "mazeSize": [
+    6,
+    3
+   ],
+   "rooms": 12
+  },
+  {
+   "id": 37,
+   "path": "act4/shadowmaze.dgn",
+   "act": "act4",
+   "name": "暗影迷宮",
+   "name_sc": "暗影迷宫",
+   "minLevel": 41,
+   "basisLevel": 44,
+   "mazeSize": [
+    3,
+    3
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 40,
+   "path": "act5/charnakridge.dgn",
+   "act": "act5",
+   "name": "山脊",
+   "name_sc": "山脊",
+   "minLevel": 42,
+   "basisLevel": 45,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 41,
+   "path": "act5/theboywithcoldheart.dgn",
+   "act": "act5",
+   "name": "冰心少年",
+   "name_sc": "冰心少年",
+   "minLevel": 43,
+   "basisLevel": 50,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 42,
+   "path": "act5/ricuceiling.dgn",
+   "act": "act5",
+   "name": "利庫天井",
+   "name_sc": "利库天井",
+   "minLevel": 43,
+   "basisLevel": 46,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 43,
+   "path": "act5/whiteland.dgn",
+   "act": "act5",
+   "name": "白色廢墟",
+   "name_sc": "白色废墟",
+   "minLevel": 44,
+   "basisLevel": 47,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 44,
+   "path": "act5/icepalace.dgn",
+   "act": "act5",
+   "name": "冰雪宮殿",
+   "name_sc": "冰雪宫殿",
+   "minLevel": 46,
+   "basisLevel": 49,
+   "mazeSize": [
+    3,
+    3
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 45,
+   "path": "act5/scasalair.dgn",
+   "act": "act5",
+   "name": "斯卡薩之巢",
+   "name_sc": "斯卡萨之巢",
+   "minLevel": 54,
+   "basisLevel": 57,
+   "mazeSize": [
+    3,
+    4
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 50,
+   "path": "act6/astraythief.dgn",
+   "act": "act6",
+   "name": "墮落的盜賊",
+   "name_sc": "堕落的盗贼",
+   "minLevel": 48,
+   "basisLevel": 51,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 51,
+   "path": "act6/villageoftemptation.dgn",
+   "act": "act6",
+   "name": "迷亂之村哈穆林",
+   "name_sc": "迷乱之村哈穆林",
+   "minLevel": 50,
+   "basisLevel": 53,
+   "mazeSize": [
+    5,
+    5
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 52,
+   "path": "act6/danceingbutterfly.dgn",
+   "act": "act6",
+   "name": "血蝴蝶之舞",
+   "name_sc": "血蝴蝶之舞",
+   "minLevel": 63,
+   "basisLevel": 66,
+   "mazeSize": [
+    4,
+    5
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 53,
+   "path": "act6/suspiciousvillage.dgn",
+   "act": "act6",
+   "name": "疑惑之村",
+   "name_sc": "疑惑之村",
+   "minLevel": 64,
+   "basisLevel": 67,
+   "mazeSize": [
+    5,
+    6
+   ],
+   "rooms": 11
+  },
+  {
+   "id": 60,
+   "path": "village/cartelarad/odesa.dgn",
+   "act": "village",
+   "name": "熱血八番街",
+   "name_sc": "热血八番街",
+   "minLevel": 52,
+   "basisLevel": 55,
+   "mazeSize": [
+    4,
+    2
+   ],
+   "rooms": 7
+  },
+  {
+   "id": 61,
+   "path": "village/cartelarad/grozni.dgn",
+   "act": "village",
+   "name": "綠都格羅茲尼",
+   "name_sc": "绿都格罗兹尼",
+   "minLevel": 53,
+   "basisLevel": 56,
+   "mazeSize": [
+    3,
+    3
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 62,
+   "path": "impossible/goblinkingdom.dgn",
+   "act": "impossible",
+   "name": "哥布林王國",
+   "name_sc": "哥布林王国",
+   "minLevel": 65,
+   "basisLevel": 70,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 63,
+   "path": "impossible/activeskycastle.dgn",
+   "act": "impossible",
+   "name": "蠕動之城",
+   "name_sc": "蠕动之城",
+   "minLevel": 65,
+   "basisLevel": 70,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 64,
+   "path": "impossible/ranjerusdogs.dgn",
+   "act": "impossible",
+   "name": "蘭蒂盧斯的鷹犬",
+   "name_sc": "兰蒂卢斯的鹰犬",
+   "minLevel": 65,
+   "basisLevel": 70,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 65,
+   "path": "impossible/bakalcastle.dgn",
+   "act": "impossible",
+   "name": "巴卡爾之城",
+   "name_sc": "巴卡尔之城",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 66,
+   "path": "impossible/cosmofiend.dgn",
+   "act": "impossible",
+   "name": "虛無之境",
+   "name_sc": "虚无之境",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 67,
+   "path": "impossible/blackearth.dgn",
+   "act": "impossible",
+   "name": "黑色大地",
+   "name_sc": "黑色大地",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 80,
+   "path": "act7/outergent.dgn",
+   "act": "act7",
+   "name": "根特外圍",
+   "name_sc": "根特外围",
+   "minLevel": 55,
+   "basisLevel": 58,
+   "mazeSize": [
+    5,
+    5
+   ],
+   "rooms": 13
+  },
+  {
+   "id": 81,
+   "path": "act7/genteastgate.dgn",
+   "act": "act7",
+   "name": "根特東門",
+   "name_sc": "根特东门",
+   "minLevel": 56,
+   "basisLevel": 59,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 82,
+   "path": "act7/gentsouthgate.dgn",
+   "act": "act7",
+   "name": "根特南門",
+   "name_sc": "根特南门",
+   "minLevel": 57,
+   "basisLevel": 60,
+   "mazeSize": [
+    2,
+    2
+   ],
+   "rooms": 4
+  },
+  {
+   "id": 83,
+   "path": "act7/nightassault.dgn",
+   "act": "act7",
+   "name": "夜間襲擊戰",
+   "name_sc": "夜间袭击战",
+   "minLevel": 60,
+   "basisLevel": 63,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 84,
+   "path": "act7/supplycut.dgn",
+   "act": "act7",
+   "name": "補給線阻斷戰",
+   "name_sc": "补给线阻断战",
+   "minLevel": 61,
+   "basisLevel": 64,
+   "mazeSize": [
+    9,
+    2
+   ],
+   "rooms": 7
+  },
+  {
+   "id": 85,
+   "path": "act7/counterattack.dgn",
+   "act": "act7",
+   "name": "追擊殲滅戰",
+   "name_sc": "追击歼灭战",
+   "minLevel": 62,
+   "basisLevel": 65,
+   "mazeSize": [
+    8,
+    3
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 86,
+   "path": "act8/pirateonthetrain.dgn",
+   "act": "act8",
+   "name": "列車上的海賊",
+   "name_sc": "列车上的海贼",
+   "minLevel": 65,
+   "basisLevel": 68,
+   "mazeSize": [
+    11,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 87,
+   "path": "act8/seatrainretaking.dgn",
+   "act": "act8",
+   "name": "奪回西部線",
+   "name_sc": "夺回西部线",
+   "minLevel": 66,
+   "basisLevel": 69,
+   "mazeSize": [
+    11,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 88,
+   "path": "act7/gentnorthgate.dgn",
+   "act": "act7",
+   "name": "根特北門",
+   "name_sc": "根特北门",
+   "minLevel": 58,
+   "basisLevel": 61,
+   "mazeSize": [
+    7,
+    3
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 89,
+   "path": "act7/gentdefence.dgn",
+   "act": "act7",
+   "name": "根特防御戰",
+   "name_sc": "根特防御战",
+   "minLevel": 59,
+   "basisLevel": 62,
+   "mazeSize": [
+    6,
+    3
+   ],
+   "rooms": 12
+  },
+  {
+   "id": 100,
+   "path": "southerndale/grimseeker.dgn",
+   "act": "southerndale",
+   "name": "南部溪谷",
+   "name_sc": "南部溪谷",
+   "minLevel": 40,
+   "basisLevel": 60,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 140,
+   "path": "village/moonlightpub/aganzo.dgn",
+   "act": "village",
+   "name": "月光酒館",
+   "name_sc": "月光酒馆",
+   "minLevel": 49,
+   "basisLevel": 52,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 141,
+   "path": "act5/bwanga.dgn",
+   "act": "act5",
+   "name": "布萬加的修煉場",
+   "name_sc": "布万加的修炼场",
+   "minLevel": 45,
+   "basisLevel": 48,
+   "mazeSize": [
+    10,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 500,
+   "path": "quest/training.dgn",
+   "act": "quest",
+   "name": "月光修煉場",
+   "name_sc": "月光修炼场",
+   "minLevel": 20,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 501,
+   "path": "quest/captainscabin.dgn",
+   "act": "quest",
+   "name": "艦長室",
+   "name_sc": "舰长室",
+   "minLevel": 66,
+   "basisLevel": 69,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 502,
+   "path": "quest/steelscales.dgn",
+   "act": "quest",
+   "name": "鐵鱗海賊團",
+   "name_sc": "铁鳞海贼团",
+   "minLevel": 66,
+   "basisLevel": 69,
+   "mazeSize": [
+    11,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 503,
+   "path": "quest/deadmoon.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 504,
+   "path": "quest/middleocean.dgn",
+   "act": "quest",
+   "name": "城主宮殿",
+   "name_sc": "城主宫殿",
+   "minLevel": 20,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 505,
+   "path": "quest/training_striker.dgn",
+   "act": "quest",
+   "name": "月光修煉場",
+   "name_sc": "月光修炼场",
+   "minLevel": 20,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 506,
+   "path": "quest/deadmoon_avenger2.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 507,
+   "path": "quest/training_asura.dgn",
+   "act": "quest",
+   "name": "月光修煉場",
+   "name_sc": "月光修炼场",
+   "minLevel": 20,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 508,
+   "path": "quest/training_weaponmaster.dgn",
+   "act": "quest",
+   "name": "月光修煉場",
+   "name_sc": "月光修炼场",
+   "minLevel": 20,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 509,
+   "path": "quest/deadmoon_summoner1.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 510,
+   "path": "quest/deadmoon_summoner2.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 511,
+   "path": "quest/training2.dgn",
+   "act": "quest",
+   "name": "月光修煉場",
+   "name_sc": "月光修炼场",
+   "minLevel": 50,
+   "basisLevel": 53,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 512,
+   "path": "quest/deadmoon_elemental.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 23,
+   "mazeSize": [
+    4,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 513,
+   "path": "quest/deadmoon_witch.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 23,
+   "mazeSize": [
+    4,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 514,
+   "path": "quest/deadmoon_avenger1.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 23,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 515,
+   "path": "quest/timegate.dgn",
+   "act": "quest",
+   "name": "時空之門",
+   "name_sc": "时空之门",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 516,
+   "path": "quest/fairyforest.dgn",
+   "act": "quest",
+   "name": "精靈之森",
+   "name_sc": "精灵之森",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    5,
+    2
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 517,
+   "path": "quest/lawlessdistrict.dgn",
+   "act": "quest",
+   "name": "無法地帶",
+   "name_sc": "无法地带",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    4,
+    2
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 518,
+   "path": "quest/tangledtimegate.dgn",
+   "act": "quest",
+   "name": "錯亂的時空之門",
+   "name_sc": "错乱的时空之门",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    3,
+    2
+   ],
+   "rooms": 5
+  },
+  {
+   "id": 519,
+   "path": "quest/iristime.dgn",
+   "act": "quest",
+   "name": "艾麗絲之謎",
+   "name_sc": "艾丽丝之谜",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 520,
+   "path": "quest/irisconsciousness.dgn",
+   "act": "quest",
+   "name": "艾麗絲的覺悟",
+   "name_sc": "艾丽丝的觉悟",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    2
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 521,
+   "path": "quest/deadmoon_new.dgn",
+   "act": "quest",
+   "name": "亡月雷鳴廢墟",
+   "name_sc": "亡月雷鸣废墟",
+   "minLevel": 99,
+   "basisLevel": 18,
+   "mazeSize": [
+    6,
+    2
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 522,
+   "path": "quest/energyisolator.dgn",
+   "act": "quest",
+   "name": "能量阻斷室",
+   "name_sc": "能量阻断室",
+   "minLevel": 78,
+   "basisLevel": 81,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 1000,
+   "path": "act1/sunderlanddark.dgn",
+   "act": "act1",
+   "name": "暗黑雷鳴廢墟",
+   "name_sc": "暗黑雷鸣废墟",
+   "minLevel": 14,
+   "basisLevel": 17,
+   "mazeSize": [
+    6,
+    4
+   ],
+   "rooms": 14
+  },
+  {
+   "id": 1500,
+   "path": "ancient/vilmark.dgn",
+   "act": "ancient",
+   "name": "比爾馬克帝國試驗場",
+   "name_sc": "比尔马克帝国试验场",
+   "minLevel": 55,
+   "basisLevel": 58,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 1501,
+   "path": "ancient/screamingcave.dgn",
+   "act": "ancient",
+   "name": "悲鳴洞穴",
+   "name_sc": "悲鸣洞穴",
+   "minLevel": 58,
+   "basisLevel": 61,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 1502,
+   "path": "ancient/noirpera.dgn",
+   "act": "ancient",
+   "name": "諾伊佩拉",
+   "name_sc": "诺伊佩拉",
+   "minLevel": 61,
+   "basisLevel": 64,
+   "mazeSize": [
+    5,
+    2
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 1504,
+   "path": "ancient/ghosttrain.dgn",
+   "act": "ancient",
+   "name": "幽靈列車",
+   "name_sc": "幽灵列车",
+   "minLevel": 65,
+   "basisLevel": 68,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 1506,
+   "path": "ancient/leshphon.dgn",
+   "act": "ancient",
+   "name": "痛苦之村列瑟芬",
+   "name_sc": "痛苦之村列瑟芬",
+   "minLevel": 67,
+   "basisLevel": 70,
+   "mazeSize": [
+    2,
+    3
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 1507,
+   "path": "ancient/cartelcommand.dgn",
+   "act": "ancient",
+   "name": "卡勒特指揮部",
+   "name_sc": "卡勒特指挥部",
+   "minLevel": 68,
+   "basisLevel": 71,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 2000,
+   "path": "warroom/grenselos20-30.dgn",
+   "act": "warroom",
+   "name": "Grenselos",
+   "name_sc": "Grenselos",
+   "minLevel": 20,
+   "basisLevel": 30,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 2001,
+   "path": "warroom/grenselos30-40.dgn",
+   "act": "warroom",
+   "name": "Grenselos",
+   "name_sc": "Grenselos",
+   "minLevel": 20,
+   "basisLevel": 30,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 2002,
+   "path": "warroom/grenselos40-50.dgn",
+   "act": "warroom",
+   "name": "Grenselos",
+   "name_sc": "Grenselos",
+   "minLevel": 20,
+   "basisLevel": 30,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 2003,
+   "path": "warroom/grenselos50-60.dgn",
+   "act": "warroom",
+   "name": "Grenselos",
+   "name_sc": "Grenselos",
+   "minLevel": 20,
+   "basisLevel": 30,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 2004,
+   "path": "warroom/grenselos60-70.dgn",
+   "act": "warroom",
+   "name": "Grenselos",
+   "name_sc": "Grenselos",
+   "minLevel": 20,
+   "basisLevel": 30,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 10000,
+   "path": "tutorial/tutorial.dgn",
+   "act": "tutorial",
+   "name": "新手教程-洛蘭",
+   "name_sc": "新手教程-洛兰",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    3,
+    2
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 10001,
+   "path": "tutorial/tutorial_timegate.dgn",
+   "act": "tutorial",
+   "name": "時間之門",
+   "name_sc": "时间之门",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    7,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 10002,
+   "path": "tutorial/tutorial_timegate2.dgn",
+   "act": "tutorial",
+   "name": "時間之門",
+   "name_sc": "时间之门",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    8,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 11000,
+   "path": "towers/towerofdeath.dgn",
+   "act": "towers",
+   "name": "死亡之塔",
+   "name_sc": "死亡之塔",
+   "minLevel": 20,
+   "basisLevel": 50,
+   "mazeSize": null,
+   "rooms": null
+  },
+  {
+   "id": 11001,
+   "path": "towers/towerofillusion.dgn",
+   "act": "towers",
+   "name": "迷妄之塔",
+   "name_sc": "迷妄之塔",
+   "minLevel": 18,
+   "basisLevel": 25,
+   "mazeSize": null,
+   "rooms": null
+  },
+  {
+   "id": 11006,
+   "path": "towers/towerofbloodyfight4.dgn",
+   "act": "towers",
+   "name": "無盡的祭壇",
+   "name_sc": "无尽的祭坛",
+   "minLevel": 40,
+   "basisLevel": 60,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 11007,
+   "path": "towers/towerofultimate.dgn",
+   "act": "towers",
+   "name": "極限的祭壇",
+   "name_sc": "极限的祭坛",
+   "minLevel": 65,
+   "basisLevel": 70,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 110,
+   "path": "village/gbl/gbl_branchofarad.dgn",
+   "act": "village",
+   "name": "GBL教阿拉德分部",
+   "name_sc": "GBL教阿拉德分部",
+   "minLevel": 46,
+   "basisLevel": 49,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 111,
+   "path": "village/gbl/gbl_laboratory.dgn",
+   "act": "village",
+   "name": "GBL教研究所",
+   "name_sc": "GBL教研究所",
+   "minLevel": 47,
+   "basisLevel": 50,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 112,
+   "path": "village/gbl/gbl_hatchery.dgn",
+   "act": "village",
+   "name": "GBL教孵化場",
+   "name_sc": "GBL教孵化场",
+   "minLevel": 47,
+   "basisLevel": 50,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 12
+  },
+  {
+   "id": 90,
+   "path": "act3/breeding.dgn",
+   "act": "act3",
+   "name": "樹精繁殖地",
+   "name_sc": "树精繁殖地",
+   "minLevel": 35,
+   "basisLevel": 38,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 91,
+   "path": "act3/goddesstemple.dgn",
+   "act": "act3",
+   "name": "GBL女神殿",
+   "name_sc": "GBL女神殿",
+   "minLevel": 33,
+   "basisLevel": 36,
+   "mazeSize": [
+    4,
+    5
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 92,
+   "path": "act8/haze.dgn",
+   "act": "act8",
+   "name": "霧都赫伊斯",
+   "name_sc": "雾都赫伊斯",
+   "minLevel": 67,
+   "basisLevel": 70,
+   "mazeSize": [
+    5,
+    6
+   ],
+   "rooms": 11
+  },
+  {
+   "id": 93,
+   "path": "act8/arden.dgn",
+   "act": "act8",
+   "name": "阿登高地",
+   "name_sc": "阿登高地",
+   "minLevel": 68,
+   "basisLevel": 71,
+   "mazeSize": [
+    4,
+    5
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 120,
+   "path": "shonantournament/yellowdragon.dgn",
+   "act": "shonantournament",
+   "name": "黃龍大會",
+   "name_sc": "黄龙大会",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 121,
+   "path": "shonantournament/bluedragon.dgn",
+   "act": "shonantournament",
+   "name": "青龍大會",
+   "name_sc": "青龙大会",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 70,
+   "path": "timegate/conflagration.dgn",
+   "act": "timegate",
+   "name": "格蘭之火",
+   "name_sc": "格兰之火",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 11
+  },
+  {
+   "id": 71,
+   "path": "timegate/epidemic.dgn",
+   "act": "timegate",
+   "name": "瘟疫之源",
+   "name_sc": "瘟疫之源",
+   "minLevel": 71,
+   "basisLevel": 74,
+   "mazeSize": [
+    4,
+    4
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 72,
+   "path": "timegate/formacartel.dgn",
+   "act": "timegate",
+   "name": "卡勒特之初",
+   "name_sc": "卡勒特之初",
+   "minLevel": 72,
+   "basisLevel": 75,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 73,
+   "path": "timegate/black_church.dgn",
+   "act": "timegate",
+   "name": "暗黑圣戰",
+   "name_sc": "暗黑圣战",
+   "minLevel": 73,
+   "basisLevel": 76,
+   "mazeSize": [
+    7,
+    2
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 74,
+   "path": "timegate/topsecretarea.dgn",
+   "act": "timegate",
+   "name": "絕密區域",
+   "name_sc": "绝密区域",
+   "minLevel": 74,
+   "basisLevel": 77,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 75,
+   "path": "timegate/oldscreamingcave.dgn",
+   "act": "timegate",
+   "name": "昔日悲鳴",
+   "name_sc": "昔日悲鸣",
+   "minLevel": 75,
+   "basisLevel": 78,
+   "mazeSize": [
+    7,
+    2
+   ],
+   "rooms": 7
+  },
+  {
+   "id": 76,
+   "path": "timegate/beginning.dgn",
+   "act": "timegate",
+   "name": "凜冬",
+   "name_sc": "凛冬",
+   "minLevel": 76,
+   "basisLevel": 79,
+   "mazeSize": [
+    2,
+    5
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 77,
+   "path": "timegate/consciousness.dgn",
+   "act": "timegate",
+   "name": "謎之覺悟",
+   "name_sc": "谜之觉悟",
+   "minLevel": 77,
+   "basisLevel": 80,
+   "mazeSize": [
+    5,
+    4
+   ],
+   "rooms": 12
+  },
+  {
+   "id": 101,
+   "path": "act9/kohlepowerstation.dgn",
+   "act": "act9",
+   "name": "克雷發電站",
+   "name_sc": "克雷发电站",
+   "minLevel": 78,
+   "basisLevel": 81,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 13
+  },
+  {
+   "id": 102,
+   "path": "act9/fruz_station.dgn",
+   "act": "act9",
+   "name": "普魯茲發電站",
+   "name_sc": "普鲁兹发电站",
+   "minLevel": 79,
+   "basisLevel": 82,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 10
+  },
+  {
+   "id": 103,
+   "path": "act9/trombe.dgn",
+   "act": "act9",
+   "name": "特倫斯發電站",
+   "name_sc": "特伦斯发电站",
+   "minLevel": 80,
+   "basisLevel": 83,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 104,
+   "path": "act9/grandine.dgn",
+   "act": "act9",
+   "name": "格蘭迪發電站",
+   "name_sc": "格兰迪发电站",
+   "minLevel": 81,
+   "basisLevel": 84,
+   "mazeSize": [
+    6,
+    3
+   ],
+   "rooms": 7
+  },
+  {
+   "id": 200,
+   "path": "riskdungeon/r_kingsruins.dgn",
+   "act": "riskdungeon",
+   "name": "魂·王的遺跡",
+   "name_sc": "魂·王的遗迹",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 201,
+   "path": "riskdungeon/r_vilmark.dgn",
+   "act": "riskdungeon",
+   "name": "魂·比爾馬克帝國試驗場",
+   "name_sc": "魂·比尔马克帝国试验场",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 202,
+   "path": "riskdungeon/r_screamingcave.dgn",
+   "act": "riskdungeon",
+   "name": "魂·悲鳴洞穴",
+   "name_sc": "魂·悲鸣洞穴",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 203,
+   "path": "riskdungeon/r_noirpera.dgn",
+   "act": "riskdungeon",
+   "name": "魂·諾伊佩拉",
+   "name_sc": "魂·诺伊佩拉",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    5,
+    2
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 204,
+   "path": "riskdungeon/r_ghosttrain.dgn",
+   "act": "riskdungeon",
+   "name": "魂·幽靈列車",
+   "name_sc": "魂·幽灵列车",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 205,
+   "path": "riskdungeon/r_leshphon.dgn",
+   "act": "riskdungeon",
+   "name": "魂·痛苦之村列瑟芬",
+   "name_sc": "魂·痛苦之村列瑟芬",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    2,
+    3
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 206,
+   "path": "riskdungeon/r_cartelcommand.dgn",
+   "act": "riskdungeon",
+   "name": "魂·卡勒特指揮部",
+   "name_sc": "魂·卡勒特指挥部",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    6,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 3511,
+   "path": "advancealtar/advancealtar_stage_01.dgn",
+   "act": "advancealtar",
+   "name": "1-1. 腐爛的營地",
+   "name_sc": "1-1. 腐烂的营地",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3512,
+   "path": "advancealtar/advancealtar_stage_02.dgn",
+   "act": "advancealtar",
+   "name": "1-2. 腐爛的營地",
+   "name_sc": "1-2. 腐烂的营地",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3513,
+   "path": "advancealtar/advancealtar_stage_03.dgn",
+   "act": "advancealtar",
+   "name": "1-3. 腐爛的營地",
+   "name_sc": "1-3. 腐烂的营地",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3514,
+   "path": "advancealtar/advancealtar_stage_04.dgn",
+   "act": "advancealtar",
+   "name": "1-4. 腐爛的營地",
+   "name_sc": "1-4. 腐烂的营地",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3515,
+   "path": "advancealtar/advancealtar_stage_05.dgn",
+   "act": "advancealtar",
+   "name": "2-1. 永遠忠誠的部下",
+   "name_sc": "2-1. 永远忠诚的部下",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3516,
+   "path": "advancealtar/advancealtar_stage_06.dgn",
+   "act": "advancealtar",
+   "name": "2-2. 永遠忠誠的部下",
+   "name_sc": "2-2. 永远忠诚的部下",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3517,
+   "path": "advancealtar/advancealtar_stage_07.dgn",
+   "act": "advancealtar",
+   "name": "2-3. 永遠忠誠的部下",
+   "name_sc": "2-3. 永远忠诚的部下",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3518,
+   "path": "advancealtar/advancealtar_stage_08.dgn",
+   "act": "advancealtar",
+   "name": "2-4. 永遠忠誠的部下",
+   "name_sc": "2-4. 永远忠诚的部下",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3519,
+   "path": "advancealtar/advancealtar_stage_09.dgn",
+   "act": "advancealtar",
+   "name": "3-1. 寂靜森林里的回聲",
+   "name_sc": "3-1. 寂静森林里的回声",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3520,
+   "path": "advancealtar/advancealtar_stage_10.dgn",
+   "act": "advancealtar",
+   "name": "3-2. 寂靜森林里的回聲",
+   "name_sc": "3-2. 寂静森林里的回声",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3521,
+   "path": "advancealtar/advancealtar_stage_11.dgn",
+   "act": "advancealtar",
+   "name": "3-3. 寂靜森林里的回聲",
+   "name_sc": "3-3. 寂静森林里的回声",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3522,
+   "path": "advancealtar/advancealtar_stage_12.dgn",
+   "act": "advancealtar",
+   "name": "3-4. 寂靜森林里的回聲",
+   "name_sc": "3-4. 寂静森林里的回声",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3523,
+   "path": "advancealtar/advancealtar_survival_01.dgn",
+   "act": "advancealtar",
+   "name": "無限模式",
+   "name_sc": "无限模式",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3536,
+   "path": "Event/chn_Dragon_Dungeon/chn_Dragon_dungeon_01_tranning_area.dgn",
+   "act": "Event",
+   "name": "念氣修煉場",
+   "name_sc": "念气修炼场",
+   "minLevel": 80,
+   "basisLevel": 83,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 3537,
+   "path": "Event/chn_Dragon_Dungeon/chn_Dragon_dungeon_02_in_cave.dgn",
+   "act": "Event",
+   "name": "念氣洞穴深處",
+   "name_sc": "念气洞穴深处",
+   "minLevel": 82,
+   "basisLevel": 85,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 3538,
+   "path": "Event/chn_Dragon_Dungeon/chn_Dragon_dungeon_03_dragon_nest.dgn",
+   "act": "Event",
+   "name": "巨龍盤踞之地",
+   "name_sc": "巨龙盘踞之地",
+   "minLevel": 84,
+   "basisLevel": 84,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 3539,
+   "path": "Event/chn_Dragon_Dungeon/chn_Dragon_dungeon_03_time.dgn",
+   "act": "Event",
+   "name": "極 · 巨龍盤踞之地",
+   "name_sc": "极 · 巨龙盘踞之地",
+   "minLevel": 84,
+   "basisLevel": 88,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 3540,
+   "path": "Event/chn_Dragon_Dungeon/chn_Dragon_dungeon_03_event.dgn",
+   "act": "Event",
+   "name": "巨龍盤踞之地",
+   "name_sc": "巨龙盘踞之地",
+   "minLevel": 84,
+   "basisLevel": 84,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 3505,
+   "path": "Towers/towerofboss.dgn",
+   "act": "Towers",
+   "name": "領主之塔",
+   "name_sc": "领主之塔",
+   "minLevel": 60,
+   "basisLevel": 60,
+   "mazeSize": null,
+   "rooms": 1
+  },
+  {
+   "id": 247,
+   "path": "Anton_Awakening/Phase2/BlackVolcano.dgn",
+   "act": "Anton_Awakening",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    5,
+    2
+   ],
+   "rooms": 8
+  },
+  {
+   "id": 246,
+   "path": "Anton_Awakening/Phase2/EnergyCut.dgn",
+   "act": "Anton_Awakening",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    4,
+    3
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 245,
+   "path": "Anton_Awakening/Phase1/Strongleg_Lower.dgn",
+   "act": "Anton_Awakening",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    1,
+    5
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 244,
+   "path": "Anton_Awakening/Phase1/Strongleg_High.dgn",
+   "act": "Anton_Awakening",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    3,
+    2
+   ],
+   "rooms": 5
+  },
+  {
+   "id": 243,
+   "path": "Anton_Awakening/Phase1/Close_Blacksmoke.dgn",
+   "act": "Anton_Awakening",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    4,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 3500,
+   "path": "towers/chn_event_01.dgn",
+   "act": "towers",
+   "name": "抉擇之沼",
+   "name_sc": "抉择之沼",
+   "minLevel": 1,
+   "basisLevel": 15,
+   "mazeSize": [
+    3,
+    2
+   ],
+   "rooms": 5
+  },
+  {
+   "id": 3501,
+   "path": "towers/chn_event_02.dgn",
+   "act": "towers",
+   "name": "挑戰者之沼",
+   "name_sc": "挑战者之沼",
+   "minLevel": 60,
+   "basisLevel": 65,
+   "mazeSize": [
+    3,
+    2
+   ],
+   "rooms": 5
+  },
+  {
+   "id": 3502,
+   "path": "towers/chn_event_03.dgn",
+   "act": "towers",
+   "name": "抉擇之沼",
+   "name_sc": "抉择之沼",
+   "minLevel": 40,
+   "basisLevel": 46,
+   "mazeSize": [
+    3,
+    2
+   ],
+   "rooms": 5
+  },
+  {
+   "id": 8500,
+   "path": "GuildDungeon/GuildNomal1.dgn",
+   "act": "GuildDungeon",
+   "name": "傷城",
+   "name_sc": "伤城",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    5,
+    3
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 8503,
+   "path": "GuildDungeon/GuildDefence1.dgn",
+   "act": "GuildDungeon",
+   "name": "哀泣之穴",
+   "name_sc": "哀泣之穴",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 8504,
+   "path": "GuildDungeon/GuildDefence2.dgn",
+   "act": "GuildDungeon",
+   "name": "吶喊之地",
+   "name_sc": "呐喊之地",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 8505,
+   "path": "GuildDungeon/GuildHard1.dgn",
+   "act": "GuildDungeon",
+   "name": "失心迷宮",
+   "name_sc": "失心迷宫",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    1,
+    6
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 8507,
+   "path": "GuildDungeon/GuildHard3.dgn",
+   "act": "GuildDungeon",
+   "name": "破滅峽谷",
+   "name_sc": "破灭峡谷",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    4,
+    2
+   ],
+   "rooms": 5
+  },
+  {
+   "id": 8508,
+   "path": "GuildDungeon/GuildLast.dgn",
+   "act": "GuildDungeon",
+   "name": "¥ÃùÚ·µ°ó",
+   "name_sc": "¥ÃùÚ·µ°ó",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    3,
+    4
+   ],
+   "rooms": 9
+  },
+  {
+   "id": 6004,
+   "path": "event/2016_epciroad/epicroad_01.dgn",
+   "act": "event",
+   "name": "破碎森林",
+   "name_sc": "破碎森林",
+   "minLevel": 20,
+   "basisLevel": 50,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 4001,
+   "path": "Towers/ScreamTower001.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4002,
+   "path": "Towers/ScreamTower002.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4003,
+   "path": "Towers/ScreamTower003.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4004,
+   "path": "Towers/ScreamTower004.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4005,
+   "path": "Towers/ScreamTower005.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4006,
+   "path": "Towers/ScreamTower006.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4007,
+   "path": "Towers/ScreamTower007.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4008,
+   "path": "Towers/ScreamTower008.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4009,
+   "path": "Towers/ScreamTower009.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4010,
+   "path": "Towers/ScreamTower010.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4011,
+   "path": "Towers/ScreamTower011.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4012,
+   "path": "Towers/ScreamTower012.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4013,
+   "path": "Towers/ScreamTower013.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4014,
+   "path": "Towers/ScreamTower014.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4015,
+   "path": "Towers/ScreamTower015.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 4016,
+   "path": "Towers/ScreamTower016.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4017,
+   "path": "Towers/ScreamTower017.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4018,
+   "path": "Towers/ScreamTower018.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4019,
+   "path": "Towers/ScreamTower019.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4020,
+   "path": "Towers/ScreamTower020.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4021,
+   "path": "Towers/ScreamTower021.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4022,
+   "path": "Towers/ScreamTower022.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4023,
+   "path": "Towers/ScreamTower023.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4024,
+   "path": "Towers/ScreamTower024.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4025,
+   "path": "Towers/ScreamTower025.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    4,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 4026,
+   "path": "Towers/ScreamTower026.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4027,
+   "path": "Towers/ScreamTower027.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4028,
+   "path": "Towers/ScreamTower028.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4029,
+   "path": "Towers/ScreamTower029.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4030,
+   "path": "Towers/ScreamTower030.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4031,
+   "path": "Towers/ScreamTower031.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4032,
+   "path": "Towers/ScreamTower032.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4033,
+   "path": "Towers/ScreamTower033.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4034,
+   "path": "Towers/ScreamTower034.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4035,
+   "path": "Towers/ScreamTower035.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4036,
+   "path": "Towers/ScreamTower036.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4037,
+   "path": "Towers/ScreamTower037.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4038,
+   "path": "Towers/ScreamTower038.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4039,
+   "path": "Towers/ScreamTower039.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4040,
+   "path": "Towers/ScreamTower040.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4041,
+   "path": "Towers/ScreamTower041.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4042,
+   "path": "Towers/ScreamTower042.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4043,
+   "path": "Towers/ScreamTower043.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4044,
+   "path": "Towers/ScreamTower044.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4045,
+   "path": "Towers/ScreamTower045.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4046,
+   "path": "Towers/ScreamTower046.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4047,
+   "path": "Towers/ScreamTower047.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4048,
+   "path": "Towers/ScreamTower048.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4049,
+   "path": "Towers/ScreamTower049.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4050,
+   "path": "Towers/ScreamTower050.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4051,
+   "path": "Towers/ScreamTower051.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4052,
+   "path": "Towers/ScreamTower052.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4053,
+   "path": "Towers/ScreamTower053.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4054,
+   "path": "Towers/ScreamTower054.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4055,
+   "path": "Towers/ScreamTower055.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 4056,
+   "path": "Towers/ScreamTower056.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4057,
+   "path": "Towers/ScreamTower057.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4058,
+   "path": "Towers/ScreamTower058.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4059,
+   "path": "Towers/ScreamTower059.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4060,
+   "path": "Towers/ScreamTower060.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4061,
+   "path": "Towers/ScreamTower061.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4062,
+   "path": "Towers/ScreamTower062.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4063,
+   "path": "Towers/ScreamTower063.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4064,
+   "path": "Towers/ScreamTower064.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4065,
+   "path": "Towers/ScreamTower065.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4066,
+   "path": "Towers/ScreamTower066.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4067,
+   "path": "Towers/ScreamTower067.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4068,
+   "path": "Towers/ScreamTower068.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4069,
+   "path": "Towers/ScreamTower069.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4070,
+   "path": "Towers/ScreamTower070.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4071,
+   "path": "Towers/ScreamTower071.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4072,
+   "path": "Towers/ScreamTower072.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4073,
+   "path": "Towers/ScreamTower073.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4074,
+   "path": "Towers/ScreamTower074.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4075,
+   "path": "Towers/ScreamTower075.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4076,
+   "path": "Towers/ScreamTower076.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4077,
+   "path": "Towers/ScreamTower077.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4078,
+   "path": "Towers/ScreamTower078.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4079,
+   "path": "Towers/ScreamTower079.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4080,
+   "path": "Towers/ScreamTower080.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4081,
+   "path": "Towers/ScreamTower081.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4082,
+   "path": "Towers/ScreamTower082.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4083,
+   "path": "Towers/ScreamTower083.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4084,
+   "path": "Towers/ScreamTower084.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4085,
+   "path": "Towers/ScreamTower085.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4086,
+   "path": "Towers/ScreamTower086.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4087,
+   "path": "Towers/ScreamTower087.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4088,
+   "path": "Towers/ScreamTower088.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4089,
+   "path": "Towers/ScreamTower089.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4090,
+   "path": "Towers/ScreamTower090.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4091,
+   "path": "Towers/ScreamTower091.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4092,
+   "path": "Towers/ScreamTower092.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4093,
+   "path": "Towers/ScreamTower093.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4094,
+   "path": "Towers/ScreamTower094.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4095,
+   "path": "Towers/ScreamTower095.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4096,
+   "path": "Towers/ScreamTower096.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4097,
+   "path": "Towers/ScreamTower097.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4098,
+   "path": "Towers/ScreamTower098.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4099,
+   "path": "Towers/ScreamTower099.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 4100,
+   "path": "Towers/ScreamTower100.dgn",
+   "act": "Towers",
+   "name": "嘆息之塔",
+   "name_sc": "叹息之塔",
+   "minLevel": 70,
+   "basisLevel": 73,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3503,
+   "path": "Act5/Counterattackarea.dgn",
+   "act": "Act5",
+   "name": "逆襲之谷",
+   "name_sc": "逆袭之谷",
+   "minLevel": 40,
+   "basisLevel": 40,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 3600,
+   "path": "towers/sao_towerofdespair001.dgn",
+   "act": "towers",
+   "name": "艾恩葛朗特",
+   "name_sc": "艾恩葛朗特",
+   "minLevel": 60,
+   "basisLevel": 70,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3901,
+   "path": "towers/sao_system.dgn",
+   "act": "towers",
+   "name": "世界樹 : 系統區域",
+   "name_sc": "世界树 : 系统区域",
+   "minLevel": 60,
+   "basisLevel": 60,
+   "mazeSize": [
+    9,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 4123,
+   "path": "Event/chn_dayof_goldsilver_Dungeon/chn_dayof_goldsilver_Dungeon.dgn",
+   "act": "Event",
+   "name": "新·金角銀角",
+   "name_sc": "新·金角银角",
+   "minLevel": 50,
+   "basisLevel": 50,
+   "mazeSize": [
+    2,
+    2
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 5009,
+   "path": "DarkelfTemple/TempleEnterance_4.dgn",
+   "act": "DarkelfTemple",
+   "name": "神殿入口",
+   "name_sc": "神殿入口",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    12,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 5019,
+   "path": "DarkelfTemple/TempleLabyrinth4.dgn",
+   "act": "DarkelfTemple",
+   "name": "虛妄迷宮",
+   "name_sc": "虚妄迷宫",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    15,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 5029,
+   "path": "DarkelfTemple/TempleCentral_4.dgn",
+   "act": "DarkelfTemple",
+   "name": "神殿中心",
+   "name_sc": "神殿中心",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    10,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 4132,
+   "path": "Event/chn_proga_dungeon/proga_dungeon.dgn",
+   "act": "Event",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 72,
+   "mazeSize": [
+    3,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 4133,
+   "path": "Event/chn_proga_dungeon/casus_dungeon.dgn",
+   "act": "Event",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 72,
+   "mazeSize": [
+    2,
+    1
+   ],
+   "rooms": 2
+  },
+  {
+   "id": 4117,
+   "path": "Event/chn_3kingdoms/jang_guild.dgn",
+   "act": "Event",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    5,
+    1
+   ],
+   "rooms": 3
+  },
+  {
+   "id": 4118,
+   "path": "Event/chn_3kingdoms/castle_guild.dgn",
+   "act": "Event",
+   "name": "",
+   "name_sc": "",
+   "minLevel": 70,
+   "basisLevel": 70,
+   "mazeSize": [
+    6,
+    2
+   ],
+   "rooms": 6
+  },
+  {
+   "id": 6000,
+   "path": "PoongjinTrainingRoom/PoongjinTrainingRoom.dgn",
+   "act": "PoongjinTrainingRoom",
+   "name": "修練場",
+   "name_sc": "修练场",
+   "minLevel": 1,
+   "basisLevel": 11,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3001,
+   "path": "Event/BlueMarble/3001.dgn",
+   "act": "Event",
+   "name": 2,
+   "name_sc": 2,
+   "minLevel": 1,
+   "basisLevel": 30,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3002,
+   "path": "Event/BlueMarble/3002.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 31,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3003,
+   "path": "Event/BlueMarble/3003.dgn",
+   "act": "Event",
+   "name": "????",
+   "name_sc": "????",
+   "minLevel": 1,
+   "basisLevel": 32,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3004,
+   "path": "Event/BlueMarble/3004.dgn",
+   "act": "Event",
+   "name": 2,
+   "name_sc": 2,
+   "minLevel": 1,
+   "basisLevel": 33,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3005,
+   "path": "Event/BlueMarble/3005.dgn",
+   "act": "Event",
+   "name": 2,
+   "name_sc": 2,
+   "minLevel": 1,
+   "basisLevel": 33,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3006,
+   "path": "Event/BlueMarble/3006.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 35,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3007,
+   "path": "Event/BlueMarble/3007.dgn",
+   "act": "Event",
+   "name": "GBL????",
+   "name_sc": "GBL????",
+   "minLevel": 1,
+   "basisLevel": 36,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3008,
+   "path": "Event/BlueMarble/3008.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 37,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3009,
+   "path": "Event/BlueMarble/3009.dgn",
+   "act": "Event",
+   "name": "?????????",
+   "name_sc": "?????????",
+   "minLevel": 1,
+   "basisLevel": 38,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3010,
+   "path": "Event/BlueMarble/3010.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 39,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3011,
+   "path": "Event/BlueMarble/3011.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 40,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3012,
+   "path": "Event/BlueMarble/3012.dgn",
+   "act": "Event",
+   "name": "????",
+   "name_sc": "????",
+   "minLevel": 1,
+   "basisLevel": 41,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3013,
+   "path": "Event/BlueMarble/3013.dgn",
+   "act": "Event",
+   "name": "?????????",
+   "name_sc": "?????????",
+   "minLevel": 1,
+   "basisLevel": 42,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3014,
+   "path": "Event/BlueMarble/3014.dgn",
+   "act": "Event",
+   "name": 2,
+   "name_sc": 2,
+   "minLevel": 1,
+   "basisLevel": 43,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3015,
+   "path": "Event/BlueMarble/3015.dgn",
+   "act": "Event",
+   "name": 2,
+   "name_sc": 2,
+   "minLevel": 1,
+   "basisLevel": 43,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3016,
+   "path": "Event/BlueMarble/3016.dgn",
+   "act": "Event",
+   "name": "???",
+   "name_sc": "???",
+   "minLevel": 1,
+   "basisLevel": 45,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3017,
+   "path": "Event/BlueMarble/3017.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 46,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3018,
+   "path": "Event/BlueMarble/3018.dgn",
+   "act": "Event",
+   "name": "???????",
+   "name_sc": "???????",
+   "minLevel": 1,
+   "basisLevel": 47,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3019,
+   "path": "Event/BlueMarble/3019.dgn",
+   "act": "Event",
+   "name": "????????????",
+   "name_sc": "????????????",
+   "minLevel": 1,
+   "basisLevel": 48,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3020,
+   "path": "Event/BlueMarble/3020.dgn",
+   "act": "Event",
+   "name": "GBL??????繚??",
+   "name_sc": "GBL??????缭??",
+   "minLevel": 1,
+   "basisLevel": 49,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3021,
+   "path": "Event/BlueMarble/3021.dgn",
+   "act": "Event",
+   "name": "GBL???????",
+   "name_sc": "GBL???????",
+   "minLevel": 1,
+   "basisLevel": 50,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3022,
+   "path": "Event/BlueMarble/3022.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 51,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3023,
+   "path": "Event/BlueMarble/3023.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 51,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3024,
+   "path": "Event/BlueMarble/3024.dgn",
+   "act": "Event",
+   "name": "????????????",
+   "name_sc": "????????????",
+   "minLevel": 1,
+   "basisLevel": 53,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3025,
+   "path": "Event/BlueMarble/3025.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 54,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3026,
+   "path": "Event/BlueMarble/3026.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 55,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3027,
+   "path": "Event/BlueMarble/3027.dgn",
+   "act": "Event",
+   "name": "???????£???",
+   "name_sc": "???????£???",
+   "minLevel": 1,
+   "basisLevel": 56,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3028,
+   "path": "Event/BlueMarble/3028.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 57,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3029,
+   "path": "Event/BlueMarble/3029.dgn",
+   "act": "Event",
+   "name": "??????峓",
+   "name_sc": "??????峓",
+   "minLevel": 1,
+   "basisLevel": 58,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3030,
+   "path": "Event/BlueMarble/3030.dgn",
+   "act": "Event",
+   "name": "???????",
+   "name_sc": "???????",
+   "minLevel": 1,
+   "basisLevel": 59,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3031,
+   "path": "Event/BlueMarble/3031.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3032,
+   "path": "Event/BlueMarble/3032.dgn",
+   "act": "Event",
+   "name": "???????",
+   "name_sc": "???????",
+   "minLevel": 1,
+   "basisLevel": 61,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3033,
+   "path": "Event/BlueMarble/3033.dgn",
+   "act": "Event",
+   "name": "???????",
+   "name_sc": "???????",
+   "minLevel": 1,
+   "basisLevel": 61,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3034,
+   "path": "Event/BlueMarble/3034.dgn",
+   "act": "Event",
+   "name": "???????",
+   "name_sc": "???????",
+   "minLevel": 1,
+   "basisLevel": 63,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3035,
+   "path": "Event/BlueMarble/3035.dgn",
+   "act": "Event",
+   "name": "??????????",
+   "name_sc": "??????????",
+   "minLevel": 1,
+   "basisLevel": 64,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3036,
+   "path": "Event/BlueMarble/3036.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 65,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3037,
+   "path": "Event/BlueMarble/3037.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 66,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3038,
+   "path": "Event/BlueMarble/3038.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 67,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3039,
+   "path": "Event/BlueMarble/3039.dgn",
+   "act": "Event",
+   "name": "?迣???????",
+   "name_sc": "?迣???????",
+   "minLevel": 1,
+   "basisLevel": 68,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3040,
+   "path": "Event/BlueMarble/3040.dgn",
+   "act": "Event",
+   "name": "?????????",
+   "name_sc": "?????????",
+   "minLevel": 1,
+   "basisLevel": 69,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3041,
+   "path": "Event/BlueMarble/3041.dgn",
+   "act": "Event",
+   "name": "????????",
+   "name_sc": "????????",
+   "minLevel": 1,
+   "basisLevel": 70,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3042,
+   "path": "Event/BlueMarble/3042.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 71,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3043,
+   "path": "Event/BlueMarble/3043.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 71,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3044,
+   "path": "Event/BlueMarble/3044.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 71,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3045,
+   "path": "Event/BlueMarble/3045.dgn",
+   "act": "Event",
+   "name": "??????",
+   "name_sc": "??????",
+   "minLevel": 1,
+   "basisLevel": 71,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3046,
+   "path": "Event/BlueMarble/Kick.dgn",
+   "act": "Event",
+   "name": 2,
+   "name_sc": 2,
+   "minLevel": 1,
+   "basisLevel": 65,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3047,
+   "path": "Event/BlueMarble/Aganzo.dgn",
+   "act": "Event",
+   "name": 2,
+   "name_sc": 2,
+   "minLevel": 1,
+   "basisLevel": 52,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 3048,
+   "path": "Event/BlueMarble/Lorien.dgn",
+   "act": "Event",
+   "name": "????",
+   "name_sc": "????",
+   "minLevel": 1,
+   "basisLevel": 1,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20000,
+   "path": "VillageAttack/Hendon_org_Easy.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾中央大街",
+   "name_sc": "赫顿玛尔中央大街",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20001,
+   "path": "VillageAttack/Hendon_org_Normal.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾中央大街",
+   "name_sc": "赫顿玛尔中央大街",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20002,
+   "path": "VillageAttack/Hendon_org_Hard.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾中央大街",
+   "name_sc": "赫顿玛尔中央大街",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20003,
+   "path": "VillageAttack/Hendon_org_Special.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾中央大街",
+   "name_sc": "赫顿玛尔中央大街",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20004,
+   "path": "VillageAttack/Hendon_City_Easy.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾市政廳",
+   "name_sc": "赫顿玛尔市政厅",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20005,
+   "path": "VillageAttack/Hendon_City_Normal.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾市政廳",
+   "name_sc": "赫顿玛尔市政厅",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20006,
+   "path": "VillageAttack/Hendon_City_Hard.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾市政廳",
+   "name_sc": "赫顿玛尔市政厅",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20007,
+   "path": "VillageAttack/Hendon_City_Special.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾市政廳",
+   "name_sc": "赫顿玛尔市政厅",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20008,
+   "path": "VillageAttack/Hendon_Auction_Easy.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾內巷",
+   "name_sc": "赫顿玛尔内巷",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20009,
+   "path": "VillageAttack/Hendon_Auction_Normal.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾內巷",
+   "name_sc": "赫顿玛尔内巷",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20010,
+   "path": "VillageAttack/Hendon_Auction_Hard.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾內巷",
+   "name_sc": "赫顿玛尔内巷",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20011,
+   "path": "VillageAttack/Hendon_Auction_Special.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾內巷",
+   "name_sc": "赫顿玛尔内巷",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20012,
+   "path": "VillageAttack/WestCoast_org_Easy.dgn",
+   "act": "VillageAttack",
+   "name": "西海岸濱海大道",
+   "name_sc": "西海岸滨海大道",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20013,
+   "path": "VillageAttack/WestCoast_org_Normal.dgn",
+   "act": "VillageAttack",
+   "name": "西海岸濱海大道",
+   "name_sc": "西海岸滨海大道",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20014,
+   "path": "VillageAttack/WestCoast_org_Hard.dgn",
+   "act": "VillageAttack",
+   "name": "西海岸濱海大道",
+   "name_sc": "西海岸滨海大道",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20015,
+   "path": "VillageAttack/WestCoast_org_Special.dgn",
+   "act": "VillageAttack",
+   "name": "西海岸濱海大道",
+   "name_sc": "西海岸滨海大道",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20016,
+   "path": "VillageAttack/WestCoast_Magic_Easy.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾集市",
+   "name_sc": "赫顿玛尔集市",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20017,
+   "path": "VillageAttack/WestCoast_Magic_Normal.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾集市",
+   "name_sc": "赫顿玛尔集市",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20018,
+   "path": "VillageAttack/WestCoast_Magic_Hard.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾集市",
+   "name_sc": "赫顿玛尔集市",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20019,
+   "path": "VillageAttack/WestCoast_Magic_Special.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾集市",
+   "name_sc": "赫顿玛尔集市",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20020,
+   "path": "VillageAttack/Hendon_org_Ultimate.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾中央大街",
+   "name_sc": "赫顿玛尔中央大街",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20021,
+   "path": "VillageAttack/Hendon_City_Ultimate.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾市政廳",
+   "name_sc": "赫顿玛尔市政厅",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20022,
+   "path": "VillageAttack/Hendon_Auction_Ultimate.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾內巷",
+   "name_sc": "赫顿玛尔内巷",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20023,
+   "path": "VillageAttack/WestCoast_org_Ultimate.dgn",
+   "act": "VillageAttack",
+   "name": "西海岸濱海大道",
+   "name_sc": "西海岸滨海大道",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  },
+  {
+   "id": 20024,
+   "path": "VillageAttack/WestCoast_Magic_Ultimate.dgn",
+   "act": "VillageAttack",
+   "name": "赫頓瑪爾集市",
+   "name_sc": "赫顿玛尔集市",
+   "minLevel": 1,
+   "basisLevel": 60,
+   "mazeSize": [
+    1,
+    1
+   ],
+   "rooms": 1
+  }
+ ]
+}

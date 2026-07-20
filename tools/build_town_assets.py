@@ -6,9 +6,9 @@ from pathlib import Path
 from PIL import Image
 
 try:
-    from .dnf_img import parse_img, read_npk
+    from .dnf_img import parse_img, read_npk, read_npk_names
 except ImportError:
-    from dnf_img import parse_img, read_npk
+    from dnf_img import parse_img, read_npk, read_npk_names
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +25,34 @@ MAP_SPRITES = {
     "treeSmall": (123, 0),
     "forestGate": (113, 0),
 }
-NPC_SPRITES = {"linus": 267, "seria": 772, "daphne": 821, "minet": 606, "guard": 496}
+# 原版赫顿玛尔 NPC 名单(Script.pvf map/hendonmyre/*.map [NPC] 布置 + 各 .npc [field animation]),
+# 通过 NPK 内部路径名 sprite/map/npc/<name>.img 定位, 不再硬编码索引。
+NPC_SPRITES = {
+    "danjin":   "npc_dj1",       # 火罐(西门)
+    "poongjin": "npc_pj",        # 风振(西门)
+    "rothon":   "npc_rt",        # 诺顿·马西莫格(西门)
+    "kiri":     "npc_kr",        # 凯丽·德莱迪(西门)
+    "veol":     "veol_caelow",   # 维尔·克鲁(中央大街)
+    "glam":     "glam_rinwood",  # 格林·林德(中央大街)
+    "grandis":  "npc_gd",        # 歌兰蒂斯·格拉西亚(中央大街)
+    "birken":   "npc_bk",        # 博肯(中央大街)
+    "albert":   "npc_al",        # 阿尔伯特·伯恩斯坦(中央大街)
+    "gsd":      "npc_gsd",       # G.S.D(拍卖场)
+    "minet":    "npc_minet",     # 米内特(后巷)
+    "shylock":  "npc_gbn",       # 夏洛克·戈林德(后巷)
+    "shusia":   "npc_su",        # 索西雅(酒馆)
+    "seria":    "npc_se",        # 赛丽亚·克鲁敏(城镇入口)
+}
+
+
+def npc_index_by_name(npk_path):
+    lookup = {}
+    for index, name, _off, _size in read_npk_names(str(npk_path)):
+        lookup[name.lower()] = index
+    return {
+        key: lookup[f"sprite/map/npc/{img}.img"]
+        for key, img in NPC_SPRITES.items()
+    }
 
 
 def resolved_frame(frames, index):
@@ -70,7 +97,8 @@ def main():
         frame = resolved_frame(frames, frame_index)
         cells[name] = frame["image"]
 
-    for npc_name, image_index in NPC_SPRITES.items():
+    npc_indexes = npc_index_by_name(NPC_NPK)
+    for npc_name, image_index in npc_indexes.items():
         frames = parse_img(npc_entries[image_index])["frames"]
         first = resolved_frame(frames, 0)
         foot_x = first["x"] + first["w"] / 2

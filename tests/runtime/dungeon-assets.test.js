@@ -26,8 +26,14 @@ test('town atlas includes original NPC animation sets', () => {
   vm.createContext(context);
   vm.runInContext(fs.readFileSync('assets/town_hendonmyre.meta.js', 'utf8'), context);
   const npcs = context.window.TOWN_HENDONMYRE_META.npcs;
-  for (const name of ['linus', 'seria', 'daphne', 'minet', 'guard']) {
+  // 原版赫顿玛尔名单(Script.pvf map/hendonmyre [NPC] 布置): 西门/中央大街/拍卖场/后巷/酒馆/入口
+  const roster = ['danjin', 'poongjin', 'rothon', 'kiri', 'veol', 'glam', 'grandis',
+    'birken', 'albert', 'gsd', 'minet', 'shylock', 'shusia', 'seria'];
+  for (const name of roster) {
     assert.ok(npcs[name]?.frames?.length > 0, `missing ${name}`);
+  }
+  for (const name of roster) {
+    assert.ok(html.includes(`sprite:'${name}'`), `TOWN.npcs missing sprite ${name}`);
   }
   assert.match(html, /const nearbyNpc=nearestTownNpc\(\)/);
 });

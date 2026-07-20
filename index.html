@@ -114,7 +114,7 @@ const MAX_UNLOCKED_DUNGEON=3;        // 当前 4 张图, 索引 3 表示全开
 const GROUND_TOP = 300, GROUND_BOT = 510, GRAVITY = 0.8;
 const WORLD_W = 1800;        // 房间世界宽度(>屏幕, 横向卷轴)
 let camX = 0;                // 摄像机左边界(世界坐标), 渲染时整体 -camX
-function updateCam(){ camX = clamp(player.x - W/2, 0, WORLD_W - W); }
+function updateCam(){ const ww=(gameState==='town'&&typeof TOWN!=='undefined')?(TOWN.worldW||WORLD_W):WORLD_W; camX = clamp(player.x - W/2, 0, ww - W); }
 let banner = null;           // 屏幕居中横幅(图/房/Boss 提示, 不随摄像机偏移)
 function showBanner(text,color,big){ banner={text,color,big:big||false,life:130}; }
 let stageTitle = null;
@@ -1095,31 +1095,306 @@ class Player extends Fighter {
 }
 
 /* ===================== 敌人 ===================== */
+/* 原版副本同步(DOF70 Script.pvf dungeon.lst 权威数据, 见 assets/dungeon_list.json / docs/DUNGEON_SYNC.md)
+   dgnId=原版副本编号; name/recommendedLv/rooms 与原版 .dgn 一致;
+   theme 暂用现有 5 套环境图集近似, monsterPool 暂用现有 6 种怪近似, 逐批替换为原版素材。 */
+const ACT_NAMES={1:'天空之城',2:'幽暗岛',3:'天帷巨兽',4:'暗黑城',5:'诺斯玛尔',6:'哈穆林',7:'根特',8:'西海岸',9:'发电站'};
 const DUNGEONS = [
-  {id:'lorien', name:'洛兰幽暗密林', recommendedLv:1, rooms:5,
+  {id:'lorien', dgnId:1, act:1, name:'洛兰', recommendedLv:1, rooms:6,
     theme:'light',
     tint:['#241c2e','#3a2c40'], floor:['#4a3f33','#2b2520'],
-    monsterPool:['gob','gob','gob','orc'], boss:'boss',
-    desc:'新手森林,哥布林成群出没,适合熟悉走门刷图节奏。'},
-  {id:'grakqarak', name:'格兰之森·雷鸣废墟', recommendedLv:3, rooms:6,
-    theme:'ice',
-    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
-    monsterPool:['gob','orc','orc','archer','archer'], boss:'boss',
-    desc:'阴冷废墟,弓箭手拉开距离,需要用突进打断。'},
-  {id:'flamepass', name:'烈焰格拉卡', recommendedLv:5, rooms:6,
-    theme:'red',
-    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
-    monsterPool:['orc','charger','charger','bomber','gob'], boss:'boss',
-    desc:'灼热通道,冲锋怪和自爆怪压迫走位。'},
-  {id:'shadowkeep', name:'暗黑雷鸣废墟', recommendedLv:8, rooms:7,
+    monsterPool:['gob','gob','gob'], boss:'boss',
+    desc:'祥和安宁的精灵丛林,哥布林成群聚集,新手冒险从这里开始。'},
+  {id:'lorieninside', dgnId:2, act:1, name:'洛兰深处', recommendedLv:2, rooms:6,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','gob','bomber'], boss:'boss',
+    desc:'荧光蘑菇丛生的密林深处,哥布林的老巢就藏在这里。'},
+  {id:'mirkwood', dgnId:3, act:1, name:'幽暗密林', recommendedLv:2, rooms:7,
     theme:'dark',
     tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
-    monsterPool:['orc','archer','charger','bomber','bomber','gob'], boss:'boss',
-    desc:'高阶混编地下城,远程、冲锋、自爆同时登场。'},
-  {id:'mushroomgarden', name:'蘑菇花园', recommendedLv:12, rooms:7,
-    theme:'mushroom', tint:['#17201e','#263b2c'], floor:['#3b4b38','#1a251d'],
-    monsterPool:['gob','orc','bomber','archer','charger'], boss:'boss',
-    desc:'荧光蘑菇与孢子遍布的异变花园,环境明暗交错。'},
+    monsterPool:['gob','orc'], boss:'boss',
+    desc:'不见天日的阴暗森林,树影间潜伏着更凶悍的怪物。'},
+  {id:'mirkwooddeep', dgnId:4, act:1, name:'幽暗密林深处', recommendedLv:3, rooms:10,
+    theme:'dark',
+    tint:['#16241a','#20362a'], floor:['#2b3a2d','#121a13'],
+    monsterPool:['gob','orc','orc'], boss:'boss',
+    desc:'密林最深处,石兽人部族盘踞,道路漫长而危险。'},
+  {id:'sunderland', dgnId:5, act:1, name:'雷鸣废墟', recommendedLv:5, rooms:8,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['orc','archer'], boss:'boss',
+    desc:'雷声轰鸣的古代废墟,骷髅弓手在断壁残垣间放冷箭。'},
+  {id:'sunderlandpoison', dgnId:6, act:1, name:'猛毒雷鸣废墟', recommendedLv:7, rooms:8,
+    theme:'mushroom',
+    tint:['#1a2616','#2b3d1f'], floor:['#37452c','#181f12'],
+    monsterPool:['orc','archer','bomber'], boss:'boss',
+    desc:'被剧毒侵蚀的废墟,毒雾弥漫,自爆怪伺机而动。'},
+  {id:'mirkwoodfrost', dgnId:9, act:1, name:'冰霜幽暗密林', recommendedLv:8, rooms:11,
+    theme:'ice',
+    tint:['#182430','#22384a'], floor:['#38434e','#1a2229'],
+    monsterPool:['gob','orc','archer'], boss:'boss',
+    desc:'被寒气冻结的密林,冰霜覆盖下混编怪群层层设防。'},
+  {id:'grakkarak', dgnId:7, act:1, name:'格拉卡', recommendedLv:10, rooms:11,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','charger','gob'], boss:'boss',
+    desc:'赤红岩地格拉卡,冲锋怪横冲直撞,考验走位。'},
+  {id:'grakkarakburning', dgnId:8, act:1, name:'烈焰格拉卡', recommendedLv:12, rooms:10,
+    theme:'red',
+    tint:['#331a18','#4a2420'], floor:['#523226','#291612'],
+    monsterPool:['orc','charger','bomber'], boss:'boss',
+    desc:'烈焰吞噬的灼热通道,冲锋怪与自爆怪联手压迫。'},
+  {id:'sunderlanddark', dgnId:1000, act:1, name:'暗黑雷鸣废墟', recommendedLv:14, rooms:14,
+    theme:'dark',
+    tint:['#141420','#222036'], floor:['#2e2c3a','#141218'],
+    monsterPool:['archer','charger','bomber','orc'], boss:'boss',
+    desc:'黑暗笼罩的雷鸣废墟,ACT1 最终试炼,全部敌人倾巢而出。'},
+  {id:'draconiantower', dgnId:11, act:2, name:'龙人之塔', recommendedLv:16, rooms:9,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['orc','archer'], boss:'boss',
+    desc:'耸立在幽暗岛上的古塔,龙人族在塔内层层驻守。'},
+  {id:'hallofdoll', dgnId:12, act:2, name:'人偶玄关', recommendedLv:18, rooms:11,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['gob','archer','charger'], boss:'boss',
+    desc:'摆满诡异人偶的玄关,人偶会突然睁开眼睛。'},
+  {id:'golemtower', dgnId:13, act:2, name:'石巨人塔', recommendedLv:20, rooms:10,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','charger'], boss:'boss',
+    desc:'石巨人沉睡的高塔,每一步都伴随沉重的轰鸣。'},
+  {id:'darkentrance', dgnId:14, act:2, name:'黑暗玄廊', recommendedLv:22, rooms:9,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['orc','archer','bomber'], boss:'boss',
+    desc:'通往城主宫殿的黑暗回廊,亡灵在阴影中徘徊。'},
+  {id:'floatingcastle', dgnId:17, act:2, name:'悬空城', recommendedLv:24, rooms:3,
+    theme:'light',
+    tint:['#241c2e','#3a2c40'], floor:['#4a3f33','#2b2520'],
+    monsterPool:['charger','archer'], boss:'boss',
+    desc:'漂浮在幽暗岛上空的城塞,狂风呼啸的空中回廊。'},
+  {id:'palaceofload', dgnId:15, act:2, name:'城主宫殿', recommendedLv:25, rooms:10,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'幽暗岛之主的宫殿,精锐卫队严阵以待。'},
+  {id:'outerwall', dgnId:21, act:3, name:'神殿外围', recommendedLv:27, rooms:10,
+    theme:'light',
+    tint:['#241c2e','#3a2c40'], floor:['#4a3f33','#2b2520'],
+    monsterPool:['gob','orc','archer'], boss:'boss',
+    desc:'GBL 神殿的外围防线,狂信者在圣墙下巡逻。'},
+  {id:'jungle', dgnId:22, act:3, name:'树精丛林', recommendedLv:28, rooms:10,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','charger','bomber'], boss:'boss',
+    desc:'天帷巨兽体表繁茂的丛林,树精成群游荡。'},
+  {id:'darkhell', dgnId:23, act:3, name:'炼狱', recommendedLv:29, rooms:13,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','charger','bomber'], boss:'boss',
+    desc:'灼热瘴气弥漫的炼狱,烈焰中传来低沉咆哮。'},
+  {id:'whitenight', dgnId:24, act:3, name:'极昼', recommendedLv:30, rooms:8,
+    theme:'light',
+    tint:['#241c2e','#3a2c40'], floor:['#4a3f33','#2b2520'],
+    monsterPool:['archer','charger'], boss:'boss',
+    desc:'永昼笼罩的奇异地带,光芒刺眼却杀机四伏。'},
+  {id:'1stbackbone', dgnId:25, act:3, name:'第一脊椎', recommendedLv:32, rooms:9,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'深入天帷巨兽的第一节脊椎,血肉之路蜿蜒向上。'},
+  {id:'goddesstemple', dgnId:91, act:3, name:'GBL女神殿', recommendedLv:33, rooms:10,
+    theme:'light',
+    tint:['#241c2e','#3a2c40'], floor:['#4a3f33','#2b2520'],
+    monsterPool:['gob','archer','bomber'], boss:'boss',
+    desc:'供奉 GBL 女神的圣殿,神官与守卫虔诚而狂热。'},
+  {id:'2ndbackbone', dgnId:26, act:3, name:'第二脊椎', recommendedLv:34, rooms:11,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','charger','bomber'], boss:'boss',
+    desc:'第二节脊椎,巨兽的搏动声在骨壁间回响。'},
+  {id:'breeding', dgnId:90, act:3, name:'树精繁殖地', recommendedLv:35, rooms:8,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','bomber','bomber'], boss:'boss',
+    desc:'树精的繁殖地,孢子与藤蔓吞噬一切来客。'},
+  {id:'bloodhell', dgnId:27, act:3, name:'天帷禁地', recommendedLv:36, rooms:10,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','archer','charger','bomber'], boss:'boss',
+    desc:'天帷巨兽的心脏禁地,最强守卫在此恭候。'},
+  {id:'shallowkeep', dgnId:31, act:4, name:'浅栖之地', recommendedLv:37, rooms:12,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','orc','bomber'], boss:'boss',
+    desc:'暗黑城前的湿地,浅栖生物在泥沼中蠕动。'},
+  {id:'marpissalair', dgnId:32, act:4, name:'蜘蛛洞穴', recommendedLv:38, rooms:9,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['gob','archer','bomber'], boss:'boss',
+    desc:'马尔皮萨的巢穴,蛛网密布,毒牙在暗处闪光。'},
+  {id:'darkelfcemetary', dgnId:35, act:4, name:'暗精灵墓地', recommendedLv:39, rooms:9,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['orc','archer'], boss:'boss',
+    desc:'暗精灵长眠的墓地,亡灵被怨念从棺椁中唤醒。'},
+  {id:'magmacave', dgnId:34, act:4, name:'熔岩穴', recommendedLv:40, rooms:9,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','charger','bomber'], boss:'boss',
+    desc:'地底熔岩奔涌的洞穴,热浪灼烧着每一寸皮肤。'},
+  {id:'shadowmaze', dgnId:37, act:4, name:'暗影迷宫', recommendedLv:41, rooms:9,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['archer','charger','bomber'], boss:'boss',
+    desc:'影子扭曲成迷宫,方向感在黑暗中彻底失效。'},
+  {id:'underfoot', dgnId:36, act:4, name:'暗黑城入口', recommendedLv:51, rooms:12,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['orc','archer','charger','bomber'], boss:'boss',
+    desc:'暗黑城的正门入口,暗精灵禁卫军全员出动。'},
+  {id:'kingsruins', dgnId:33, act:4, name:'王的遗迹', recommendedLv:52, rooms:3,
+    theme:'light',
+    tint:['#241c2e','#3a2c40'], floor:['#4a3f33','#2b2520'],
+    monsterPool:['orc','charger'], boss:'boss',
+    desc:'历代暗精灵之王的陵墓遗迹,王的力量仍未散去。'},
+  {id:'charnakridge', dgnId:40, act:5, name:'山脊', recommendedLv:42, rooms:8,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['gob','orc','archer'], boss:'boss',
+    desc:'诺斯玛尔的雪岭山脊,暴风雪中视野一片苍白。'},
+  {id:'theboywithcoldheart', dgnId:41, act:5, name:'冰心少年', recommendedLv:43, rooms:2,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['charger','archer'], boss:'boss',
+    desc:'被冰封记忆困住的少年,寒气在他周身凝结。'},
+  {id:'ricuceiling', dgnId:42, act:5, name:'利库天井', recommendedLv:43, rooms:10,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['gob','archer','bomber'], boss:'boss',
+    desc:'利库族栖居的天井,冰柱如林,寒光四射。'},
+  {id:'whiteland', dgnId:43, act:5, name:'白色废墟', recommendedLv:44, rooms:8,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'白雪掩埋的废墟,冻土之下沉睡着旧日文明。'},
+  {id:'bwanga', dgnId:141, act:5, name:'布万加的修炼场', recommendedLv:45, rooms:3,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['orc','charger'], boss:'boss',
+    desc:'布万加一族的修炼场,战士们以严寒磨砺筋骨。'},
+  {id:'icepalace', dgnId:44, act:5, name:'冰雪宫殿', recommendedLv:46, rooms:8,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['orc','archer','bomber'], boss:'boss',
+    desc:'晶莹剔透的冰雪宫殿,美丽而致命。'},
+  {id:'scasalair', dgnId:45, act:5, name:'斯卡萨之巢', recommendedLv:54, rooms:9,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['orc','archer','charger','bomber'], boss:'boss',
+    desc:'冰龙斯卡萨盘踞的巢穴,极寒吐息冻结一切。'},
+  {id:'astraythief', dgnId:50, act:6, name:'堕落的盗贼', recommendedLv:48, rooms:10,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['gob','orc','bomber'], boss:'boss',
+    desc:'堕落盗贼盘踞的山道,黑吃黑在这里司空见惯。'},
+  {id:'villageoftemptation', dgnId:51, act:6, name:'迷乱之村哈穆林', recommendedLv:50, rooms:10,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','orc','archer'], boss:'boss',
+    desc:'被迷乱之雾笼罩的村庄哈穆林,村民眼神空洞。'},
+  {id:'danceingbutterfly', dgnId:52, act:6, name:'血蝴蝶之舞', recommendedLv:63, rooms:9,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['archer','charger','bomber'], boss:'boss',
+    desc:'血蝶漫天飞舞的禁地,鳞粉所过之处寸草不生。'},
+  {id:'suspiciousvillage', dgnId:53, act:6, name:'疑惑之村', recommendedLv:64, rooms:11,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'处处透着疑点的村落,每扇门后都藏着秘密。'},
+  {id:'outergent', dgnId:80, act:7, name:'根特外围', recommendedLv:55, rooms:13,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','orc','archer'], boss:'boss',
+    desc:'根特城郊的原野,哥布林军团正在集结。'},
+  {id:'genteastgate', dgnId:81, act:7, name:'根特东门', recommendedLv:56, rooms:3,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','charger'], boss:'boss',
+    desc:'根特东门攻防的最前线,炮火昼夜不息。'},
+  {id:'gentsouthgate', dgnId:82, act:7, name:'根特南门', recommendedLv:57, rooms:4,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'根特南门要塞,机械部队从这里源源开出。'},
+  {id:'gentnorthgate', dgnId:88, act:7, name:'根特北门', recommendedLv:58, rooms:9,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['orc','archer','bomber'], boss:'boss',
+    desc:'根特北门的暗道,夜色掩护下的渗透与反渗透。'},
+  {id:'gentdefence', dgnId:89, act:7, name:'根特防御战', recommendedLv:59, rooms:12,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','archer','charger','bomber'], boss:'boss',
+    desc:'根特全面防御战,守住城墙就是守住希望。'},
+  {id:'nightassault', dgnId:83, act:7, name:'夜间袭击战', recommendedLv:60, rooms:9,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['archer','charger','bomber'], boss:'boss',
+    desc:'趁夜发动的袭击战,火光撕裂根特的夜空。'},
+  {id:'supplycut', dgnId:84, act:7, name:'补给线阻断战', recommendedLv:61, rooms:7,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['gob','charger','bomber'], boss:'boss',
+    desc:'切断敌军补给线的奇袭行动,速战速决。'},
+  {id:'counterattack', dgnId:85, act:7, name:'追击歼灭战', recommendedLv:62, rooms:9,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','charger','bomber'], boss:'boss',
+    desc:'乘胜追击的歼灭战,不给敌人喘息之机。'},
+  {id:'pirateonthetrain', dgnId:86, act:8, name:'列车上的海贼', recommendedLv:65, rooms:3,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['gob','archer','charger'], boss:'boss',
+    desc:'海贼劫持的西部线列车,车厢内短兵相接。'},
+  {id:'seatrainretaking', dgnId:87, act:8, name:'夺回西部线', recommendedLv:66, rooms:3,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'夺回西部线的反击战,铁轨上硝烟未散。'},
+  {id:'haze', dgnId:92, act:8, name:'雾都赫伊斯', recommendedLv:67, rooms:11,
+    theme:'dark',
+    tint:['#1c2e22','#284338'], floor:['#334235','#171f18'],
+    monsterPool:['gob','archer','bomber'], boss:'boss',
+    desc:'浓雾常年不散的赫伊斯,雾里藏着枪口与刀锋。'},
+  {id:'arden', dgnId:93, act:8, name:'阿登高地', recommendedLv:68, rooms:9,
+    theme:'mushroom',
+    tint:['#1b2418','#2c3b26'], floor:['#3b4b38','#1a251d'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'阿登高地的丛林战场,伏兵在草木间屏息。'},
+  {id:'kohlepowerstation', dgnId:101, act:9, name:'克雷发电站', recommendedLv:78, rooms:13,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['orc','archer','charger'], boss:'boss',
+    desc:'克雷发电站,高压电流在管线间嘶鸣。'},
+  {id:'fruz_station', dgnId:102, act:9, name:'普鲁兹发电站', recommendedLv:79, rooms:10,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['archer','charger','bomber'], boss:'boss',
+    desc:'普鲁兹发电站,机械守卫循着轨道巡逻。'},
+  {id:'trombe', dgnId:103, act:9, name:'特伦斯发电站', recommendedLv:80, rooms:9,
+    theme:'ice',
+    tint:['#1c2630','#26404a'], floor:['#3e4850','#20282d'],
+    monsterPool:['orc','archer','bomber'], boss:'boss',
+    desc:'特伦斯发电站,蒸汽与齿轮构成的钢铁迷宫。'},
+  {id:'grandine', dgnId:104, act:9, name:'格兰迪发电站', recommendedLv:81, rooms:7,
+    theme:'red',
+    tint:['#2e1c22','#43282c'], floor:['#4b3026','#251713'],
+    monsterPool:['orc','archer','charger','bomber'], boss:'boss',
+    desc:'格兰迪发电站的核心区,过载的能量一触即发。'},
 ];
 function currentDungeonDef(){ return DUNGEONS[dungeonId] || DUNGEONS[0]; }
 function currentRooms(){ return currentDungeonDef().rooms || ROOMS_PER_DUNGEON; }
@@ -2431,18 +2706,31 @@ function drawTownSprite(name,x,y,sx=1,sy=sx){
   const f=TOWN_SPR.meta.sprites[name]; if(!f)return;
   ctx.drawImage(TOWN_SPR.img,f[0],f[1],f[2],f[3],x,y,f[2]*sx,f[3]*sy);
 }
+/* 原版赫顿玛尔 NPC 同步:名单/站位次序/朝向来自 Script.pvf map/hendonmyre 各区域 [NPC] 布置
+   (西门→中央大街→拍卖场→后巷→酒馆→城镇入口 合并为单条街), 名字/台词取自各 .npc 脚本;
+   诺顿原版带 [item shop]+修理/分解 → 挂游戏商店; 索西雅原版 [recover stamina] → 休息回满 HP/MP。 */
 const TOWN={
-  id:'hendonmyre',name:'赫顿玛尔',spawn:{x:180,y:430},
-  npc:{x:690,y:430,name:'林纳斯',action:'shop'},
+  id:'hendonmyre',name:'赫顿玛尔',spawn:{x:180,y:430},worldW:2600,
+  npc:{x:560,y:434,name:'诺顿',action:'shop'},
   npcs:[
-    {x:690,y:430,name:'林纳斯',role:'武器商人',sprite:'linus',action:'shop'},
-    {x:900,y:438,name:'赛丽亚',role:'旅馆主人',sprite:'seria',message:'欢迎回来,冒险家。旅馆永远为你留着房间。'},
-    {x:1110,y:442,name:'达芙妮',role:'徽章商人',sprite:'daphne',message:'想让装备更闪耀吗？收集徽章来找我吧。'},
-    {x:1310,y:440,name:'米内特',role:'暗精灵导师',sprite:'minet',message:'暗影之力需要耐心,也需要精准的时机。'},
-    {x:1510,y:443,name:'贝希守卫',role:'城门守卫',sprite:'guard',message:'前方就是格兰之森,祝你平安归来。'},
+    {x:240,y:432,name:'火罐',role:'袖珍罐商人',sprite:'danjin',message:'我叫火罐！我的袖珍罐,绝对比土罐哥哥的好！'},
+    {x:400,y:440,name:'风振',role:'风拳流馆主',sprite:'poongjin',message:'你好！我是风拳流馆主风振！你感觉到风的气息了吗？'},
+    {x:560,y:434,name:'诺顿',role:'装备商人',sprite:'rothon',action:'shop'},
+    {x:720,y:442,name:'凯丽',role:'装备强化',sprite:'kiri',message:'哇,天气晴朗,又是让人开心的一天！我是从天界来的凯丽,见到你很高兴！',dir:-1},
+    {x:950,y:436,name:'维尔·克鲁',role:'势力战管理员',sprite:'veol',message:'中央大街的秩序由我来维持,请不要惹事。'},
+    {x:1090,y:442,name:'格林·林德',role:'势力战管理员',sprite:'glam',message:'想比试实力的话,去找愿意接受挑战的对手吧。'},
+    {x:1230,y:433,name:'歌兰蒂斯',role:'修女',sprite:'grandis',message:'以神的名义为你祈祷,愿神赐予你无尽的勇气……'},
+    {x:1370,y:441,name:'博肯',role:'公会管理员',sprite:'birken',message:'嘘！小点声,我有个紧急任务需要你帮忙。'},
+    {x:1510,y:435,name:'阿尔伯特',role:'魔法商人',sprite:'albert',message:'喂！傻乎乎的家伙,别挡我的视线！看什么看,说的就是你！'},
+    {x:1690,y:438,name:'G.S.D',role:'鬼剑士导师',sprite:'gsd',message:'年轻人！听你的脚步声,好像遇到了难题,有什么问题困扰你吗？'},
+    {x:1850,y:443,name:'米内特',role:'杂货商人',sprite:'minet',message:'任务还顺利吧？'},
+    {x:1990,y:436,name:'夏洛克',role:'哥布林商人',sprite:'shylock',message:'嘿嘿嘿,我就是哥布林商人夏洛克。',dir:-1},
+    {x:2130,y:441,name:'索西雅',role:'酒馆老板娘',sprite:'shusia',action:'rest',dir:-1},
+    {x:2300,y:437,name:'赛丽亚',role:'冒险家的向导',sprite:'seria',message:'愿精灵的光芒照耀您……',dir:-1},
   ],
-  gate:{x:1660,y:405,name:'格兰之森入口'},
+  gate:{x:2450,y:405,name:'格兰之森入口'},
 };
+function townWorldW(){ return TOWN.worldW||WORLD_W; }
 let townPrompt='', shopReturnState='town';
 const MULTIPLAYER={
   socket:null,id:null,players:new Map(),lastSent:'',lastSendAt:0,retry:null,
@@ -2515,34 +2803,39 @@ function updateTown(){
   if(down('arrowup'))my=-1;
   if(down('arrowdown'))my=1;
   const moving=mx||my, sp=player.speed*0.72;
-  player.x=clamp(player.x+mx*sp,30,WORLD_W-30);
+  player.x=clamp(player.x+mx*sp,30,townWorldW()-30);
   player.y=clamp(player.y+my*sp*0.72,GROUND_TOP+40,GROUND_BOT);
   player.walkPhase=moving?player.walkPhase+0.18:0;
   player.state=moving?'walk':'idle'; player.selectAction(moving?'walk':'stand');
   updateCam();
   MULTIPLAYER.update();
   const nearbyNpc=nearestTownNpc();
-  townPrompt=nearbyNpc?'空格 / Enter  与 '+nearbyNpc.name+' 交谈':nearTownObject(TOWN.gate,125)?'空格 / Enter  进入 '+TOWN.gate.name:'';
+  townPrompt=nearbyNpc?('空格 / Enter  '+(nearbyNpc.action==='shop'?'查看 '+nearbyNpc.name+' 的商品':nearbyNpc.action==='rest'?'在 '+nearbyNpc.name+' 的酒馆休息':'与 '+nearbyNpc.name+' 交谈')):nearTownObject(TOWN.gate,125)?'空格 / Enter  进入 '+TOWN.gate.name:'';
   if(pressed('enter')||pressed(' ')){
     if(nearbyNpc?.action==='shop'){ generateShopItems(); shopReturnState='town'; gameState='shop'; Audio2.sfx('select'); }
+    else if(nearbyNpc?.action==='rest'){ player.hp=player.maxhp; player.mp=player.maxmp; spawnText(nearbyNpc.x,nearbyNpc.y-110,'欢迎光临,要来一杯冰爽的啤酒吗？','#ffe08a'); spawnText(player.x,player.y-90,'HP / MP 完全恢复！','#7dff9a'); Audio2.sfx('select'); }
     else if(nearbyNpc){ spawnText(nearbyNpc.x,nearbyNpc.y-110,nearbyNpc.message,'#ffe08a'); Audio2.sfx('select'); }
     else if(nearTownObject(TOWN.gate,125)){ mapIndex=Math.min(Save.data.unlocked||0,DUNGEONS.length-1); MULTIPLAYER.disconnect(); gameState='mapsel'; Audio2.sfx('select'); }
   }
 }
 function drawTownBackground(){
-  ctx.fillStyle='#091c4b'; ctx.fillRect(0,0,WORLD_W,GROUND_TOP);
-  if(!TOWN_SPR.ready){ ctx.fillStyle='#796b50';ctx.fillRect(0,GROUND_TOP,WORLD_W,H-GROUND_TOP);return; }
-  for(let x=0;x<WORLD_W;x+=960) drawTownSprite('far',x,0,1.5,1.5);
-  for(let x=-80;x<WORLD_W;x+=895) drawTownSprite('mid',x,42,1,1);
-  ctx.fillStyle='#d6bf8d';ctx.fillRect(0,GROUND_TOP,WORLD_W,H-GROUND_TOP);
-  for(let y=GROUND_TOP;y<H;y+=120) for(let x=0;x<WORLD_W;x+=224) drawTownSprite('ground',x,y,1,1);
+  const ww=townWorldW();
+  ctx.fillStyle='#091c4b'; ctx.fillRect(0,0,ww,GROUND_TOP);
+  if(!TOWN_SPR.ready){ ctx.fillStyle='#796b50';ctx.fillRect(0,GROUND_TOP,ww,H-GROUND_TOP);return; }
+  for(let x=0;x<ww;x+=960) drawTownSprite('far',x,0,1.5,1.5);
+  for(let x=-80;x<ww;x+=895) drawTownSprite('mid',x,42,1,1);
+  ctx.fillStyle='#d6bf8d';ctx.fillRect(0,GROUND_TOP,ww,H-GROUND_TOP);
+  for(let y=GROUND_TOP;y<H;y+=120) for(let x=0;x<ww;x+=224) drawTownSprite('ground',x,y,1,1);
 }
 function drawTownNpc(){
   for(const n of TOWN.npcs){
     drawShadow(n.x,n.y,28);
     if(TOWN_SPR.ready){
       const data=TOWN_SPR.meta.npcs?.[n.sprite], frames=data?.frames||[], fi=frames.length?Math.floor(performance.now()/data.frameMs)%frames.length:-1;
-      if(fi>=0){ const f=frames[fi], scale=n.sprite==='guard'?.72:.72; ctx.drawImage(TOWN_SPR.img,f[0],f[1],f[2],f[3],n.x+f[4]*scale,n.y+f[5]*scale,f[2]*scale,f[3]*scale); }
+      if(fi>=0){ const f=frames[fi], scale=.72, dir=n.dir||1;
+        ctx.save(); ctx.translate(n.x,n.y); ctx.scale(dir,1);
+        ctx.drawImage(TOWN_SPR.img,f[0],f[1],f[2],f[3],f[4]*scale,f[5]*scale,f[2]*scale,f[3]*scale);
+        ctx.restore(); }
     }
     ctx.textAlign='center'; ctx.fillStyle='#ffd24d'; ctx.font='bold 13px sans-serif'; ctx.fillText(n.name,n.x,n.y-103);
     ctx.fillStyle='#d7dde6'; ctx.font='11px sans-serif'; ctx.fillText(n.role,n.x,n.y-88);
@@ -2566,10 +2859,10 @@ function drawTownHud(){
 function drawTown(){
   ctx.save();ctx.translate(-camX,0);drawTownBackground();drawTownGate();
   const scene=[
-    {y:410,draw:()=>drawTownSprite('treeSmall',360,104,.82,.82)},
+    {y:410,draw:()=>drawTownSprite('treeSmall',850,104,.82,.82)},
     {y:445,draw:()=>drawTownNpc()},
     {y:player.y,draw:()=>player.draw()},
-    {y:488,draw:()=>drawTownSprite('treeLarge',1160,188,.78,.78)},
+    {y:488,draw:()=>drawTownSprite('treeLarge',1580,188,.78,.78)},
   ];
   for(const remote of MULTIPLAYER.players.values())scene.push({y:remote.y,draw:()=>drawRemotePlayer(remote)});
   scene.sort((a,b)=>a.y-b.y).forEach(item=>item.draw());ctx.restore();
@@ -2790,7 +3083,7 @@ function drawShop(){
 
   // ── 购买模式 ──────────────────────────────────────────────────
   ctx.textAlign='center';
-  ctx.fillStyle='#ffcf4d'; ctx.font='bold 28px sans-serif'; ctx.fillText('⚒  N P C  商  店  ⚒',W/2,36);
+  ctx.fillStyle='#ffcf4d'; ctx.font='bold 28px sans-serif'; ctx.fillText('⚒  诺 顿 的 商 店  ⚒',W/2,36);
   ctx.fillStyle='#ffd24d'; ctx.font='bold 15px sans-serif';
   ctx.fillText('💰 '+p.gold+' 金   Lv.'+p.level+'   已解锁 '+((Save.data.unlocked||0)+1)+' 张图',W/2,56);
   ctx.fillStyle='#555'; ctx.font='11px sans-serif';
@@ -2929,12 +3222,18 @@ function drawClassPortrait(clsKey,x,feetY,dir,scale){
 function drawMapSelect(){
   drawBackground(); ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center'; ctx.fillStyle='#ffcf4d'; ctx.font='bold 32px sans-serif'; ctx.fillText('选 择 地 下 城',W/2,56);
-  ctx.fillStyle='#9aa6b8'; ctx.font='13px sans-serif'; ctx.fillText('↑↓ 选择    Enter/空格 进入    Esc 返回城镇',W/2,82);
+  ctx.fillStyle='#9aa6b8'; ctx.font='13px sans-serif'; ctx.fillText('↑↓ 选择    ←→ 切换区域    Enter/空格 进入    Esc 返回城镇',W/2,82);
   const cardW=660, cardH=74, x=(W-cardW)/2, y0=118;
-  DUNGEONS.forEach((d,i)=>{ const y=y0+i*(cardH+14), sel=i===mapIndex, locked=i>(Save.data.unlocked||0), risky=player&&player.level<d.recommendedLv;
+  const visible=4, N=DUNGEONS.length;
+  const first=clamp(mapIndex-1, 0, Math.max(0,N-visible));
+  if(first>0){ ctx.fillStyle='#8ab4ff'; ctx.font='bold 14px sans-serif'; ctx.fillText('▲ 还有 '+first+' 个',W/2,y0-8); }
+  if(first+visible<N){ ctx.fillStyle='#8ab4ff'; ctx.font='bold 14px sans-serif'; ctx.fillText('▼ 还有 '+(N-first-visible)+' 个',W/2,y0+visible*(cardH+14)+4); }
+  DUNGEONS.slice(first,first+visible).forEach((d,vi)=>{ const i=first+vi, y=y0+vi*(cardH+14), sel=i===mapIndex, locked=i>(Save.data.unlocked||0), risky=player&&player.level<d.recommendedLv;
     ctx.fillStyle=locked?'rgba(8,10,16,.78)':(sel?'#1c2840':'#101620'); ctx.fillRect(x,y,cardW,cardH);
     ctx.strokeStyle=locked?'#333':(sel?'#ffcf4d':d.tint[1]); ctx.lineWidth=sel?3:1.5; ctx.strokeRect(x,y,cardW,cardH);
     ctx.textAlign='left'; ctx.fillStyle=locked?'#666':'#fff'; ctx.font='bold 19px sans-serif'; ctx.fillText((sel?'▶ ':'')+d.name,x+18,y+28);
+    if(d.act){ ctx.textAlign='right'; ctx.fillStyle=locked?'#4a4a55':'#c9a24d'; ctx.font='bold 11px sans-serif';
+      ctx.fillText('ACT'+d.act+' · '+(ACT_NAMES[d.act]||''),x+cardW-18,y+22); ctx.textAlign='left'; }
     ctx.fillStyle=locked?'#555':(risky?'#ff8c42':'#8ab4ff'); ctx.font='12px sans-serif';
     const state=locked?'未解锁':(risky?'推荐 Lv.'+d.recommendedLv+' · 等级偏低也可挑战':'推荐 Lv.'+d.recommendedLv+' · '+d.rooms+' 房');
     ctx.fillText(state,x+22,y+48);
@@ -2984,7 +3283,7 @@ function drawHelp(){
     '【背包】I 打开/关闭（不暂停）  ↑↓←→ 选择  Enter 穿戴',
     '【消耗品】1~6 快捷栏即时使用药水（掉落/商店获得）',
     '【装备】Boss 概率掉装备，分白蓝紫橙四档；穿戴提升属性',
-    '【商店】与城镇武器商人交谈，可买武器/防具/药水，S 出售',
+    '【商店】与装备商人诺顿交谈，可买武器/防具/药水，S 出售；酒馆索西雅处可休息回满 HP/MP',
     '【系统】P 暂停   M 静音   0 返回主菜单',
     '',
     '怪物：哥布林 / 兽人 / 弓箭手 / 冲锋怪 / 自爆怪 / 首领',
@@ -3198,6 +3497,8 @@ function update(){
     const N=DUNGEONS.length; mapIndex=clamp(mapIndex,0,N-1);
     if(pressed('arrowup')){mapIndex=(mapIndex+N-1)%N;Audio2.sfx('ui');}
     if(pressed('arrowdown')){mapIndex=(mapIndex+1)%N;Audio2.sfx('ui');}
+    if(pressed('arrowleft')){ const act=DUNGEONS[mapIndex].act; let i=mapIndex; while(i>0&&DUNGEONS[i-1].act===act)i--; if(i===mapIndex&&i>0){const pa=DUNGEONS[i-1].act; while(i>0&&DUNGEONS[i-1].act===pa)i--;} mapIndex=i; Audio2.sfx('ui'); }
+    if(pressed('arrowright')){ const act=DUNGEONS[mapIndex].act; let i=mapIndex; while(i<N-1&&DUNGEONS[i].act===act)i++; if(DUNGEONS[i].act===act)i=N-1; mapIndex=i; Audio2.sfx('ui'); }
     if(pressed('escape')){enterTown(TOWN.gate.x-120,TOWN.gate.y);return;}
     for(let i=1;i<=Math.min(9,N);i++) if(pressed(''+i)){mapIndex=i-1;}
     if((pressed('enter')||pressed(' ')) && mapIndex<=(Save.data.unlocked||0)){ beginDungeon(mapIndex); return; }
